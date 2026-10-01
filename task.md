@@ -199,27 +199,31 @@ window 30 kỳ và detail query thành công. HTTP endpoints thuộc P6.
 **Phụ thuộc:** P0-04, P4. **Điều kiện ra:** combination hợp lệ được kiểm tra
 và sinh theo rule minh bạch, không vòng lặp vô hạn hoặc score suy đoán.
 
-- [ ] **P5-01 — Checker input contract.** Main numbers đúng count/range,
+- [x] **P5-01 — Checker input contract.** Main numbers đúng count/range,
   canonical trước compare; optional special/full-ticket chỉ làm khi mode và
   identity đã được chốt. Test reorder, duplicate, invalid type và hai game.
-- [ ] **P5-02 — Exact match.** Count và last exact match theo identity/search
+- [x] **P5-02 — Exact match.** Count và last exact match theo identity/search
   range đã chốt, bao gồm no-match hợp lệ; test permutation, history trùng ở
   nhiều kỳ và special behavior theo mode.
-- [ ] **P5-03 — Historical overlap.** Tính số phần tử giao main, buckets theo
+- [x] **P5-03 — Historical overlap.** Tính số phần tử giao main, buckets theo
   contract, similar/recent draws có stable sort/paging; test 0..5/0..6,
   exact bucket và special không ảnh hưởng.
-- [ ] **P5-04 — Checker analytics.** Đưa frequency/gap/pair context theo
+- [x] **P5-04 — Checker analytics.** Đưa frequency/gap/pair context theo
   window vào result có metadata; kiểm tra checker không tính metric khác
   analytics core trên cùng dataset.
-- [ ] **P5-05 — Rule engine.** Typed rule config, enabled/disabled và validate
+- [x] **P5-05 — Rule engine.** Typed rule config, enabled/disabled và validate
   threshold/contradiction; implement từng rule MVP trong docs theo cùng
   semantic analytics/checker; test pass/fail và boundary từng rule.
-- [ ] **P5-06 — Generator.** Candidate hợp lệ/canonical, optional local seed,
+- [x] **P5-06 — Generator.** Candidate hợp lệ/canonical, optional local seed,
   unique outputs, bounded attempts/work và số kết quả yêu cầu có giới hạn;
   test reproducibility cùng data/config/seed/time và rule set không khả thi.
-- [ ] **P5-07 — Structured explanation.** Mỗi result ghi rule/threshold/value,
+- [x] **P5-07 — Structured explanation.** Mỗi result ghi rule/threshold/value,
   frequency/pairs/exact-match/recent-overlap liên quan, window/as-of và trạng
   thái partial/no-result; test explanation khớp chính kết quả lọc.
+
+Kiểm chứng P5 (01/10/2026): checker và generator dùng cùng snapshot window,
+main-only identity; tests PostgreSQL xác nhận exact/overlap, rule pass/fail ở
+từng ngưỡng, seed tái lập, no-result/partial và giới hạn 1000–20000 attempts.
 
 ## P6 — HTTP API và tích hợp backend
 

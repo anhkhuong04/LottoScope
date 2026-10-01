@@ -107,7 +107,7 @@ class AnalyticsService:
         self.engine = engine
 
     @staticmethod
-    def _snapshot(
+    def select_snapshot(
         repo: DrawRepository,
         game: str,
         window: AnalysisWindow,
@@ -117,7 +117,12 @@ class AnalyticsService:
         if as_of_draw_id is None:
             cutoff = repo.latest(game)
         else:
-            cutoff = repo.get_by_id(game, as_of_draw_id)
+            try:
+                cutoff = repo.get_by_id(game, as_of_draw_id)
+            except DomainValidationError as exc:
+                if exc.field != "draw_id":
+                    raise
+                raise CutoffNotFoundError(f"{game}/{as_of_draw_id}") from exc
             if cutoff is None:
                 raise CutoffNotFoundError(f"{game}/{as_of_draw_id}")
         draws = repo.window_draws(
@@ -145,7 +150,7 @@ class AnalyticsService:
             isolation_level="REPEATABLE READ"
         ) as connection:
             with Session(connection) as session:
-                return self._snapshot(DrawRepository(session), game, window, as_of_draw_id)
+                return self.select_snapshot(DrawRepository(session), game, window, as_of_draw_id)
 
     def numbers(
         self,
@@ -221,7 +226,7 @@ class AnalyticsService:
         ) as connection:
             with Session(connection) as session:
                 repo = DrawRepository(session)
-                snapshot = self._snapshot(repo, game, window, as_of_draw_id)
+                snapshot = self.select_snapshot(repo, game, window, as_of_draw_id)
                 metric = select_number(number_metrics(game, snapshot.draws), number)
                 partners = tuple(
                     sorted(
@@ -263,7 +268,7 @@ class AnalyticsService:
         ) as connection:
             with Session(connection) as session:
                 repo = DrawRepository(session)
-                snapshot = self._snapshot(repo, game, window, as_of_draw_id)
+                snapshot = self.select_snapshot(repo, game, window, as_of_draw_id)
                 metric = select_pair(game, pair_metrics(game, snapshot.draws), *pair)
                 appearances = self._appearances(repo, snapshot.draws, pair, page, page_size)
                 return PairDetail(

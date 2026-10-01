@@ -100,7 +100,7 @@ def test_window_cutoff_same_day_empty_and_missing_count(engine) -> None:
     assert empty.context.as_of_draw_id == "90003"
     with pytest.raises(CutoffNotFoundError):
         service.snapshot("lotto_535", last, as_of_draw_id="99999")
-    with pytest.raises(DomainValidationError):
+    with pytest.raises(CutoffNotFoundError):
         service.snapshot("lotto_535", last, as_of_draw_id="bad")
 
 
