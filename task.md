@@ -230,26 +230,33 @@ từng ngưỡng, seed tái lập, no-result/partial và giới hạn 1000–200
 **Phụ thuộc:** P0-07 và services P2–P5 tương ứng. **Điều kiện ra:** mọi use
 case MVP backend gọi được qua FastAPI với schema/error/limits đã thống nhất.
 
-- [ ] **P6-01 — API shell.** FastAPI app, dependency injection cho session/
+- [x] **P6-01 — API shell.** FastAPI app, dependency injection cho session/
   service, typed schemas, error mapping và OpenAPI; route không chứa SQL,
   parsing nguồn hoặc thuật toán analytics.
-- [ ] **P6-02 — History endpoints.** Latest draw, danh sách/detail theo ID,
+- [x] **P6-02 — History endpoints.** Latest draw, danh sách/detail theo ID,
   date range, paging/sort và data freshness; test contract, game isolation,
   invalid filters, no-data và stable ordering.
-- [ ] **P6-03 — Analytics endpoints.** Frequency, gap, pairs, number detail,
+- [x] **P6-03 — Analytics endpoints.** Frequency, gap, pairs, number detail,
   pair detail theo window; trả as-of/actual draw count và pagination cần
   thiết. Test dữ liệu API với core fixture cho cả hai game.
-- [ ] **P6-04 — Checker endpoint.** Validate server-side, exact/overlap/
+- [x] **P6-04 — Checker endpoint.** Validate server-side, exact/overlap/
   similar draws/number-pair context; test response/no match/errors và limits.
-- [ ] **P6-05 — Generator endpoint.** Typed rules, requested count/seed,
+- [x] **P6-05 — Generator endpoint.** Typed rules, requested count/seed,
   explanation và partial/no-result; test invalid/contradictory input, bounded
   failure, reproducibility và response size limit.
-- [ ] **P6-06 — Cross-layer integration.** Từ fixture nguồn → ingest vào
+- [x] **P6-06 — Cross-layer integration.** Từ fixture nguồn → ingest vào
   PostgreSQL → query API: kiểm tra lịch sử, frequency/gap/pairs, checker,
   generator và freshness cùng game/window; không lấy mock thay DB ở test này.
-- [ ] **P6-07 — API reliability.** Không lộ traceback/secret, không trả 200
+- [x] **P6-07 — API reliability.** Không lộ traceback/secret, không trả 200
   cho job/source failure, date/time serialize nhất quán và analytics CPU
   không chặn event loop theo mô hình đã chọn; kiểm tra cases liên quan.
+
+Kiểm chứng P6 (01/10/2026): 72 pytest pass trên PostgreSQL 16, Ruff/Pyright
+đạt; fixture HTML nguồn → ingestion → DB → API xác nhận cả hai game, window,
+freshness, checker và generator. Test lỗi 404/409/422/500, không lộ secret và
+timestamp UTC `Z`. Routes đồng bộ chạy trong FastAPI threadpool. Compose
+config/build/readiness và smoke test API trên DB lịch sử đạt. MVP không có
+endpoint trigger ingestion; collector failure được lưu trong status.
 
 ## P7 — Frontend MVP (luồng riêng theo wireframe)
 

@@ -1,7 +1,8 @@
 # LottoScope — Vietlott Analytics
 
 Ứng dụng phân tích dữ liệu lịch sử Lotto 5/35 và Mega 6/45. Hiện repository ở
-**P4: history và analytics core**; endpoint nghiệp vụ sẽ được nối ở P6.
+**P6: backend MVP** với API history, analytics, checker và generator. Giao diện
+người dùng thuộc P7; nghiệm thu triển khai thuộc P8.
 Tiến độ và điều kiện nghiệm thu: [task.md](task.md). Contract: [docs/](docs/).
 
 ## Chạy backend với Docker Compose
@@ -24,6 +25,13 @@ và migration đang ở head. API docs ở `http://localhost:8000/docs`. `POSTGR
 và `BACKEND_PORT` trong `.env` chỉ bind loopback trên host. Nếu password có ký
 tự đặc biệt, URL-encode phần password trong `LOTTO_DATABASE_URL`. File `.env`
 được Git ignore; `.env.example` chỉ chứa placeholder.
+
+API nghiệp vụ ở `/api/v1`; tham số, response và lỗi theo [docs/API.md](docs/API.md).
+Ví dụ đọc tần suất 30 kỳ gần nhất:
+
+```powershell
+Invoke-RestMethod 'http://localhost:8000/api/v1/games/lotto_535/analytics/numbers?window=last_draws&count=30'
+```
 
 Sau khi sửa code, chạy `docker compose build backend` rồi
 `docker compose up -d backend`. Xem lỗi bằng

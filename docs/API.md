@@ -17,7 +17,8 @@ lại analytics. Tất cả number trong JSON là integer; UI tự hiển thị 
   gap `null` luôn đứng cuối.
 - Endpoint analytics có `window=last_draws&count=10|20|30|50|100`, hoặc
   `window=date_range&from_date=...&to_date=...`, hoặc `window=all_time`.
-  Gửi thừa/thiếu tham số không hợp lệ → 422. API yêu cầu window rõ; UI gửi
+  Gửi thừa/thiếu tham số không hợp lệ → 422; `date_range` tối đa 3650 ngày
+  giữa hai đầu để giới hạn tài nguyên API. API yêu cầu window rõ; UI gửi
   `last_draws, count=30` theo default của wireframe. Có thể thêm
   `as_of_draw_id`; absent lấy latest đã lưu. Cutoff chỉ cùng game và inclusive.
 - `analysis_window` trong POST body là object tương đương:

@@ -5,7 +5,9 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from app.api.errors import install_error_handlers
 from app.api.health import router as health_router
+from app.api.v1 import router as v1_router
 from app.core.config import get_settings, scheduler_enabled
 from app.jobs.collection import build_scheduler
 
@@ -26,7 +28,9 @@ async def lifespan(_application: FastAPI) -> AsyncGenerator[None]:
 
 def create_app() -> FastAPI:
     application = FastAPI(title="LottoScope API", version="0.1.0", lifespan=lifespan)
+    install_error_handlers(application)
     application.include_router(health_router)
+    application.include_router(v1_router)
     return application
 
 

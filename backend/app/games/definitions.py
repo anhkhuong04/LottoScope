@@ -18,14 +18,23 @@ class GameId(StrEnum):
 @dataclass(frozen=True, slots=True)
 class GameDefinition:
     id: GameId
+    label: str
     main_count: int
     main_max: int
     special_max: int | None
 
+    @property
+    def main_min(self) -> int:
+        return 1
+
+    @property
+    def special_min(self) -> int | None:
+        return 1 if self.special_max is not None else None
+
 
 GAMES: dict[GameId, GameDefinition] = {
-    GameId.LOTTO_535: GameDefinition(GameId.LOTTO_535, 5, 35, 12),
-    GameId.MEGA_645: GameDefinition(GameId.MEGA_645, 6, 45, None),
+    GameId.LOTTO_535: GameDefinition(GameId.LOTTO_535, "Lotto 5/35", 5, 35, 12),
+    GameId.MEGA_645: GameDefinition(GameId.MEGA_645, "Mega 6/45", 6, 45, None),
 }
 
 
