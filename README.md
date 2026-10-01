@@ -1,162 +1,102 @@
 # LottoScope — Vietlott Analytics
 
-Ứng dụng phân tích dữ liệu lịch sử Lotto 5/35 và Mega 6/45. Hiện repository ở
-**P7: frontend MVP** với dashboard, history, analytics, checker và generator.
-Nghiệm thu triển khai thuộc P8.
-Tiến độ và điều kiện nghiệm thu: [task.md](task.md). Contract: [docs/](docs/).
+Ứng dụng xem và phân tích **kết quả đã công bố** của Lotto 5/35 và Mega 6/45. MVP gồm lịch sử, frequency/gap/pairs, checker và generator theo rule có giải thích; không dự đoán kỳ tiếp theo. Phạm vi ở [docs/MVP.md](docs/MVP.md), tiến độ ở [task.md](task.md), bằng chứng nghiệm thu ở [docs/MVP_ACCEPTANCE.md](docs/MVP_ACCEPTANCE.md).
 
-## Chạy backend với Docker Compose
+## Chạy ứng dụng bằng Docker Compose
 
-Cần Docker Desktop/Compose. Trong PowerShell tại root repository:
+Cần Docker Desktop/Compose. Chạy PowerShell tại root repository:
 
 ```powershell
 Copy-Item .env.example .env
-# Sửa POSTGRES_PASSWORD và LOTTO_DATABASE_URL trong .env cho khớp nhau.
-docker compose build backend
-docker compose up -d postgres
-docker compose run --rm backend alembic upgrade head
-docker compose up -d backend
-Invoke-RestMethod http://localhost:8000/health/live
-Invoke-RestMethod http://localhost:8000/health/ready
+# Sửa POSTGRES_PASSWORD và password đã URL-encode trong LOTTO_DATABASE_URL cho khớp.
+docker compose config --quiet
+docker compose build backend frontend
+docker compose up -d postgres --wait
+docker compose run --rm --no-deps -e LOTTO_SCHEDULER_ENABLED=false backend alembic upgrade head
+docker compose up -d backend frontend --wait
+Invoke-RestMethod http://127.0.0.1:8000/health/ready
+Invoke-RestMethod http://127.0.0.1:8088/api/v1/games
 ```
 
-`/health/live` chỉ xác nhận process; `/health/ready` cần kết nối PostgreSQL
-và migration đang ở head. API docs ở `http://localhost:8000/docs`. `POSTGRES_PORT`
-và `BACKEND_PORT` trong `.env` chỉ bind loopback trên host. Nếu password có ký
-tự đặc biệt, URL-encode phần password trong `LOTTO_DATABASE_URL`. File `.env`
-được Git ignore; `.env.example` chỉ chứa placeholder.
+Mở `http://127.0.0.1:8088` (frontend), `http://127.0.0.1:8000/docs` (API). Nginx phục vụ SPA deep links và proxy `/api/` cùng origin; có thể đổi `FRONTEND_PORT`, `BACKEND_PORT`, `POSTGRES_PORT` trong `.env` nếu cổng bận. Các cổng chỉ bind loopback. `/health/live` kiểm tra process; `/health/ready` đòi PostgreSQL kết nối được và migration ở head. `docker compose down` giữ volume; **không dùng `down -v` nếu muốn giữ dữ liệu**. `.env` không được commit. Cấu hình này dành cho triển khai thử cục bộ, chưa bao gồm TLS/public ingress.
 
-API nghiệp vụ ở `/api/v1`; tham số, response và lỗi theo [docs/API.md](docs/API.md).
-Ví dụ đọc tần suất 30 kỳ gần nhất:
+Sau khi cập nhật image, backup trước khi chạy migration mới, rồi chạy lại `alembic upgrade head` và `docker compose up -d backend frontend --wait`. Kiểm tra `docker compose ps`, `docker compose logs backend frontend postgres` và readiness. Một backend worker bật APScheduler; không scale backend khi scheduler còn nằm trong process này. Giờ poll có thể chỉnh bằng `LOTTO_LOTTO_POLL_FIRST`, `LOTTO_LOTTO_POLL_SECOND`, `LOTTO_MEGA_POLL`, `LOTTO_RECONCILE_POLL` (`HH:MM`, giờ Việt Nam).
+
+## Nhập dữ liệu và vận hành collector
+
+Migration phải hoàn tất trước khi import. Các lệnh chạy trong backend container nên dùng đúng URL database trong `.env`:
 
 ```powershell
-Invoke-RestMethod 'http://localhost:8000/api/v1/games/lotto_535/analytics/numbers?window=last_draws&count=30'
+docker compose run --rm --no-deps -e LOTTO_SCHEDULER_ENABLED=false backend python -m app.commands.import_history --game lotto_535
+docker compose run --rm --no-deps -e LOTTO_SCHEDULER_ENABLED=false backend python -m app.commands.import_history --game mega_645
+docker compose run --rm --no-deps -e LOTTO_SCHEDULER_ENABLED=false backend python -m app.commands.audit_import --game lotto_535
+docker compose run --rm --no-deps -e LOTTO_SCHEDULER_ENABLED=false backend python -m app.commands.audit_import --game mega_645
+docker compose run --rm --no-deps -e LOTTO_SCHEDULER_ENABLED=false backend python -m app.commands.collect --game lotto_535
+docker compose run --rm --no-deps -e LOTTO_SCHEDULER_ENABLED=false backend python -m app.commands.collect --game mega_645
 ```
 
-Sau khi sửa code, chạy `docker compose build backend` rồi
-`docker compose up -d backend`. Xem lỗi bằng
-`docker compose logs backend postgres`. `docker compose down` dừng services
-nhưng giữ volume; **không thêm `-v`** nếu muốn giữ dữ liệu.
+Import mặc định quét từ `00001` đến ID mới nhất ở [Vietlott Lotto 5/35](https://vietlott.vn/vi/trung-thuong/ket-qua-trung-thuong/535) hoặc [Mega 6/45](https://vietlott.vn/vi/trung-thuong/ket-qua-trung-thuong/645), tối đa một request/giây mỗi game; chạy lại bỏ qua item đã `found`. Có thể giới hạn bằng `--start-id`, `--end-id`, `--from-date`, `--to-date`; `--recheck` kiểm lại draw đã có. Import theo phạm vi mẫu không chứng minh lịch sử đầy đủ. `audit_import` exit 0 chỉ khi ID từ đầu đến latest nguồn được quét, không có lỗi và các draw mẫu khớp nguồn. Collector yêu cầu checkpoint đầy đủ, kiểm tra kỳ mới và đối chiếu lại 7 kỳ gần nhất; chạy lặp phải giữ count/identity. Lỗi nguồn, parse hoặc conflict được ghi trong `ingestion_runs`, `ingestion_items`, `draw_corrections`; không áp dụng correction trước khi đối chiếu nguồn. Sau khi xác minh correction `123`, áp dụng có lý do bằng `docker compose run --rm --no-deps backend python -m app.commands.apply_correction 123 --reason "Đã đối chiếu nguồn"`. Xem policy chi tiết tại [docs/DATA_PIPELINE.md](docs/DATA_PIPELINE.md).
 
-## Phát triển backend tại máy
+## Backup, restore và rollback
 
-Cài [uv](https://docs.astral.sh/uv/getting-started/installation/) và Docker.
-Từ `backend/`:
+Tạo custom-format dump của database `lotto`; sao chép archive **ra ngoài container** và lưu ở vị trí backup được quản lý:
 
 ```powershell
-uv python install 3.12
+docker compose exec -T postgres pg_dump -U lotto -d lotto -Fc --no-owner --no-acl -f /tmp/lotto.dump
+$pgContainer = docker compose ps -q postgres
+docker cp "${pgContainer}:/tmp/lotto.dump" .\lotto.dump
+```
+
+Restore vào database **khác**, không ghi đè database đang phục vụ. Kiểm tra tên `lotto_restore_check` chưa tồn tại trước khi tạo; bản dump chứa schema và Alembic version:
+
+```powershell
+docker compose exec -T postgres createdb -U lotto lotto_restore_check
+$pgContainer = docker compose ps -q postgres
+docker cp .\lotto.dump "${pgContainer}:/tmp/lotto_restore.dump"
+docker compose exec -T postgres pg_restore -U lotto -d lotto_restore_check --no-owner --no-acl --exit-on-error /tmp/lotto_restore.dump
+docker compose exec -T postgres psql -U lotto -d lotto -c "SELECT game,count(*),max(draw_id) FROM draws GROUP BY game ORDER BY game"
+docker compose exec -T postgres psql -U lotto -d lotto_restore_check -c "SELECT game,count(*),max(draw_id) FROM draws GROUP BY game ORDER BY game"
+```
+
+Đối chiếu thêm `source_sha256`, main/special numbers và draw mẫu; kiểm tra API với một backend tạm trỏ tới DB restore. Có thể copy `.env` thành `.env.restore` (file này được Git ignore), đổi **chỉ** database cuối `LOTTO_DATABASE_URL` thành `lotto_restore_check`, rồi chạy:
+
+```powershell
+$restoreApi = docker compose --env-file .env.restore run -d --rm --no-deps -e LOTTO_SCHEDULER_ENABLED=false -p 127.0.0.1:18001:8000 backend
+Invoke-RestMethod http://127.0.0.1:18001/health/ready
+Invoke-RestMethod http://127.0.0.1:18001/api/v1/games/lotto_535/draws/latest
+docker stop $restoreApi
+```
+
+Nếu release/migration lỗi, dừng traffic, giữ dump và image cũ, restore vào DB mới rồi trỏ bản image cũ sang DB đó sau khi đối chiếu. Không tự động `alembic downgrade`: downgrade `0003` xóa bảng tracking import, downgrade `0002` xóa cả draws/audit. Rollback code chỉ an toàn khi schema còn tương thích; nếu không, restore bản backup trước migration. Không xóa volume để rollback. Chi tiết schema và giới hạn ở [docs/DATA_MODEL.md](docs/DATA_MODEL.md).
+
+## Phát triển và kiểm tra
+
+Backend cần uv/Python 3.12, frontend cần Node.js 22.12+. Quality gates:
+
+```powershell
+# Trong backend/
 uv sync --locked
 uv run --locked ruff check .
 uv run --locked ruff format --check .
 uv run --locked pyright
-$env:LOTTO_TEST_DATABASE_URL = 'postgresql+psycopg://lotto:change-me@localhost:5432/lotto_test'
+# LOTTO_TEST_DATABASE_URL phải trỏ tới DB *_test đã migrate, dùng 127.0.0.1 trên Windows.
 uv run --locked pytest
-```
 
-Để chạy API/migration từ host, khởi PostgreSQL qua Compose và đặt
-`LOTTO_DATABASE_URL` bằng URL trong `.env` nhưng đổi host `postgres` thành
-`localhost`, dùng `POSTGRES_PORT` nếu đổi port. Ví dụ PowerShell với password
-placeholder ban đầu:
-
-```powershell
-$env:LOTTO_DATABASE_URL = 'postgresql+psycopg://lotto:change-me@localhost:5432/lotto'
-uv run --locked alembic upgrade head
-uv run --locked uvicorn app.main:app --reload
-```
-
-Integration tests cần database `lotto_test` riêng đã chạy `alembic upgrade head`;
-ví dụ tạo bằng `docker compose exec -T postgres createdb -U lotto lotto_test`,
-sau đó đặt `LOTTO_DATABASE_URL` trỏ tới `lotto_test` để migrate và đặt lại URL
-ứng dụng. Tests xóa dữ liệu ingestion/draw trong **test database** giữa các ca.
-
-## Chạy frontend
-
-Cần Node.js 22.12+ và backend ở `http://127.0.0.1:8000`. Từ `frontend/`:
-
-```powershell
+# Trong frontend/
 npm ci
-npm run dev
-```
-
-Mở `http://localhost:5173`. Vite chuyển `/api` tới backend; frontend luôn gọi
-same-origin `/api/v1`. Với production build, host cần SPA fallback và reverse
-proxy `/api` cùng origin (triển khai ở P8). Không nhúng URL backend/secret vào
-bundle. Giao diện dùng dữ liệu API thật; phạm vi chưa có dữ liệu hiện trạng thái rỗng.
-
-Quality gates và browser smoke:
-
-```powershell
 npm run lint
 npm run format:check
 npm run typecheck
 npm test
 npm run build
-npx playwright install chromium
 npm run test:e2e
 ```
 
-`test:e2e` kiểm tra luồng A–D, lỗi mạng/retry, quét axe WCAG A/AA và kích thước
-desktop/tablet/mobile với backend địa phương có lịch sử Lotto và Mega đã nhập.
-CI frontend chạy các quality gates độc lập với backend. Xem
-[ADR 0002](docs/DECISIONS/0002-frontend-stack.md) về stack và yêu cầu hosting.
+Backend integration tests **truncate bảng trong test database**; tuyệt đối không trỏ `LOTTO_TEST_DATABASE_URL` vào DB ứng dụng. Tạo DB bằng `docker compose exec -T postgres createdb -U lotto lotto_test`, migrate với `LOTTO_DATABASE_URL` trỏ DB test trước khi chạy suite. Frontend dev dùng `npm run dev`, Vite proxy `/api` tới backend cổng 8000. Browser tests mặc định chạy Vite; đặt `PLAYWRIGHT_BASE_URL=http://127.0.0.1:8088` để kiểm tra bản Compose đã build. API contract ở [docs/API.md](docs/API.md).
 
-## Nhập lịch sử và kiểm tra collector
+## Tài liệu và trạng thái
 
-Migrate DB trước, chạy lệnh sau từ `backend/` với `LOTTO_DATABASE_URL` trỏ đúng
-DB ứng dụng. Import mặc định quét từ `00001` đến ID mới nhất trên Vietlott, tối
-đa một request/giây mỗi game; hai game có thể chạy riêng. Trạng thái từng ID
-và checkpoint lưu ở PostgreSQL, chạy lại sẽ bỏ qua ID đã `found` và thử lại ID
-thiếu/lỗi. `--recheck` buộc đối chiếu lại nội dung đã lưu.
-
-```powershell
-uv run --locked python -m app.commands.import_history --game lotto_535
-uv run --locked python -m app.commands.import_history --game mega_645
-uv run --locked python -m app.commands.import_history --game lotto_535 --start-id 00829 --end-id 00830 --from-date 2026-08-17 --to-date 2026-08-17
-uv run --locked python -m app.commands.ingestion_status --game lotto_535
-uv run --locked python -m app.commands.audit_import --game lotto_535
-uv run --locked python -m app.commands.audit_import --game mega_645
-uv run --locked python -m app.commands.collect --game lotto_535
-```
-
-Mỗi ID và trạng thái item/checkpoint commit trong một transaction. `partial` hoặc
-`failed` trả exit code khác 0; xem `ingestion_runs`, `ingestion_items` để xử lý
-ID lỗi rồi chạy lại. `excluded` ghi ID ngoài date filter, không tính là đã nhập.
-Collector chỉ chạy khi các ID từ `00001` đến checkpoint đã được quét và không
-có `excluded`; khi đó nó kiểm tra kỳ mới, thử lại ID lỗi và đối chiếu 7 kỳ gần
-nhất. Import một phạm vi mẫu không chứng minh toàn bộ lịch sử đã đầy đủ.
-`audit_import` đối chiếu ID mới nhất, số draw/item, các ID chưa quét, trạng thái
-lỗi, chronology, provenance và các kỳ mẫu với nguồn; exit code 0 chỉ khi toàn
-dải từ `00001` đến latest khớp và không còn lỗ hổng/lỗi.
-
-Compose bật APScheduler trong **một** backend worker, theo giờ Việt Nam. Giờ
-poll có thể đổi bằng `LOTTO_LOTTO_POLL_FIRST`, `LOTTO_LOTTO_POLL_SECOND`,
-`LOTTO_MEGA_POLL`, `LOTTO_RECONCILE_POLL` trong `.env` (định dạng `HH:MM`).
-Import thủ công và scheduler dùng cùng PostgreSQL advisory lock theo game để
-tránh chạy chồng. Nếu triển khai nhiều API worker, cần tách scheduler thành
-một process có ownership riêng trước khi tăng số worker.
-
-Khi nguồn trả cùng `(game, draw_id)` với nội dung khác, repository lưu correction
-`pending` và giữ draw hiện tại. Người vận hành xem bản ghi trong
-`draw_corrections`, đối chiếu nguồn, rồi áp dụng có lý do bằng:
-
-```powershell
-uv run --locked python -m app.commands.apply_correction 123 --reason "Đã đối chiếu nguồn"
-```
-
-Lệnh chạy với `LOTTO_DATABASE_URL` hiện hành, cập nhật draw, audit và version
-trong cùng transaction. Không dùng lệnh này trước khi kiểm tra nội dung nguồn.
-
-## Cấu trúc
-
-- `backend/app/`: FastAPI, domain, ingestion, jobs, repository và DB boundary.
-- `backend/app/analytics/`, `backend/app/services/history.py`: window/cutoff,
-  metric lịch sử và truy vấn detail có paging; công thức ở `docs/ANALYTICS.md`.
-- `backend/migrations/`: Alembic migrations.
-- `backend/tests/`: domain và PostgreSQL integration tests; CI chạy quality gates.
-- `frontend/src/`: React UI, API client, server state và các màn hình MVP;
-  `frontend/e2e/` chứa browser smoke tests.
-- `docs/`: đặc tả sản phẩm, domain, analytics, pipeline, schema, API và ADR.
-- `.agent/`, `AGENTS.md`: quy tắc bắt buộc cho agent.
-
-Mọi thay đổi code đi qua quality gates trong
-[.agent/WORKFLOW.md](.agent/WORKFLOW.md). `uv.lock` và migration được commit.
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) và [ADR 0001–0003](docs/DECISIONS/0003-compose-frontend.md): boundaries, stack và Compose frontend.
+- Migrations: `0001_baseline`, `0002_draw_storage`, `0003_ingestion_tracking`.
+- [docs/MVP_ACCEPTANCE.md](docs/MVP_ACCEPTANCE.md): phiên bản/môi trường, kết quả gates, dữ liệu nguồn, 12 tiêu chí backend, 15 tiêu chí frontend và giới hạn còn lại.
+- Phase 2 gồm strategy management/backtesting/random baseline/saved picks; phương pháp backtest còn phải chốt trước khi làm. Prediction, mua vé, thanh toán, ROI không thuộc MVP.

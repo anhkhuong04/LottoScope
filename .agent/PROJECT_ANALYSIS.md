@@ -3,7 +3,9 @@
 Tài liệu này giúp agent biết nguồn của từng quyết định; không lặp lại contract.
 Phân tích ban đầu ngày 01/10/2026 từ `PROJECT_OVERVIEW.md` và `wireframe.md`
 đã được cụ thể hóa ở P0 trong [task.md](../task.md). Tiến độ hiện tại theo
-checklist trong `task.md`; frontend stack được chốt ở P7.
+checklist trong `task.md`; bằng chứng nghiệm thu P8 ở
+[MVP_ACCEPTANCE.md](../docs/MVP_ACCEPTANCE.md). Frontend stack được chốt ở P7,
+cấu hình Compose frontend ở [ADR 0003](../docs/DECISIONS/0003-compose-frontend.md).
 
 ## Phạm vi
 
@@ -19,7 +21,7 @@ checklist trong `task.md`; frontend stack được chốt ở P7.
 | ID | Trạng thái/nguồn chuẩn |
 | --- | --- |
 | Q01 — Mốc MVP | Đã chốt trong [MVP.md](../docs/MVP.md) |
-| Q02 — Nguồn, lịch, retry/correction | Đã chốt trong [DATA_PIPELINE.md](../docs/DATA_PIPELINE.md); access được kiểm tra ngày 01/10/2026, phải kiểm lại khi P3 |
+| Q02 — Nguồn, lịch, retry/correction | Đã chốt trong [DATA_PIPELINE.md](../docs/DATA_PIPELINE.md); P8 audit nguồn ngày 01/10/2026 trong [MVP_ACCEPTANCE.md](../docs/MVP_ACCEPTANCE.md), tiếp tục kiểm tra theo collector |
 | Q03 — Draw/time/ordering | Đã chốt trong [DOMAIN.md](../docs/DOMAIN.md) |
 | Q04 — Window/freshness | Đã chốt trong [ANALYTICS.md](../docs/ANALYTICS.md) và [API.md](../docs/API.md) |
 | Q05 — Frequency/gap/pair formula | Đã chốt trong [ANALYTICS.md](../docs/ANALYTICS.md); MVP không có Hot/Cold threshold riêng |

@@ -307,46 +307,49 @@ browser smoke cần backend có lịch sử như README.
 
 ## P8 — Hoàn thiện, triển khai thử và nghiệm thu
 
+Bằng chứng chạy thật và đối chiếu từng tiêu chí: [docs/MVP_ACCEPTANCE.md](docs/MVP_ACCEPTANCE.md).
+Lệnh vận hành: [README.md](README.md).
+
 **Phụ thuộc:** P2–P6 cho mốc backend; thêm P7 cho mốc có giao diện. **Điều kiện
 ra:** hệ thống có thể cài đặt lại, nhập dữ liệu, tự cập nhật và kiểm tra các
 luồng theo acceptance với bằng chứng lưu lại.
 
-- [ ] **P8-01 — Chạy toàn bộ backend gates.** `uv sync --locked`, Ruff check/
+- [x] **P8-01 — Chạy toàn bộ backend gates.** `uv sync --locked`, Ruff check/
   format, Pyright, pytest; PostgreSQL integration/migration tests pass;
   ghi lệnh, kết quả và môi trường thực tế. Không thay PostgreSQL bằng SQLite.
-- [ ] **P8-02 — Chạy frontend gates nếu P7 trong milestone.** Install theo
+- [x] **P8-02 — Chạy frontend gates nếu P7 trong milestone.** Install theo
   lockfile, lint/type/test/build và browser checks cho các flow chính trên
   desktop/mobile; ghi lỗi còn lại và kết quả sửa.
-- [ ] **P8-03 — Kiểm tra migration/deploy trên môi trường sạch.** Compose
+- [x] **P8-03 — Kiểm tra migration/deploy trên môi trường sạch.** Compose
   config/build/up, DB volume tồn tại sau restart, migration upgrade, readiness
   và app phục vụ request; hướng dẫn rollback/giới hạn rollback.
-- [ ] **P8-04 — Kiểm tra backup/restore.** Backup PostgreSQL, restore vào DB
+- [x] **P8-04 — Kiểm tra backup/restore.** Backup PostgreSQL, restore vào DB
   khác, đối chiếu draw count, identity/sample và API query sau restore; ghi
   lệnh vận hành trong README/architecture.
-- [ ] **P8-05 — Smoke test end-to-end dữ liệu thực.** Import history hai game,
+- [x] **P8-05 — Smoke test end-to-end dữ liệu thực.** Import history hai game,
   chạy collector lặp, đối chiếu kỳ mới/source, truy vấn history/analytics/
   checker/generator; ghi source, thời điểm và hạn chế nếu source không sẵn.
-- [ ] **P8-06 — Kiểm tra phi chức năng mức MVP.** Paging/limits trên dataset
+- [x] **P8-06 — Kiểm tra phi chức năng mức MVP.** Paging/limits trên dataset
   lịch sử, queries/indexes chủ đạo, failure/retry và scheduler một instance;
   sửa bottleneck hoặc lỗi correctness được quan sát, không tối ưu suy đoán.
-- [ ] **P8-07 — Nghiệm thu backend.** Đánh dấu từng mục overview mục 15 bằng
+- [x] **P8-07 — Nghiệm thu backend.** Đánh dấu từng mục overview mục 15 bằng
   evidence: hai game đúng, update tự động, history, frequency, gap, pairs,
   checker, generator/explanation, automated tests, Compose và khả năng mở
   rộng game/analytics mà không sửa core rải rác.
-- [ ] **P8-08 — Nghiệm thu frontend nếu P7 trong milestone.** Đánh dấu từng
+- [x] **P8-08 — Nghiệm thu frontend nếu P7 trong milestone.** Đánh dấu từng
   mục wireframe mục 33 bằng màn hình/flow/test cụ thể; kiểm tra wording không
   gây hiểu là dự đoán và các trạng thái loading/empty/error.
-- [ ] **P8-09 — Bàn giao.** README và tài liệu phản ánh implementation,
+- [x] **P8-09 — Bàn giao.** README và tài liệu phản ánh implementation,
   danh sách ADR/migration, các vấn đề còn mở, kết quả gates, hướng dẫn vận hành
   import/collector/backup/restore và phạm vi Phase 2 để triển khai tiếp.
 
 ## Mốc đánh dấu hoàn thành
 
-- [ ] **Backend MVP hoàn thành:** P0–P6 và P8-01, P8-03–P8-07, P8-09 đạt;
+- [x] **Backend MVP hoàn thành:** P0–P6 và P8-01, P8-03–P8-07, P8-09 đạt;
   nghiệm thu theo overview mục 15. P7/P8-02/P8-08 có thể còn mở nếu
   `docs/MVP.md` chốt bàn giao backend trước.
-- [ ] **Frontend MVP hoàn thành:** P7, P8-02 và P8-08 đạt trên API backend
+- [x] **Frontend MVP hoàn thành:** P7, P8-02 và P8-08 đạt trên API backend
   đã nghiệm thu; 15 mục wireframe mục 33 có bằng chứng.
-- [ ] **MVP ứng dụng hoàn thành:** hai mốc trên đạt, luồng người dùng từ xem
+- [x] **MVP ứng dụng hoàn thành:** hai mốc trên đạt, luồng người dùng từ xem
   lịch sử đến phân tích/checker/generator hoạt động với dữ liệu thật, Compose
   chạy được và tài liệu bàn giao P8-09 đã cập nhật.

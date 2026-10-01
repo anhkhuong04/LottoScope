@@ -10,12 +10,13 @@ Một modular monolith Python **3.12**, PostgreSQL **16**. FastAPI/Pydantic
 cho HTTP, SQLAlchemy 2.x/Alembic cho persistence/migration; httpx cho nguồn
 và APScheduler cho collector.
 uv quản lý dependency/lock; Ruff/Pyright/pytest cho quality.
-Polars/NumPy chỉ thêm khi phép tính bảng thực sự cần; core MVP có thể tính
-bằng Python/SQL. P1 khóa exact dependency versions trong `uv.lock`. Chọn
-minor PostgreSQL 16 mới nhất có sẵn trong image đã kiểm tra khi bootstrap.
+Polars/NumPy chỉ thêm khi phép tính bảng thực sự cần; core MVP tính bằng
+Python/SQL. Backend dùng `uv.lock`; PostgreSQL dùng image `postgres:16`.
 
 Frontend chọn React/TypeScript + Vite, React Router và `lucide-react` tại
-[ADR 0002](DECISIONS/0002-frontend-stack.md). UI chỉ gọi API, không giữ domain
+[ADR 0002](DECISIONS/0002-frontend-stack.md). Bản build được Nginx phục vụ
+cùng origin với `/api` theo [ADR 0003](DECISIONS/0003-compose-frontend.md).
+UI chỉ gọi API, không giữ domain
 analytics riêng.
 
 ## Luồng và boundaries
@@ -42,15 +43,16 @@ cùng kết quả đã tính, không tính lại trên dataset khác. `data_vers
 
 ## Chạy và vận hành
 
-Docker Compose tối thiểu `backend` + `postgres`, persistent volume và health
+Docker Compose chạy `frontend` + `backend` + `postgres`, persistent volume và health
 checks. MVP chạy một API worker nếu APScheduler nằm cùng backend process;
 PostgreSQL advisory lock bảo vệ job overlap. Dùng env typed cho URL/secret,
 không commit `.env` thật. Migration chạy explicit trước phục vụ traffic;
 không `create_all()` production. Log có game/draw/run/source context; route
-không lộ lỗi nguồn hoặc traceback. Backup/restore thực hiện theo
-[DATA_MODEL.md](DATA_MODEL.md).
+không lộ lỗi nguồn hoặc traceback. Schema/giới hạn rollback ở
+[DATA_MODEL.md](DATA_MODEL.md); lệnh backup, restore vào DB riêng và đối chiếu API ở
+[README](../README.md#backup-restore-và-rollback).
 
 Gates chạy từ `backend/`: `uv sync --locked`, Ruff check/format, Pyright,
-pytest (gồm integration PostgreSQL). CI và README P1 dùng cùng commands.
+pytest (gồm integration PostgreSQL). CI và README dùng cùng commands.
 Frontend gates theo ADR 0002 và CI frontend. Không thêm Redis/Celery,
 microservices hoặc Kubernetes cho workload MVP.
