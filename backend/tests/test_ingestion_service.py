@@ -11,6 +11,7 @@ import pytest
 from sqlalchemy import create_engine, func, select, text
 from sqlalchemy.orm import Session
 
+from app.ingestion.audit import audit_history
 from app.ingestion.fetcher import SourceFetchError
 from app.ingestion.service import IngestionService, JobOverlapError
 from app.models.draw import DrawCorrectionRow, DrawRow, GameDataStateRow
@@ -72,6 +73,8 @@ def test_import_resume_recheck_and_content_conflict(engine) -> None:
     assert initial.status == "success"
     assert initial.counters["created"] == 2
     assert initial.counters["inserted"] == 2
+    with Session(engine) as session:
+        assert session.get(IngestionRunRow, initial.run_id).scope["source_latest_id"] == "00830"
     resumed = service.import_history("lotto_535", start_id="00829", end_id="00830")
     assert resumed.counters["resumed"] == 2
     assert resumed.counters["skipped"] == 2
@@ -259,3 +262,34 @@ def test_requested_end_above_source_latest_is_not_reported_success(engine) -> No
     with Session(engine) as session:
         assert "requested end" in session.get(IngestionRunRow, summary.run_id).error_summary
         assert session.scalar(select(func.count()).select_from(DrawRow)) == 0
+
+
+@pytest.mark.integration
+def test_audit_requires_full_coverage_and_matches_source_samples(engine) -> None:
+    template = fixture("535", "00001")
+    fetcher = FixtureFetcher(
+        latest="00002", pages={"00001": template, "00002": template.replace("#00001", "#00002")}
+    )
+    service = IngestionService(engine, fetcher)
+    assert service.import_history("lotto_535", end_id="00002").status == "success"
+    report = audit_history(engine, fetcher, "lotto_535")
+    assert report.complete
+    assert report.stored_draws == report.scanned_ids == 2
+    assert report.sample_mismatches == ()
+    with Session(engine) as session, session.begin():
+        session.delete(session.get(IngestionItemRow, ("lotto_535", 2)))
+    incomplete = audit_history(engine, fetcher, "lotto_535")
+    assert not incomplete.complete
+    assert incomplete.unscanned_examples == ("00002",)
+
+    class UnavailableSampleFetcher(FixtureFetcher):
+        def fetch(self, url: str) -> tuple[str, datetime]:
+            if "?nocatche=1" in url:
+                return template.replace("#00001", "#00002"), RETRIEVED_AT
+            return super().fetch(url)
+
+    unavailable_fetcher = UnavailableSampleFetcher(
+        latest="00002", pages={"00001": template, "00002": SourceFetchError("source", "HTTP 503")}
+    )
+    unavailable = audit_history(engine, unavailable_fetcher, "lotto_535")
+    assert "00002:source_unavailable_or_invalid" in unavailable.sample_mismatches

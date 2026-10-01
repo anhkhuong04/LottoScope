@@ -149,17 +149,17 @@ import/collector lặp hoặc song song không tạo duplicate hay làm sai dữ
 - [x] **P3-06 — Scheduled collection.** APScheduler hoặc cơ chế giai đoạn
   đầu đã chốt gọi cùng ingestion use case; tránh job overlap/multi-worker
   duplicate; test hoặc smoke test một kỳ chạy và trạng thái last success/fail.
-- [ ] **P3-07 — Kiểm tra dữ liệu nhập.** So sánh identity/count/sample draws
+- [x] **P3-07 — Kiểm tra dữ liệu nhập.** So sánh identity/count/sample draws
   cho cả hai game với nguồn chính thức, xác nhận main/special, provenance,
   thứ tự kỳ và không có lỗ hổng import không được báo cáo.
 
-Kiểm chứng P3 đang chạy (01/10/2026): Ruff check/format, Pyright (0 lỗi),
-48 pytest pass trên PostgreSQL 16; migration `0003` upgrade/downgrade/upgrade
-giữ draw P2, `alembic check` khớp metadata; Compose build/readiness và scheduler
-startup đạt. Năm kỳ nguồn chính thức (`535`: `00001`, `00829`, `00830`;
-`645`: `00001`, `01530`) đã nhập và đối chiếu đúng ID/ngày/main/special/URL.
-Backfill `00001..latest` cho cả hai game còn đang quét; ID chưa quét và các lỗi
-timeout được ghi nhận rõ, nên P3-07 chỉ hoàn tất sau khi đối chiếu toàn dải.
+Kiểm chứng P3 (01/10/2026): Ruff check/format, Pyright (0 lỗi), 49 pytest pass
+trên PostgreSQL 16; migration `0003` upgrade/downgrade/upgrade giữ draw P2,
+`alembic check` khớp metadata; Compose build/readiness và scheduler startup đạt.
+Backfill và resume thành công các kỳ timeout. Audit với nguồn chính thức xác nhận
+Lotto 5/35 `919/919` (latest `00919`, 01/10/2026) và Mega 6/45 `1569/1569`
+(latest `01569`, 30/09/2026); mỗi game có 8 kỳ mẫu khớp ID/ngày/main/special,
+không có ID chưa quét, lỗi, provenance sai hoặc thứ tự ngày sai.
 
 ## P4 — History và analytics core
 

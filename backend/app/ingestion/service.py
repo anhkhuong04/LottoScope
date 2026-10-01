@@ -307,7 +307,16 @@ class IngestionService:
         status: Literal["success", "partial", "failed"] = "failed"
         error: str | None = None
         try:
-            sequences = self._plan_ids(game, kind, start_id=start_id, end_id=end_id)
+            sequences, latest_source = self._plan_ids(game, kind, start_id=start_id, end_id=end_id)
+            with Session(self.engine) as session, session.begin():
+                planned_run = session.get(IngestionRunRow, run_id)
+                if planned_run is None:
+                    raise RuntimeError(f"ingestion run {run_id} vanished")
+                planned_run.scope = {
+                    **scope,
+                    "source_latest_id": latest_source.draw_id,
+                    "source_latest_date": latest_source.draw_date.isoformat(),
+                }
             pending: list[int] = []
             for sequence in sequences:
                 if kind == "import" and not recheck:
@@ -385,7 +394,7 @@ class IngestionService:
         *,
         start_id: str | None,
         end_id: str | None,
-    ) -> Iterable[int]:
+    ) -> tuple[Iterable[int], Draw]:
         latest = self._latest_source(game)
         if end_id is not None and int(end_id) > latest.draw_seq:
             raise ImportPrerequisiteError(
@@ -398,7 +407,7 @@ class IngestionService:
                 raise ImportPrerequisiteError(
                     f"{game}: requested start {lower:05d} exceeds source latest {latest.draw_id}"
                 )
-            return range(lower, upper + 1)
+            return range(lower, upper + 1), latest
         with Session(self.engine) as session:
             local_latest = DrawRepository(session).latest(game)
             if local_latest is None:
@@ -438,7 +447,7 @@ class IngestionService:
             set(range(start, upper + 1))
             | set(range(max(1, upper - 6), upper + 1))
             | set(unresolved)
-        )
+        ), latest
 
     def import_history(
         self,

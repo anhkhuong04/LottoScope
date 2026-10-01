@@ -74,6 +74,8 @@ uv run --locked python -m app.commands.import_history --game lotto_535
 uv run --locked python -m app.commands.import_history --game mega_645
 uv run --locked python -m app.commands.import_history --game lotto_535 --start-id 00829 --end-id 00830 --from-date 2026-08-17 --to-date 2026-08-17
 uv run --locked python -m app.commands.ingestion_status --game lotto_535
+uv run --locked python -m app.commands.audit_import --game lotto_535
+uv run --locked python -m app.commands.audit_import --game mega_645
 uv run --locked python -m app.commands.collect --game lotto_535
 ```
 
@@ -83,6 +85,9 @@ ID lỗi rồi chạy lại. `excluded` ghi ID ngoài date filter, không tính 
 Collector chỉ chạy khi các ID từ `00001` đến checkpoint đã được quét và không
 có `excluded`; khi đó nó kiểm tra kỳ mới, thử lại ID lỗi và đối chiếu 7 kỳ gần
 nhất. Import một phạm vi mẫu không chứng minh toàn bộ lịch sử đã đầy đủ.
+`audit_import` đối chiếu ID mới nhất, số draw/item, các ID chưa quét, trạng thái
+lỗi, chronology, provenance và các kỳ mẫu với nguồn; exit code 0 chỉ khi toàn
+dải từ `00001` đến latest khớp và không còn lỗ hổng/lỗi.
 
 Compose bật APScheduler trong **một** backend worker, theo giờ Việt Nam. Giờ
 poll có thể đổi bằng `LOTTO_LOTTO_POLL_FIRST`, `LOTTO_LOTTO_POLL_SECOND`,
