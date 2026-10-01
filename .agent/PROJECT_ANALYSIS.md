@@ -2,8 +2,8 @@
 
 Tài liệu này giúp agent biết nguồn của từng quyết định; không lặp lại contract.
 Phân tích ban đầu ngày 01/10/2026 từ `PROJECT_OVERVIEW.md` và `wireframe.md`
-đã được cụ thể hóa ở P0 trong [task.md](../task.md). P1 đã tạo bộ khung
-backend, migration baseline, Compose và CI; domain tables/logic bắt đầu ở P2.
+đã được cụ thể hóa ở P0 trong [task.md](../task.md). P1–P2 đã có bộ khung,
+domain và draw storage; tiến độ ingestion P3 theo checklist trong `task.md`.
 
 ## Phạm vi
 

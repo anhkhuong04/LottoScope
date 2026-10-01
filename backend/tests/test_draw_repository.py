@@ -27,7 +27,7 @@ def engine():
         assert connection.dialect.name == "postgresql"
         assert (
             connection.scalar(text("SELECT version_num FROM alembic_version"))
-            == "0002_draw_storage"
+            == "0003_ingestion_tracking"
         )
     yield db_engine
     db_engine.dispose()
@@ -40,7 +40,10 @@ def clean_tables(request: pytest.FixtureRequest) -> None:
     db_engine = request.getfixturevalue("engine")
     with db_engine.begin() as connection:
         connection.execute(
-            text("TRUNCATE draw_corrections, draws, game_data_state RESTART IDENTITY")
+            text(
+                "TRUNCATE ingestion_items, ingestion_runs, ingestion_checkpoints, "
+                "draw_corrections, draws, game_data_state RESTART IDENTITY"
+            )
         )
 
 

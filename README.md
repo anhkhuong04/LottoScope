@@ -1,7 +1,7 @@
 # LottoScope — Vietlott Analytics
 
 Ứng dụng phân tích dữ liệu lịch sử Lotto 5/35 và Mega 6/45. Hiện repository ở
-**P2: domain và lưu trữ draw**; chưa có collector hoặc endpoint nghiệp vụ.
+**P3: import và collector**; chưa có endpoint nghiệp vụ cho history/analytics.
 Tiến độ và điều kiện nghiệm thu: [task.md](task.md). Contract: [docs/](docs/).
 
 ## Chạy backend với Docker Compose
@@ -59,8 +59,37 @@ uv run --locked uvicorn app.main:app --reload
 Integration tests cần database `lotto_test` riêng đã chạy `alembic upgrade head`;
 ví dụ tạo bằng `docker compose exec -T postgres createdb -U lotto lotto_test`,
 sau đó đặt `LOTTO_DATABASE_URL` trỏ tới `lotto_test` để migrate và đặt lại URL
-ứng dụng. Tests xóa dữ liệu trong các bảng P2 của **test database** giữa các ca.
-Lệnh import lịch sử/collector sẽ được thêm ở P3.
+ứng dụng. Tests xóa dữ liệu ingestion/draw trong **test database** giữa các ca.
+
+## Nhập lịch sử và kiểm tra collector
+
+Migrate DB trước, chạy lệnh sau từ `backend/` với `LOTTO_DATABASE_URL` trỏ đúng
+DB ứng dụng. Import mặc định quét từ `00001` đến ID mới nhất trên Vietlott, tối
+đa một request/giây mỗi game; hai game có thể chạy riêng. Trạng thái từng ID
+và checkpoint lưu ở PostgreSQL, chạy lại sẽ bỏ qua ID đã `found` và thử lại ID
+thiếu/lỗi. `--recheck` buộc đối chiếu lại nội dung đã lưu.
+
+```powershell
+uv run --locked python -m app.commands.import_history --game lotto_535
+uv run --locked python -m app.commands.import_history --game mega_645
+uv run --locked python -m app.commands.import_history --game lotto_535 --start-id 00829 --end-id 00830 --from-date 2026-08-17 --to-date 2026-08-17
+uv run --locked python -m app.commands.ingestion_status --game lotto_535
+uv run --locked python -m app.commands.collect --game lotto_535
+```
+
+Mỗi ID và trạng thái item/checkpoint commit trong một transaction. `partial` hoặc
+`failed` trả exit code khác 0; xem `ingestion_runs`, `ingestion_items` để xử lý
+ID lỗi rồi chạy lại. `excluded` ghi ID ngoài date filter, không tính là đã nhập.
+Collector chỉ chạy khi các ID từ `00001` đến checkpoint đã được quét và không
+có `excluded`; khi đó nó kiểm tra kỳ mới, thử lại ID lỗi và đối chiếu 7 kỳ gần
+nhất. Import một phạm vi mẫu không chứng minh toàn bộ lịch sử đã đầy đủ.
+
+Compose bật APScheduler trong **một** backend worker, theo giờ Việt Nam. Giờ
+poll có thể đổi bằng `LOTTO_LOTTO_POLL_FIRST`, `LOTTO_LOTTO_POLL_SECOND`,
+`LOTTO_MEGA_POLL`, `LOTTO_RECONCILE_POLL` trong `.env` (định dạng `HH:MM`).
+Import thủ công và scheduler dùng cùng PostgreSQL advisory lock theo game để
+tránh chạy chồng. Nếu triển khai nhiều API worker, cần tách scheduler thành
+một process có ownership riêng trước khi tăng số worker.
 
 Khi nguồn trả cùng `(game, draw_id)` với nội dung khác, repository lưu correction
 `pending` và giữ draw hiện tại. Người vận hành xem bản ghi trong
@@ -75,7 +104,7 @@ trong cùng transaction. Không dùng lệnh này trước khi kiểm tra nội 
 
 ## Cấu trúc
 
-- `backend/app/`: FastAPI, domain, repository và DB session boundary.
+- `backend/app/`: FastAPI, domain, ingestion, jobs, repository và DB boundary.
 - `backend/migrations/`: Alembic migrations.
 - `backend/tests/`: domain và PostgreSQL integration tests; CI chạy quality gates.
 - `docs/`: đặc tả sản phẩm, domain, analytics, pipeline, schema, API và ADR.

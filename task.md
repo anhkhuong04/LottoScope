@@ -131,27 +131,35 @@ Pytest còn warning deprecation từ Starlette TestClient/httpx.
 **Phụ thuộc:** P0-05, P2. **Điều kiện ra:** DB có lịch sử có nguồn rõ, chạy
 import/collector lặp hoặc song song không tạo duplicate hay làm sai dữ liệu.
 
-- [ ] **P3-01 — Source adapters và fixtures.** Implement fetcher/parser riêng
+- [x] **P3-01 — Source adapters và fixtures.** Implement fetcher/parser riêng
   cho từng nguồn được chọn, lưu fixtures ổn định; test format hợp lệ, thiếu
   field, format thay đổi và lỗi nguồn mà không phụ thuộc live website.
-- [ ] **P3-02 — Pipeline ingestion.** Ghép fetch → parse → validate → normalize
+- [x] **P3-02 — Pipeline ingestion.** Ghép fetch → parse → validate → normalize
   → persist; reject dữ liệu lỗi với context game/source/draw; test parse lỗi
   không bị xem là tập kết quả rỗng thành công.
-- [ ] **P3-03 — Historical import.** Command/job backfill có phạm vi game/date,
+- [x] **P3-03 — Historical import.** Command/job backfill có phạm vi game/date,
   transaction/resume policy và thống kê inserted/skipped/failed; đối chiếu
   mẫu với nguồn và số kỳ lưu trong DB.
-- [ ] **P3-04 — Idempotency/concurrency.** Dựa trên DB constraint và conflict
+- [x] **P3-04 — Idempotency/concurrency.** Dựa trên DB constraint và conflict
   handling; test chạy lại cùng batch, duplicate trong batch, concurrent job
   và same identity/different content theo policy.
-- [ ] **P3-05 — Retry/failure handling.** Timeout, bounded retry/backoff cho
+- [x] **P3-05 — Retry/failure handling.** Timeout, bounded retry/backoff cho
   lỗi transient; parse/validation error không retry mù; job báo lỗi và giữ
   dữ liệu đã lưu theo transaction policy. Test các nhánh failure.
-- [ ] **P3-06 — Scheduled collection.** APScheduler hoặc cơ chế giai đoạn
+- [x] **P3-06 — Scheduled collection.** APScheduler hoặc cơ chế giai đoạn
   đầu đã chốt gọi cùng ingestion use case; tránh job overlap/multi-worker
   duplicate; test hoặc smoke test một kỳ chạy và trạng thái last success/fail.
 - [ ] **P3-07 — Kiểm tra dữ liệu nhập.** So sánh identity/count/sample draws
   cho cả hai game với nguồn chính thức, xác nhận main/special, provenance,
   thứ tự kỳ và không có lỗ hổng import không được báo cáo.
+
+Kiểm chứng P3 đang chạy (01/10/2026): Ruff check/format, Pyright (0 lỗi),
+48 pytest pass trên PostgreSQL 16; migration `0003` upgrade/downgrade/upgrade
+giữ draw P2, `alembic check` khớp metadata; Compose build/readiness và scheduler
+startup đạt. Năm kỳ nguồn chính thức (`535`: `00001`, `00829`, `00830`;
+`645`: `00001`, `01530`) đã nhập và đối chiếu đúng ID/ngày/main/special/URL.
+Backfill `00001..latest` cho cả hai game còn đang quét; ID chưa quét và các lỗi
+timeout được ghi nhận rõ, nên P3-07 chỉ hoàn tất sau khi đối chiếu toàn dải.
 
 ## P4 — History và analytics core
 

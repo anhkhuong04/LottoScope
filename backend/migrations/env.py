@@ -7,12 +7,14 @@ from sqlalchemy import create_engine, pool
 
 from app.core.config import get_settings
 from app.models.draw import DrawRow
+from app.models.ingestion import IngestionRunRow
 
 config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 target_metadata = DrawRow.metadata
+assert IngestionRunRow.metadata is target_metadata
 
 
 def run_migrations_offline() -> None:

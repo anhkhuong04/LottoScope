@@ -27,7 +27,8 @@ không truy cập được.
    kiểm tra ID hợp lệ, không tin số kỳ ghi ở query nếu nội dung khác.
 2. Từ `00001` đến upper bound, fetch từng ID 5 chữ số với `nocatche=1`.
    Throttle mặc định tối đa 1 request/giây mỗi nguồn; lưu checkpoint theo
-   game/ID. Mỗi ID có `found`, `missing`, `invalid` hoặc `failed` rõ ràng.
+   game/ID. Mỗi ID có `found`, `missing`, `invalid` hoặc `failed` rõ ràng;
+   import giới hạn theo ngày có thêm `excluded`, không xem là đã persist.
 3. Parse HTML qua adapter riêng → validate theo game → normalize → persist.
    Không tự suy số còn thiếu từ HTML lân cận hay cho qua trang 200 sai ID.
 4. Cuối batch, đối chiếu số draw, first/latest ID, ngày và mẫu ngẫu nhiên
@@ -57,7 +58,8 @@ gần nhất kiểm tra lại 7 ID cuối; khác nội dung đi theo correction 
 ## Retry, duplicate, correction
 
 - HTTP connect/read timeout 10 giây mỗi request; tối đa 3 attempts với
-  exponential backoff có jitter cho timeout/429/5xx. 4xx khác 429, HTML
+  exponential backoff có jitter cho timeout/429/5xx. `Retry-After` trên 60 giây
+  được hoãn sang lượt sau, không retry sớm. 4xx khác 429, HTML
   không đúng schema, game/ID không khớp hoặc số sai được báo lỗi/quarantine,
   không retry mù. Tôn trọng `Retry-After` và giảm tốc nếu bị rate limit.
 - `(game, draw_id)` unique ở PostgreSQL. Insert dùng transaction và DB
@@ -69,7 +71,9 @@ gần nhất kiểm tra lại 7 ID cuối; khác nội dung đi theo correction 
   có chủ đích cập nhật draw + audit revision trong cùng transaction, tăng
   `data_version`. Không có cơ chế tự suy rằng bản mới luôn đúng.
 - Mọi job ghi started/finished, game, phạm vi, counters, status và lỗi có
-  context. Log không chứa secret hoặc toàn HTML nguồn.
+  context. Log không chứa secret hoặc toàn HTML nguồn. Collector từ chối chạy
+  khi lịch sử `00001..checkpoint` chưa được quét đầy đủ; import phạm vi mẫu
+  không thể bị nhầm là toàn bộ lịch sử.
 
 ## Scheduler và vận hành
 

@@ -38,16 +38,16 @@ vụ truy vấn thực tế. Không lập bảng pair/frequency persistent trong
 | Bảng | Cột chính | Vai trò |
 | --- | --- | --- |
 | `draw_corrections` | `id`, `draw_pk` FK → `draws.id`, `status`, `old_payload` JSONB, `new_payload` JSONB, `new_sha256`, `source_url`, `source_retrieved_at`, `reason`, `resolution_note`, `created_at`, `applied_at` | Conflict chờ review và revision đã apply; giữ nội dung trước/sau |
-| `ingestion_runs` | `id`, `game`, `kind`, `started_at`, `finished_at`, `status`, counters JSONB, `error_summary` | Chạy import/collector, `success`/`partial`/`failed` |
+| `ingestion_runs` | `id`, `game`, `kind`, `scope` JSONB, `started_at`, `finished_at`, `status`, counters JSONB, `error_summary` | Chạy import/collector, `running`/`success`/`partial`/`failed` |
 | `ingestion_checkpoints` | `game` PK, `last_scanned_seq`, `updated_at` | Resume; ID thiếu/lỗi được ghi trong `ingestion_items` |
-| `ingestion_items` | `(game, draw_seq)` PK, `status`, `attempted_at`, `error_summary` | Theo dõi từng ID `found`/`missing`/`invalid`/`failed` |
+| `ingestion_items` | `(game, draw_seq)` PK, `status`, `attempted_at`, `error_summary`, `last_run_id` FK | Theo dõi từng ID `found`/`missing`/`invalid`/`failed`; `excluded` là kỳ ngoài date filter, chưa được nhập |
 | `game_data_state` | `game` PK, `version` bigint, `updated_at` | Version tăng trong transaction insert/correction để gắn response/cache |
 
 Payload JSONB trong audit giữ canonical draw fields; `new_sha256` là hash của
 payload mới. Unique partial `(draw_pk, new_sha256)` cho status `pending` tránh
 ghi lặp cùng một conflict. Audit không là nguồn truy vấn analytics. Source HTML
-thô không bắt buộc lưu trong DB; fixtures
-parser đã rút gọn dùng trong tests. Corrections phải apply trong transaction
+thô không bắt buộc lưu trong DB; fixtures parser đã rút gọn dùng trong tests.
+Corrections phải apply trong transaction
 cùng draw update, audit status và `game_data_state.version` increment.
 
 ## Transaction và migration
@@ -58,6 +58,8 @@ trạng thái job trong transaction rõ. DB unique constraint chống race, kể
 hai job đọc cùng ID. API chỉ đọc committed draws. Mọi thay đổi schema qua
 Alembic; migration upgrade trên DB trống và DB có dữ liệu được test với
 PostgreSQL thật. Rollback có thể mất dữ liệu phải nêu giới hạn, không tự reset.
+Downgrade `0003` xóa bảng ingestion tracking nhưng giữ bảng draw; chỉ chạy sau
+backup nếu cần giữ run/checkpoint/audit import.
 
 Backup bằng `pg_dump` theo lịch vận hành; kiểm tra restore trên DB riêng và
 đối chiếu count/hash/mẫu trước nghiệm thu. DataFrame chỉ là bộ nhớ xử lý tạm.

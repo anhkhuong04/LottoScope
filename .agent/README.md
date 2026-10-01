@@ -43,5 +43,5 @@ Chỉ những phần được ghi rõ trong các file này mới được xem l�
 - Không nhân bản toàn bộ specification vào `.agent`; khi requirement đổi,
   cập nhật nguồn gốc và các quy tắc chịu ảnh hưởng trong cùng thay đổi.
 - `AGENTS.md` giúp agent phát hiện hướng dẫn. CI backend ở
-  `.github/workflows/backend.yml` chạy quality gates đã thiết lập trong P1;
-  domain/API/ingestion tests được bổ sung theo từng giai đoạn sau.
+  `.github/workflows/backend.yml` chạy quality gates và PostgreSQL integration
+  tests; API/analytics tests được bổ sung theo các giai đoạn tiếp theo.
