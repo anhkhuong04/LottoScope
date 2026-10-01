@@ -37,14 +37,16 @@ vụ truy vấn thực tế. Không lập bảng pair/frequency persistent trong
 
 | Bảng | Cột chính | Vai trò |
 | --- | --- | --- |
-| `draw_corrections` | `id`, `draw_pk` FK → `draws.id`, `status`, `old_payload` JSONB, `new_payload` JSONB, `source_url`, `source_retrieved_at`, `reason`, `created_at`, `applied_at` | Conflict chờ review và revision đã apply; giữ nội dung trước/sau |
+| `draw_corrections` | `id`, `draw_pk` FK → `draws.id`, `status`, `old_payload` JSONB, `new_payload` JSONB, `new_sha256`, `source_url`, `source_retrieved_at`, `reason`, `resolution_note`, `created_at`, `applied_at` | Conflict chờ review và revision đã apply; giữ nội dung trước/sau |
 | `ingestion_runs` | `id`, `game`, `kind`, `started_at`, `finished_at`, `status`, counters JSONB, `error_summary` | Chạy import/collector, `success`/`partial`/`failed` |
 | `ingestion_checkpoints` | `game` PK, `last_scanned_seq`, `updated_at` | Resume; ID thiếu/lỗi được ghi trong `ingestion_items` |
 | `ingestion_items` | `(game, draw_seq)` PK, `status`, `attempted_at`, `error_summary` | Theo dõi từng ID `found`/`missing`/`invalid`/`failed` |
 | `game_data_state` | `game` PK, `version` bigint, `updated_at` | Version tăng trong transaction insert/correction để gắn response/cache |
 
-Payload JSONB trong audit giữ canonical draw fields và hash; không dùng làm
-nguồn truy vấn analytics. Source HTML thô không bắt buộc lưu trong DB; fixtures
+Payload JSONB trong audit giữ canonical draw fields; `new_sha256` là hash của
+payload mới. Unique partial `(draw_pk, new_sha256)` cho status `pending` tránh
+ghi lặp cùng một conflict. Audit không là nguồn truy vấn analytics. Source HTML
+thô không bắt buộc lưu trong DB; fixtures
 parser đã rút gọn dùng trong tests. Corrections phải apply trong transaction
 cùng draw update, audit status và `game_data_state.version` increment.
 

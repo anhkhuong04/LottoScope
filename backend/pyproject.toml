@@ -43,3 +43,4 @@ venv = ".venv"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = ["integration: requires a dedicated migrated PostgreSQL test database"]

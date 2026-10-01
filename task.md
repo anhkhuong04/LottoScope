@@ -104,21 +104,27 @@ deprecation từ Starlette TestClient/httpx; test vẫn pass.
 **Phụ thuộc:** P0-02, P0-06, P1-02, P1-04. **Điều kiện ra:** draw hợp lệ được
 persist, truy vấn theo identity/thời gian và giữ bất biến trong DB.
 
-- [ ] **P2-01 — Game definitions tập trung.** Implement count/range/special
+- [x] **P2-01 — Game definitions tập trung.** Implement count/range/special
   rules cho Lotto 5/35 và Mega 6/45; API không dùng game không nhận diện;
   test invalid game và rule riêng của từng game.
-- [ ] **P2-02 — Normalize/validate domain.** Draw và combination main numbers
+- [x] **P2-02 — Normalize/validate domain.** Draw và combination main numbers
   canonical tăng dần, pair canonical, duplicate/range/count/type lỗi bị từ
   chối rõ; main và special độc lập; test permutations và invalid inputs.
-- [ ] **P2-03 — Schema + migration draw/source.** Tạo tables/constraints/index
+- [x] **P2-03 — Schema + migration draw/source.** Tạo tables/constraints/index
   theo `DATA_MODEL.md`, unique `(game, draw_id)`, provenance, timestamps và
   chronological key; test PostgreSQL unique/rollback và upgrade migration.
-- [ ] **P2-04 — Repository draw.** Insert/query theo game+draw ID, date range,
+- [x] **P2-04 — Repository draw.** Insert/query theo game+draw ID, date range,
   latest N và pagination/sort ổn định; test same-day ordering, game isolation,
   less-than-N, empty và tham số filter sai.
-- [ ] **P2-05 — Policy correction.** Implement hành vi đã chốt cho cùng
+- [x] **P2-05 — Policy correction.** Implement hành vi đã chốt cho cùng
   identity nhưng content khác, audit/provenance và transaction; test không
   âm thầm overwrite hoặc báo success sai.
+
+Kiểm chứng P2 (01/10/2026): Ruff check/format, Pyright (0 lỗi), pytest trên
+PostgreSQL 16 riêng (24 passed); migration `0002` upgrade/downgrade/upgrade,
+`alembic check` khớp metadata; DB unique/check, rollback, concurrent insert,
+ordering và correction audit được test. Compose build và `/health/ready` trả `ok`.
+Pytest còn warning deprecation từ Starlette TestClient/httpx.
 
 ## P3 — Import lịch sử và tự động thu thập kỳ mới
 

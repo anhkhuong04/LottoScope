@@ -1,7 +1,7 @@
 # LottoScope — Vietlott Analytics
 
 Ứng dụng phân tích dữ liệu lịch sử Lotto 5/35 và Mega 6/45. Hiện repository ở
-**P1: bộ khung backend**; chưa có bảng draw, collector hoặc endpoint nghiệp vụ.
+**P2: domain và lưu trữ draw**; chưa có collector hoặc endpoint nghiệp vụ.
 Tiến độ và điều kiện nghiệm thu: [task.md](task.md). Contract: [docs/](docs/).
 
 ## Chạy backend với Docker Compose
@@ -41,6 +41,7 @@ uv sync --locked
 uv run --locked ruff check .
 uv run --locked ruff format --check .
 uv run --locked pyright
+$env:LOTTO_TEST_DATABASE_URL = 'postgresql+psycopg://lotto:change-me@localhost:5432/lotto_test'
 uv run --locked pytest
 ```
 
@@ -55,14 +56,28 @@ uv run --locked alembic upgrade head
 uv run --locked uvicorn app.main:app --reload
 ```
 
-Migration baseline P1 chỉ tạo `alembic_version`; schema draw sẽ có ở P2.
-Lệnh import lịch sử/collector sẽ được thêm ở P3, cùng hướng dẫn vận hành.
+Integration tests cần database `lotto_test` riêng đã chạy `alembic upgrade head`;
+ví dụ tạo bằng `docker compose exec -T postgres createdb -U lotto lotto_test`,
+sau đó đặt `LOTTO_DATABASE_URL` trỏ tới `lotto_test` để migrate và đặt lại URL
+ứng dụng. Tests xóa dữ liệu trong các bảng P2 của **test database** giữa các ca.
+Lệnh import lịch sử/collector sẽ được thêm ở P3.
+
+Khi nguồn trả cùng `(game, draw_id)` với nội dung khác, repository lưu correction
+`pending` và giữ draw hiện tại. Người vận hành xem bản ghi trong
+`draw_corrections`, đối chiếu nguồn, rồi áp dụng có lý do bằng:
+
+```powershell
+uv run --locked python -m app.commands.apply_correction 123 --reason "Đã đối chiếu nguồn"
+```
+
+Lệnh chạy với `LOTTO_DATABASE_URL` hiện hành, cập nhật draw, audit và version
+trong cùng transaction. Không dùng lệnh này trước khi kiểm tra nội dung nguồn.
 
 ## Cấu trúc
 
-- `backend/app/`: FastAPI, settings và DB session boundary.
-- `backend/migrations/`: Alembic, baseline P1.
-- `backend/tests/`: smoke tests; CI chạy lint, format, type, migration và tests.
+- `backend/app/`: FastAPI, domain, repository và DB session boundary.
+- `backend/migrations/`: Alembic migrations.
+- `backend/tests/`: domain và PostgreSQL integration tests; CI chạy quality gates.
 - `docs/`: đặc tả sản phẩm, domain, analytics, pipeline, schema, API và ADR.
 - `.agent/`, `AGENTS.md`: quy tắc bắt buộc cho agent.
 
