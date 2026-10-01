@@ -1,8 +1,8 @@
 # LottoScope — Vietlott Analytics
 
 Ứng dụng phân tích dữ liệu lịch sử Lotto 5/35 và Mega 6/45. Hiện repository ở
-**P6: backend MVP** với API history, analytics, checker và generator. Giao diện
-người dùng thuộc P7; nghiệm thu triển khai thuộc P8.
+**P7: frontend MVP** với dashboard, history, analytics, checker và generator.
+Nghiệm thu triển khai thuộc P8.
 Tiến độ và điều kiện nghiệm thu: [task.md](task.md). Contract: [docs/](docs/).
 
 ## Chạy backend với Docker Compose
@@ -69,6 +69,37 @@ ví dụ tạo bằng `docker compose exec -T postgres createdb -U lotto lotto_t
 sau đó đặt `LOTTO_DATABASE_URL` trỏ tới `lotto_test` để migrate và đặt lại URL
 ứng dụng. Tests xóa dữ liệu ingestion/draw trong **test database** giữa các ca.
 
+## Chạy frontend
+
+Cần Node.js 22.12+ và backend ở `http://127.0.0.1:8000`. Từ `frontend/`:
+
+```powershell
+npm ci
+npm run dev
+```
+
+Mở `http://localhost:5173`. Vite chuyển `/api` tới backend; frontend luôn gọi
+same-origin `/api/v1`. Với production build, host cần SPA fallback và reverse
+proxy `/api` cùng origin (triển khai ở P8). Không nhúng URL backend/secret vào
+bundle. Giao diện dùng dữ liệu API thật; phạm vi chưa có dữ liệu hiện trạng thái rỗng.
+
+Quality gates và browser smoke:
+
+```powershell
+npm run lint
+npm run format:check
+npm run typecheck
+npm test
+npm run build
+npx playwright install chromium
+npm run test:e2e
+```
+
+`test:e2e` kiểm tra luồng A–D, lỗi mạng/retry, quét axe WCAG A/AA và kích thước
+desktop/tablet/mobile với backend địa phương có lịch sử Lotto và Mega đã nhập.
+CI frontend chạy các quality gates độc lập với backend. Xem
+[ADR 0002](docs/DECISIONS/0002-frontend-stack.md) về stack và yêu cầu hosting.
+
 ## Nhập lịch sử và kiểm tra collector
 
 Migrate DB trước, chạy lệnh sau từ `backend/` với `LOTTO_DATABASE_URL` trỏ đúng
@@ -122,6 +153,8 @@ trong cùng transaction. Không dùng lệnh này trước khi kiểm tra nội 
   metric lịch sử và truy vấn detail có paging; công thức ở `docs/ANALYTICS.md`.
 - `backend/migrations/`: Alembic migrations.
 - `backend/tests/`: domain và PostgreSQL integration tests; CI chạy quality gates.
+- `frontend/src/`: React UI, API client, server state và các màn hình MVP;
+  `frontend/e2e/` chứa browser smoke tests.
 - `docs/`: đặc tả sản phẩm, domain, analytics, pipeline, schema, API và ADR.
 - `.agent/`, `AGENTS.md`: quy tắc bắt buộc cho agent.
 

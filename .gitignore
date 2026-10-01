@@ -16,6 +16,12 @@ dist/
 build/
 .coverage
 htmlcov/
+node_modules/
+frontend/.vite/
+playwright-report/
+test-results/
+*.log
+*.tsbuildinfo
 
 # Editors and OS
 .idea/

@@ -2,8 +2,8 @@
 
 Tài liệu này giúp agent biết nguồn của từng quyết định; không lặp lại contract.
 Phân tích ban đầu ngày 01/10/2026 từ `PROJECT_OVERVIEW.md` và `wireframe.md`
-đã được cụ thể hóa ở P0 trong [task.md](../task.md). P1–P2 đã có bộ khung,
-domain và draw storage; tiến độ ingestion P3 theo checklist trong `task.md`.
+đã được cụ thể hóa ở P0 trong [task.md](../task.md). Tiến độ hiện tại theo
+checklist trong `task.md`; frontend stack được chốt ở P7.
 
 ## Phạm vi
 
@@ -26,7 +26,7 @@ domain và draw storage; tiến độ ingestion P3 theo checklist trong `task.md
 | Q06 — Exact/overlap/special | Đã chốt main-only trong [DOMAIN.md](../docs/DOMAIN.md) và [ANALYTICS.md](../docs/ANALYTICS.md) |
 | Q07 — Generator rules | Đã chốt trong [ANALYTICS.md](../docs/ANALYTICS.md) |
 | Q08 — API contract | Đã chốt trong [API.md](../docs/API.md) |
-| Q09 — Versions/frontend stack | Backend chọn trong [ARCHITECTURE.md](../docs/ARCHITECTURE.md); frontend stack sẽ chọn ở P7-01, không cản P1–P6 |
+| Q09 — Versions/frontend stack | Backend chọn trong [ARCHITECTURE.md](../docs/ARCHITECTURE.md); frontend stack chốt trong [ADR 0002](../docs/DECISIONS/0002-frontend-stack.md) |
 | Q10 — Storage/job/deploy | Đã chốt trong [DATA_MODEL.md](../docs/DATA_MODEL.md), [DATA_PIPELINE.md](../docs/DATA_PIPELINE.md), [ARCHITECTURE.md](../docs/ARCHITECTURE.md) |
 | Q11 — Backtest methodology | Phase 2; chưa chốt, không thuộc P0/MVP |
 

@@ -262,41 +262,48 @@ endpoint trigger ingestion; collector failure được lưu trong status.
 
 **Phụ thuộc:** P0-01, P0-07; từng màn hình cần API P6 tương ứng. **Điều kiện
 ra:** 15 acceptance criteria ở wireframe mục 33 được kiểm tra trên desktop và
-mobile với dữ liệu API thật. Stack frontend chưa được quyết định trong docs.
+mobile với dữ liệu API thật. Frontend stack chốt ở ADR 0002.
 
-- [ ] **P7-01 — Chọn và bootstrap frontend.** Ghi ADR cho framework/runtime,
+- [x] **P7-01 — Chọn và bootstrap frontend.** Ghi ADR cho framework/runtime,
   build/test tooling và cách gọi API; tạo app, lockfile, lint/type/build/test
   commands và cập nhật README/CI. Không xem một library cụ thể là đã chốt.
-- [ ] **P7-02 — Application shell/navigation.** `/` → `/dashboard`, desktop
+- [x] **P7-02 — Application shell/navigation.** `/` → `/dashboard`, desktop
   sidebar/top bar, mobile bottom nav/More, game selector toàn app; active
   navigation và keyboard focus rõ.
-- [ ] **P7-03 — Shared context/components.** Window selector (UI default 30),
+- [x] **P7-03 — Shared context/components.** Window selector (UI default 30),
   URL state cho filters/page/sort, API state key theo game/window, number ball,
   metric card, table và loading/empty/error; game switch reset input không
   hợp lệ và bỏ late response của game cũ.
-- [ ] **P7-04 — Dashboard.** Latest draw, tối đa 4 summary cards, frequency
+- [x] **P7-04 — Dashboard.** Latest draw, tối đa 4 summary cards, frequency
   chart/grid, top pairs, highest gaps, recent draws, freshness; link drill-down
   hoạt động, mobile layout đọc được.
-- [ ] **P7-05 — History và draw detail.** Date/draw-ID filters, paging, sort,
+- [x] **P7-05 — History và draw detail.** Date/draw-ID filters, paging, sort,
   main/special/source/time rõ; desktop table, mobile cards/detail view;
   empty/error/retry đúng context.
-- [ ] **P7-06 — Numbers và number detail.** Grid/table/chart frequency/gap,
+- [x] **P7-06 — Numbers và number detail.** Grid/table/chart frequency/gap,
   sort; number detail có metrics, timeline, partners, recent draws; dữ liệu
   cùng game/window và chart có textual summary.
-- [ ] **P7-07 — Pairs và pair detail.** Minimum frequency/sort, count/%/last
+- [x] **P7-07 — Pairs và pair detail.** Minimum frequency/sort, count/%/last
   seen, pair detail/timeline/draws; stable deep links, paging và empty state.
-- [ ] **P7-08 — Checker.** Number picker/token input, client validation cho
+- [x] **P7-08 — Checker.** Number picker/token input, client validation cho
   hai game; exact match → overlap → similar draws → per-number → pairs;
   no historical match hiện là kết quả bình thường.
-- [ ] **P7-09 — Generator.** Rule toggle/value/help, count và seed nếu API
+- [x] **P7-09 — Generator.** Rule toggle/value/help, count và seed nếu API
   hỗ trợ, results với structured explanation; desktop drawer/mobile full
   screen, partial/no-result rõ, không gắn nhãn best/prediction.
-- [ ] **P7-10 — States và UX test.** Từng section có loading, no-data,
+- [x] **P7-10 — States và UX test.** Từng section có loading, no-data,
   network/server/invalid/stale/retry; refresh lỗi giữ dữ liệu cũ đúng context,
   đổi game không hiện nhầm dữ liệu. Test các flow A–D wireframe mục 31.
-- [ ] **P7-11 — Responsive/accessibility test.** Kiểm tra ≥1024px,
+- [x] **P7-11 — Responsive/accessibility test.** Kiểm tra ≥1024px,
   768–1023px, <768px; primary flow mobile không ngang trang, touch target
   ≥44px, keyboard/form labels/focus/contrast/chart fallback; sửa lỗi phát hiện.
+
+Kiểm chứng P7 (01/10/2026): `npm ci`, lint không warning, Prettier, TypeScript,
+4 unit tests và Vite build đạt. Playwright với API/PostgreSQL địa phương đã nhập
+lịch sử cả hai game: 29 pass, 4 skip theo thiết bị; flow A–D, deep links,
+error/empty/invalid/stale/retry, breakpoint 320–1365px và quét axe WCAG A/AA
+trên 9 routes desktop/tablet/mobile đạt. CI frontend chạy gates độc lập;
+browser smoke cần backend có lịch sử như README.
 
 ## P8 — Hoàn thiện, triển khai thử và nghiệm thu
 

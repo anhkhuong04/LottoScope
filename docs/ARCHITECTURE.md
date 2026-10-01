@@ -14,8 +14,9 @@ Polars/NumPy chỉ thêm khi phép tính bảng thực sự cần; core MVP có 
 bằng Python/SQL. P1 khóa exact dependency versions trong `uv.lock`. Chọn
 minor PostgreSQL 16 mới nhất có sẵn trong image đã kiểm tra khi bootstrap.
 
-Frontend framework/runtime chưa chốt vì frontend là mốc F sau backend; P7-01
-ghi ADR trước khi tạo app. UI chỉ gọi API, không giữ domain analytics riêng.
+Frontend chọn React/TypeScript + Vite, React Router và `lucide-react` tại
+[ADR 0002](DECISIONS/0002-frontend-stack.md). UI chỉ gọi API, không giữ domain
+analytics riêng.
 
 ## Luồng và boundaries
 
@@ -51,5 +52,5 @@ không lộ lỗi nguồn hoặc traceback. Backup/restore thực hiện theo
 
 Gates chạy từ `backend/`: `uv sync --locked`, Ruff check/format, Pyright,
 pytest (gồm integration PostgreSQL). CI và README P1 dùng cùng commands.
-Frontend gates được chọn sau ADR P7. Không thêm Redis/Celery, microservices
-hoặc Kubernetes cho workload MVP.
+Frontend gates theo ADR 0002 và CI frontend. Không thêm Redis/Celery,
+microservices hoặc Kubernetes cho workload MVP.
