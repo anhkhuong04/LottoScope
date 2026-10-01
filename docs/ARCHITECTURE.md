@@ -8,7 +8,7 @@ Quyết định dài hạn được ghi ở [ADR 0001](DECISIONS/0001-mvp-archit
 
 Một modular monolith Python **3.12**, PostgreSQL **16**. FastAPI/Pydantic
 cho HTTP, SQLAlchemy 2.x/Alembic cho persistence/migration; httpx cho nguồn
-và APScheduler cho job sẽ được thêm khi P3 triển khai use case tương ứng.
+và APScheduler cho collector.
 uv quản lý dependency/lock; Ruff/Pyright/pytest cho quality.
 Polars/NumPy chỉ thêm khi phép tính bảng thực sự cần; core MVP có thể tính
 bằng Python/SQL. P1 khóa exact dependency versions trong `uv.lock`. Chọn

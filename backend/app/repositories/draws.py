@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from datetime import UTC, date, datetime
 from typing import Literal
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, tuple_
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
@@ -241,6 +241,44 @@ class DrawRepository:
         ).all()
         return tuple(_to_domain(row) for row in rows)
 
+    def data_version(self, game: str) -> int:
+        definition = get_game(game)
+        return (
+            self.session.scalar(
+                select(GameDataStateRow.version).where(GameDataStateRow.game == definition.id.value)
+            )
+            or 0
+        )
+
+    def window_draws(
+        self,
+        game: str,
+        *,
+        cutoff: Draw | None,
+        last_count: int | None = None,
+        from_date: date | None = None,
+        to_date: date | None = None,
+    ) -> tuple[Draw, ...]:
+        """Return an inclusive chronological window, oldest first."""
+        definition = get_game(game)
+        if cutoff is None:
+            return ()
+        if cutoff.game != definition.id.value:
+            raise DomainValidationError("cutoff", "must belong to the requested game")
+        statement = select(DrawRow).where(
+            DrawRow.game == definition.id.value,
+            tuple_(DrawRow.draw_date, DrawRow.draw_seq) <= (cutoff.draw_date, cutoff.draw_seq),
+        )
+        if from_date is not None:
+            statement = statement.where(DrawRow.draw_date >= from_date)
+        if to_date is not None:
+            statement = statement.where(DrawRow.draw_date <= to_date)
+        statement = statement.order_by(DrawRow.draw_date.desc(), DrawRow.draw_seq.desc())
+        if last_count is not None:
+            statement = statement.limit(last_count)
+        rows = self.session.scalars(statement).all()
+        return tuple(_to_domain(row) for row in reversed(rows))
+
     def list_draws(
         self,
         game: str,
@@ -248,6 +286,9 @@ class DrawRepository:
         from_date: date | None = None,
         to_date: date | None = None,
         draw_id: str | None = None,
+        main_contains: tuple[int, ...] | None = None,
+        first: Draw | None = None,
+        last: Draw | None = None,
         page: int = 1,
         page_size: int = 25,
         sort: Literal["asc", "desc"] = "desc",
@@ -261,6 +302,23 @@ class DrawRepository:
             raise DomainValidationError("date_range", "from_date must be <= to_date")
         if draw_id is not None:
             validate_draw_id(draw_id)
+        if main_contains is not None:
+            if (
+                not main_contains
+                or len(main_contains) > definition.main_count
+                or any(
+                    type(number) is not int or not 1 <= number <= definition.main_max
+                    for number in main_contains
+                )
+                or len(set(main_contains)) != len(main_contains)
+            ):
+                raise DomainValidationError(
+                    "main_contains", "expected distinct main numbers in range"
+                )
+        if first is not None and first.game != definition.id.value:
+            raise DomainValidationError("first", "must belong to the requested game")
+        if last is not None and last.game != definition.id.value:
+            raise DomainValidationError("last", "must belong to the requested game")
         if type(page) is not int or page < 1:
             raise DomainValidationError("page", "expected positive integer")
         if type(page_size) is not int or not 1 <= page_size <= 100:
@@ -274,6 +332,16 @@ class DrawRepository:
             filters.append(DrawRow.draw_date <= to_date)
         if draw_id is not None:
             filters.append(DrawRow.draw_id == draw_id)
+        if main_contains is not None:
+            filters.append(DrawRow.main_numbers.contains(list(main_contains)))
+        if first is not None:
+            filters.append(
+                tuple_(DrawRow.draw_date, DrawRow.draw_seq) >= (first.draw_date, first.draw_seq)
+            )
+        if last is not None:
+            filters.append(
+                tuple_(DrawRow.draw_date, DrawRow.draw_seq) <= (last.draw_date, last.draw_seq)
+            )
         total = self.session.scalar(select(func.count()).select_from(DrawRow).where(*filters)) or 0
         order = (
             (DrawRow.draw_date.asc(), DrawRow.draw_seq.asc())

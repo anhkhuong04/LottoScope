@@ -1,7 +1,7 @@
 # LottoScope — Vietlott Analytics
 
 Ứng dụng phân tích dữ liệu lịch sử Lotto 5/35 và Mega 6/45. Hiện repository ở
-**P3: import và collector**; chưa có endpoint nghiệp vụ cho history/analytics.
+**P4: history và analytics core**; endpoint nghiệp vụ sẽ được nối ở P6.
 Tiến độ và điều kiện nghiệm thu: [task.md](task.md). Contract: [docs/](docs/).
 
 ## Chạy backend với Docker Compose
@@ -110,6 +110,8 @@ trong cùng transaction. Không dùng lệnh này trước khi kiểm tra nội 
 ## Cấu trúc
 
 - `backend/app/`: FastAPI, domain, ingestion, jobs, repository và DB boundary.
+- `backend/app/analytics/`, `backend/app/services/history.py`: window/cutoff,
+  metric lịch sử và truy vấn detail có paging; công thức ở `docs/ANALYTICS.md`.
 - `backend/migrations/`: Alembic migrations.
 - `backend/tests/`: domain và PostgreSQL integration tests; CI chạy quality gates.
 - `docs/`: đặc tả sản phẩm, domain, analytics, pipeline, schema, API và ADR.

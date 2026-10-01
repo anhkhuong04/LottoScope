@@ -166,27 +166,33 @@ không có ID chưa quét, lỗi, provenance sai hoặc thứ tự ngày sai.
 **Phụ thuộc:** P0-03, P2; P3 cung cấp dữ liệu tích hợp. **Điều kiện ra:** các
 metric trả đúng theo cùng game/window và có tests với expected values tính tay.
 
-- [ ] **P4-01 — Analysis window service.** Select last 10/20/30/50/100,
+- [x] **P4-01 — Analysis window service.** Select last 10/20/30/50/100,
   date range và all-time theo game/cutoff; trả requested window, actual draw
   count và as-of. Test endpoints thời gian, same-day, empty, thiếu N kỳ.
-- [ ] **P4-02 — Draw history use case.** Query latest draw, ID, date range,
+- [x] **P4-02 — Draw history use case.** Query latest draw, ID, date range,
   page/sort và draws chứa combination/main number/pair theo contract; test
   stable order, filtering và paging trên PostgreSQL.
-- [ ] **P4-03 — Number frequency.** Count cho toàn miền main (kể cả count 0),
+- [x] **P4-03 — Number frequency.** Count cho toàn miền main (kể cả count 0),
   percentage/ranking theo formula đã chốt; test cả hai game, boundary window,
   denominator, ties và special không tham gia.
-- [ ] **P4-04 — Number gap/recency.** `current_gap`, `average_gap`, `max_gap`,
+- [x] **P4-04 — Number gap/recency.** `current_gap`, `average_gap`, `max_gap`,
   `last_seen_draw` theo formula đã chốt; test latest appearance gap 0,
   never-seen, window clipping, same-day và game isolation.
-- [ ] **P4-05 — Pair analysis.** Canonical pair frequency, top pairs,
+- [x] **P4-05 — Pair analysis.** Canonical pair frequency, top pairs,
   `% of draws`, last seen và draws containing pair; pair gap nếu đã chốt cho
   màn Pair Detail. Test mỗi pair một lần/draw, ties, empty và special isolation.
-- [ ] **P4-06 — Number/pair details.** Timeline, recent draws containing
+- [x] **P4-06 — Number/pair details.** Timeline, recent draws containing
   number/pair và frequent partners với pagination/limits; đảm bảo cùng
   dataset/window với metric summary, test trên fixture rõ.
-- [ ] **P4-07 — Analytics consistency.** Với cùng dataset/parameters/cutoff,
+- [x] **P4-07 — Analytics consistency.** Với cùng dataset/parameters/cutoff,
   result và tie ordering giống nhau; sau ingestion/correction dữ liệu không
   cũ sai do cache (nếu có). Test chéo các use case chung window.
+
+Kiểm chứng P4 (01/10/2026): 55 pytest pass trên PostgreSQL 16, Ruff và Pyright
+đạt. Fixture tính tay cho cả hai game xác nhận window/cutoff, main-only metrics,
+gap/pair, stable sort/paging, detail và cập nhật ngay sau correction. Smoke test
+trên DB lịch sử: Lotto 919 draw/35 số/595 pair, Mega 1569 draw/45 số/990 pair;
+window 30 kỳ và detail query thành công. HTTP endpoints thuộc P6.
 
 ## P5 — Combination checker và generator có giải thích
 
