@@ -1,0 +1,40 @@
+name: Backend checks
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: lotto
+          POSTGRES_USER: lotto
+          POSTGRES_PASSWORD: ci-only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U lotto -d lotto"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 12
+    env:
+      LOTTO_DATABASE_URL: postgresql+psycopg://lotto:ci-only@localhost:5432/lotto
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          version: "0.12.21"
+      - run: uv python install 3.12
+      - run: uv sync --locked
+      - run: uv run --locked ruff check .
+      - run: uv run --locked ruff format --check .
+      - run: uv run --locked pyright
+      - run: uv run --locked alembic upgrade head
+      - run: uv run --locked pytest

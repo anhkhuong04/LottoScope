@@ -1,0 +1,68 @@
+# Domain contract
+
+Đây là nguồn chuẩn cho game rules, identity và thời gian. Metric ở
+[ANALYTICS.md](ANALYTICS.md), schema ở [DATA_MODEL.md](DATA_MODEL.md), HTTP
+serialization ở [API.md](API.md).
+
+## Game và giá trị hợp lệ
+
+| `game` | Main | Special trong draw |
+| --- | --- | --- |
+| `lotto_535` | 5 integer khác nhau, 1–35 | 1 integer, 1–12, bắt buộc |
+| `mega_645` | 6 integer khác nhau, 1–45 | `null`, không được cung cấp số |
+
+Validation từ chối thiếu/thừa số, duplicate main, boolean/float/string thay
+integer trong domain, số ngoài miền và game lạ. Parser nguồn có thể chuyển
+chuỗi số đã nhận diện thành integer trước validation; API JSON không tự ép
+kiểu. `special_number` là miền riêng, không tham gia main frequency, pair,
+overlap hay main-only exact match. Số được lưu là integer; UI định dạng 2 chữ số.
+
+## Identity
+
+- Draw: `(game, draw_id)` unique. `draw_id` là chuỗi kỳ quay đúng 5 chữ số
+  theo trang nguồn (ví dụ `00830`); không bỏ số 0 đầu. `draw_seq` là integer
+  suy ra từ ID để hỗ trợ thứ tự và kiểm tra. Nếu nguồn đổi format, parser dừng
+  và yêu cầu cập nhật contract thay vì ép ID không hợp lệ.
+- Draw payload: `draw_date`, `draw_time` tùy chọn, main numbers canonical
+  tăng dần, special (theo game), source/provenance. Kết quả cùng combination
+  ở hai kỳ vẫn là hai draw khác nhau.
+- Main combination: `(game, sorted_main_numbers)`. Thứ tự nhập không tạo
+  combination mới. Pair là hai main khác nhau, canonical `(smaller, larger)`.
+- Checker/generator MVP dùng **main-only**. Lotto `special_number` chỉ hiển thị
+  trong draw; mode full ticket chưa thuộc MVP. Exact match của checker vì thế
+  so main và game, không so special.
+
+## Thời gian và thứ tự
+
+- Ngày/giờ kỳ quay được hiểu ở `Asia/Ho_Chi_Minh` (UTC+07). `draw_date` là
+  local calendar date; `draw_time` chỉ lưu khi nguồn công bố giờ cho kỳ cụ
+  thể. Không suy giờ quay dự kiến thành giờ kết quả thực tế.
+- `created_at`, `updated_at`, `source_retrieved_at` là timestamp aware UTC.
+  Không lấy các trường này làm thời điểm kỳ quay.
+- Chronological order theo `(draw_date ASC, draw_seq ASC)` trong từng game;
+  reverse cho latest. Hai draw cùng ngày phân biệt bằng `draw_seq`, kể cả khi
+  không có `draw_time`. Nếu ID/date của nguồn mâu thuẫn với thứ tự đã lưu,
+  đưa vào trạng thái lỗi để kiểm tra, không âm thầm đổi thứ tự.
+- Filter `from_date`/`to_date` lấy **cả hai ngày đầu/cuối** theo local date;
+  `from_date > to_date` là input lỗi. Không dùng ngày UTC để lọc ngày quay.
+- `as_of_draw_id` (nếu được cung cấp) là cutoff **inclusive**: chỉ dùng draw
+  cùng game có chronological key `<=` kỳ đó. Default là latest draw đã lưu;
+  khi game chưa có draw, cutoff là `null` và dataset rỗng. Cutoff explicit không
+  tồn tại trong game là lỗi, không fallback sang latest.
+- `reference_date` cho rule theo ngày là local date ghi rõ trong request/response;
+  khi không cung cấp, service chụp ngày hiện tại một lần tại đầu request. Phase 2
+  backtest phải dùng cutoff trước draw đánh giá và ngày của draw đánh giá.
+
+Ví dụ nguồn chính thức có Lotto [`00829`](https://vietlott.vn/vi/trung-thuong/ket-qua-trung-thuong/535?id=00829&nocatche=1)
+và [`00830`](https://vietlott.vn/vi/trung-thuong/ket-qua-trung-thuong/535?id=00830&nocatche=1)
+cùng ngày 17/08/2026: `00829` đứng trước `00830` dù `draw_time` thiếu.
+
+## Ví dụ lỗi
+
+| Input | Kết quả |
+| --- | --- |
+| Lotto main `[7,19,19,29,33]` | Duplicate `19`, từ chối; không tự bỏ bớt |
+| Lotto main `[7,19,25,29,36]` | `36` ngoài 1–35 |
+| Lotto draw thiếu special | Draw không hợp lệ |
+| Mega draw có special `4` | Draw không hợp lệ |
+| Draw có `draw_date` hợp lệ nhưng `draw_id` không phải 5 chữ số | Đưa vào lỗi nguồn/validation |
