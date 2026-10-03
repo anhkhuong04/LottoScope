@@ -81,5 +81,10 @@ APScheduler chạy trong **một process** backend ở Compose MVP. Không mở 
 API workers cùng khởi scheduler; dùng advisory lock PostgreSQL theo game/job
 để ngăn overlap kể cả trigger tay. Scheduler gọi cùng ingestion service với
 manual import. Khi sau này scale backend, phải tách job runner hoặc đổi cơ chế
-ownership trước; không nhân bản scheduler. `last_successful_ingestion_at` và
+ownership trước; không nhân bản scheduler. Khi bật scheduler, mỗi lần backend
+khởi động tạo một lượt collector nền cho mỗi game để bù kỳ bỏ lỡ lúc máy/Docker
+tắt; không chặn HTTP và không chờ cron kế tiếp. Lượt này dùng checkpoint, retry
+và khóa của collector hiện có; không tự import lịch sử trống. Nếu lỗi nguồn,
+lượt sau theo lịch sẽ thử lại. Quyết định ở [ADR 0004](DECISIONS/0004-collector-startup-catchup.md).
+`last_successful_ingestion_at` và
 `last_failed_ingestion_at` được hiển thị riêng với `latest_draw_date`.

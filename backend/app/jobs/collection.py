@@ -22,7 +22,8 @@ def run_collection(game: str) -> None:
     try:
         with httpx.Client(follow_redirects=True) as client:
             summary = IngestionService(get_engine(), VietlottFetcher(client)).collect(game)
-        logger.info(
+        log_summary = logger.info if summary.status == "success" else logger.error
+        log_summary(
             "collector game=%s run=%s status=%s counters=%s",
             game,
             summary.run_id,
@@ -37,6 +38,16 @@ def run_collection(game: str) -> None:
 
 def build_scheduler(settings: Settings) -> BackgroundScheduler:
     scheduler = BackgroundScheduler(timezone=VIETNAM_TZ)
+    # Cron jobs are rebuilt after a restart and cannot replay polls missed while offline.
+    # The shared collector backfills from PostgreSQL's checkpoint, under its per-game lock.
+    for game in ("lotto_535", "mega_645"):
+        scheduler.add_job(  # pyright: ignore[reportUnknownMemberType]
+            run_collection,
+            "date",
+            args=[game],
+            id=f"{game}_startup",
+            misfire_grace_time=None,
+        )
     schedules = (
         ("lotto_first", "lotto_535", settings.lotto_poll_first, "*"),
         ("lotto_second", "lotto_535", settings.lotto_poll_second, "*"),

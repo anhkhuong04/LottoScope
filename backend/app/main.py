@@ -1,5 +1,6 @@
 """FastAPI application factory."""
 
+import logging
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
@@ -17,6 +18,9 @@ async def lifespan(_application: FastAPI) -> AsyncGenerator[None]:
     if not scheduler_enabled():
         yield
         return
+    # Uvicorn configures its own loggers; app INFO otherwise disappears from Docker logs.
+    logging.basicConfig(format="%(levelname)s %(name)s %(message)s")
+    logging.getLogger("app").setLevel(logging.INFO)
     settings = get_settings()
     scheduler = build_scheduler(settings)
     scheduler.start()  # pyright: ignore[reportUnknownMemberType]

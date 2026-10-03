@@ -24,6 +24,12 @@ Sau khi cập nhật image, backup trước khi chạy migration mới, rồi ch
 
 ## Nhập dữ liệu và vận hành collector
 
+Khi scheduler bật (mặc định trong Compose), backend tự đồng bộ nền cả hai game
+mỗi lần khởi động để bù kỳ bỏ lỡ khi máy tắt, rồi tiếp tục lịch poll trong
+[DATA_PIPELINE.md](docs/DATA_PIPELINE.md#collector-kỳ-mới). Theo dõi kết quả bằng
+`docker compose logs -f backend`. Nút **Cập nhật** trên giao diện tải lại dữ liệu
+đã lưu; dùng lệnh `collect` bên dưới nếu cần thu thập ngay khi backend đang chạy.
+
 Migration phải hoàn tất trước khi import. Các lệnh chạy trong backend container nên dùng đúng URL database trong `.env`:
 
 ```powershell
