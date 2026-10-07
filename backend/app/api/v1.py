@@ -23,16 +23,22 @@ from app.schemas.v1 import (
     NumbersOut,
     PairDetailOut,
     PairsOut,
+    PrizesOut,
     StatusOut,
     WindowIn,
 )
 from app.services.checker import CheckerService
 from app.services.generator import GeneratorService
 from app.services.history import DrawHistoryService
+from app.services.prizes import DrawPrizeService
 from app.services.status import game_status
 
 router = APIRouter(prefix="/api/v1", tags=["v1"])
 Database = Annotated[Engine, Depends(get_engine)]
+
+
+def get_prize_service(engine: Database) -> DrawPrizeService:
+    return DrawPrizeService(engine)
 
 
 def analysis_window(
@@ -108,6 +114,16 @@ def draw_by_id(game: str, draw_id: str, engine: Database) -> DrawOut:
     if draw is None:
         raise ApiNotFoundError("draw_not_found", "Draw was not found")
     return DrawOut.model_validate(draw)
+
+
+@router.get("/games/{game}/draws/{draw_id}/prizes", response_model=PrizesOut)
+def draw_prizes(
+    game: str, draw_id: str, service: Annotated[DrawPrizeService, Depends(get_prize_service)]
+) -> PrizesOut:
+    details = service.get(game, draw_id)
+    if details is None:
+        raise ApiNotFoundError("draw_not_found", "Draw was not found")
+    return PrizesOut.model_validate(details)
 
 
 @router.get("/games/{game}/analytics/numbers", response_model=NumbersOut)

@@ -24,6 +24,12 @@ Sau khi cập nhật image, backup trước khi chạy migration mới, rồi ch
 
 ## Nhập dữ liệu và vận hành collector
 
+Chi tiết `/history/:drawId` có bảng giải thưởng theo kỳ cho cả hai game.
+Collector/import thu thập cùng kết quả quay; kỳ cũ chưa có bảng được bổ sung
+khi mở chi tiết lần đầu và lưu PostgreSQL cho lần sau. Bảng có nguồn/thời điểm
+riêng, tải độc lập và có thể thử lại khi Vietlott lỗi hoặc ingestion đang chạy.
+Sau cập nhật bản này, chạy migration `0004_draw_prizes` theo quy trình ở trên.
+
 Khi scheduler bật (mặc định trong Compose), backend tự đồng bộ nền cả hai game
 mỗi lần khởi động để bù kỳ bỏ lỡ khi máy tắt, rồi tiếp tục lịch poll trong
 [DATA_PIPELINE.md](docs/DATA_PIPELINE.md#collector-kỳ-mới). Theo dõi kết quả bằng
@@ -73,7 +79,7 @@ Invoke-RestMethod http://127.0.0.1:18001/api/v1/games/lotto_535/draws/latest
 docker stop $restoreApi
 ```
 
-Nếu release/migration lỗi, dừng traffic, giữ dump và image cũ, restore vào DB mới rồi trỏ bản image cũ sang DB đó sau khi đối chiếu. Không tự động `alembic downgrade`: downgrade `0003` xóa bảng tracking import, downgrade `0002` xóa cả draws/audit. Rollback code chỉ an toàn khi schema còn tương thích; nếu không, restore bản backup trước migration. Không xóa volume để rollback. Chi tiết schema và giới hạn ở [docs/DATA_MODEL.md](docs/DATA_MODEL.md).
+Nếu release/migration lỗi, dừng traffic, giữ dump và image cũ, restore vào DB mới rồi trỏ bản image cũ sang DB đó sau khi đối chiếu. Không tự động `alembic downgrade`: downgrade `0004` xóa snapshot giải thưởng, `0003` xóa bảng tracking import, `0002` xóa cả draws/audit. Rollback code chỉ an toàn khi schema còn tương thích; nếu không, restore bản backup trước migration. Không xóa volume để rollback. Chi tiết schema và giới hạn ở [docs/DATA_MODEL.md](docs/DATA_MODEL.md).
 
 ## Phát triển và kiểm tra
 
@@ -103,6 +109,7 @@ Backend integration tests **truncate bảng trong test database**; tuyệt đố
 ## Tài liệu và trạng thái
 
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) và [ADR 0001–0003](docs/DECISIONS/0003-compose-frontend.md): boundaries, stack và Compose frontend.
-- Migrations: `0001_baseline`, `0002_draw_storage`, `0003_ingestion_tracking`.
+- [ADR 0004](docs/DECISIONS/0004-collector-startup-catchup.md): đồng bộ sau khởi động; [ADR 0005](docs/DECISIONS/0005-draw-prizes.md): bảng giải thưởng theo kỳ.
+- Migrations: `0001_baseline`, `0002_draw_storage`, `0003_ingestion_tracking`, `0004_draw_prizes`.
 - [docs/MVP_ACCEPTANCE.md](docs/MVP_ACCEPTANCE.md): phiên bản/môi trường, kết quả gates, dữ liệu nguồn, 12 tiêu chí backend, 15 tiêu chí frontend và giới hạn còn lại.
 - Phase 2 gồm strategy management/backtesting/random baseline/saved picks; phương pháp backtest còn phải chốt trước khi làm. Prediction, mua vé, thanh toán, ROI không thuộc MVP.

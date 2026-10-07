@@ -3,7 +3,7 @@
 from datetime import date, datetime, time
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, StrictInt
+from pydantic import BaseModel, ConfigDict, StrictInt, field_serializer
 
 from app.analytics.service import AnalysisWindow
 from app.games.definitions import DomainValidationError
@@ -131,6 +131,30 @@ class DrawPageOut(Out):
     page: int
     page_size: int
     total: int
+
+
+class PrizeMatchOut(Out):
+    main_count: int
+    special: bool
+
+
+class PrizeTierOut(Out):
+    name: str
+    matches: tuple[PrizeMatchOut, ...]
+    winner_count: int
+    amount_vnd: int
+
+    @field_serializer("amount_vnd")
+    def decimal_vnd(self, amount: int) -> str:
+        return str(amount)
+
+
+class PrizesOut(Out):
+    draw_id: str
+    items: tuple[PrizeTierOut, ...]
+    currency: Literal["VND"]
+    source_url: str
+    source_retrieved_at: datetime | None
 
 
 class LastDrawsOut(Out):

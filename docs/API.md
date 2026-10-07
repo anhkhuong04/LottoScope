@@ -45,6 +45,7 @@ lại analytics. Tất cả number trong JSON là integer; UI tự hiển thị 
 | `GET /games/{game}/draws/latest` | — | Một draw; 404 `no_draws` nếu DB rỗng |
 | `GET /games/{game}/draws` | `from_date`, `to_date`, `draw_id`, `page`, `page_size`, `sort=asc|desc` | Paginated draws, default newest trước |
 | `GET /games/{game}/draws/{draw_id}` | — | Một draw; 404 `draw_not_found` |
+| `GET /games/{game}/draws/{draw_id}/prizes` | — | Snapshot giải; bổ sung đúng kỳ từ nguồn nếu chưa có; 404 `draw_not_found` |
 | `GET /games/{game}/analytics/numbers` | Window + cutoff; `sort=number|frequency_desc|frequency_asc|gap_desc`; paging không cần vì tối đa 45 | `context`, `items:[{number,frequency,frequency_percent,frequency_rank,current_gap,average_gap,max_gap,last_seen_draw_id}]` |
 | `GET /games/{game}/analytics/numbers/{number}` | Window + cutoff; `page`,`page_size` cho history | `context`, một number metrics, `appearance_draws` paginated, `pair_partners` top 10 và timeline draw IDs |
 | `GET /games/{game}/analytics/pairs` | Window + cutoff; `min_frequency>=0`, `sort=frequency_desc|frequency_asc|pair`, paging | `context`, paginated `{numbers:[a,b],frequency,percent_of_draws,current_gap,last_seen_draw_id}` |
@@ -52,6 +53,19 @@ lại analytics. Tất cả number trong JSON là integer; UI tự hiển thị 
 
 Draw JSON: `{draw_id,draw_date,draw_time,main_numbers,special_number,
 source_url,source_retrieved_at}`. `source_url` chỉ đến trang kết quả cụ thể.
+Prizes JSON: `{draw_id,currency:"VND",items:[{name,matches:[{main_count,special}],
+winner_count,amount_vnd}],source_url,source_retrieved_at}`. `winner_count` là
+integer kể cả 0; `amount_vnd` là **chuỗi thập phân** (ví dụ `"178900548500"`)
+để client không làm tròn tiền. Nguồn không có bảng hợp lệ sau fetch thành công
+→ `items:[]`, timestamp `null`; không tạo hạng/giá trị giả. Timestamp này riêng
+với lúc thu thập kết quả quay. Endpoint chi tiết/latest/history hiện có giữ shape cũ.
+
+Endpoint prizes đọc snapshot từ PostgreSQL khi có. Khi chưa có, service chạy
+ingestion giới hạn đúng kỳ và lưu snapshot idempotent. Source lỗi/parse lỗi
+→ 503 `prize_source_unavailable`; job khác đang chạy → 409 `ingestion_busy`,
+thử lại sau; source khác nội dung đã lưu → 409 `prize_review_pending`, cần
+correction review. Lỗi prizes không ảnh hưởng endpoint chi tiết kết quả quay.
+
 Number/pair không trong miền hoặc pair trùng số → 422. Pair path đảo thứ tự
 được canonical trước lookup. Detail history chỉ chứa draw trong window.
 

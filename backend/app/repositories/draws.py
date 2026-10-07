@@ -1,6 +1,6 @@
 """Draw repository. Callers own the SQLAlchemy transaction boundary."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import UTC, date, datetime
 from typing import Literal
 
@@ -9,6 +9,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from app.domain.draw import Draw, validate_draw_id
+from app.domain.prizes import PrizeTier
 from app.games.definitions import DomainValidationError, get_game
 from app.models.draw import DrawCorrectionRow, DrawRow, GameDataStateRow
 
@@ -23,7 +24,7 @@ class CorrectionError(ValueError):
 
 @dataclass(frozen=True, slots=True)
 class WriteResult:
-    status: Literal["created", "unchanged", "conflict"]
+    status: Literal["created", "enriched", "unchanged", "conflict"]
     draw_pk: int
     correction_id: int | None = None
 
@@ -47,6 +48,10 @@ def _to_domain(row: DrawRow) -> Draw:
             special_number=row.special_number,
             source_url=row.source_url,
             source_retrieved_at=row.source_retrieved_at,
+            prizes=tuple(PrizeTier.from_payload(tier) for tier in row.prizes)
+            if row.prizes is not None
+            else None,
+            prizes_retrieved_at=row.prizes_retrieved_at,
         )
     except DomainValidationError as exc:
         raise StoredDrawError(f"invalid stored draw {row.game}/{row.draw_id}") from exc
@@ -119,6 +124,10 @@ class DrawRepository:
                     source_url=draw.source_url,
                     source_retrieved_at=draw.source_retrieved_at,
                     source_sha256=draw.source_sha256,
+                    prizes=[tier.payload() for tier in draw.prizes]
+                    if draw.prizes is not None
+                    else None,
+                    prizes_retrieved_at=draw.prizes_retrieved_at,
                 )
                 .on_conflict_do_nothing(index_elements=["game", "draw_id"])
                 .returning(DrawRow.id)
@@ -136,12 +145,19 @@ class DrawRepository:
             raise StoredDrawError(f"conflict target vanished for {draw.game}/{draw.draw_id}")
         current = _to_domain(existing)
         if current.canonical_payload() == draw.canonical_payload():
-            return WriteResult("unchanged", existing.id)
+            if draw.prizes is None or draw.prizes == current.prizes:
+                return WriteResult("unchanged", existing.id)
+            if current.prizes is None:
+                existing.prizes = [tier.payload() for tier in draw.prizes]
+                existing.prizes_retrieved_at = draw.prizes_retrieved_at
+                existing.updated_at = datetime.now(UTC)
+                self._bump_state(state)
+                return WriteResult("enriched", existing.id)
 
         pending = self.session.scalar(
             select(DrawCorrectionRow).where(
                 DrawCorrectionRow.draw_pk == existing.id,
-                DrawCorrectionRow.new_sha256 == draw.source_sha256,
+                DrawCorrectionRow.new_sha256 == draw.revision_sha256,
                 DrawCorrectionRow.status == "pending",
             )
         )
@@ -149,9 +165,9 @@ class DrawRepository:
             pending = DrawCorrectionRow(
                 draw_pk=existing.id,
                 status="pending",
-                old_payload=current.canonical_payload(),
-                new_payload=draw.canonical_payload(),
-                new_sha256=draw.source_sha256,
+                old_payload=current.revision_payload(),
+                new_payload=draw.revision_payload(),
+                new_sha256=draw.revision_sha256,
                 source_url=draw.source_url,
                 source_retrieved_at=draw.source_retrieved_at,
                 reason="source_content_changed",
@@ -185,7 +201,13 @@ class DrawRepository:
         )
         if row is None:
             raise StoredDrawError("correction target vanished")
-        if _to_domain(row).canonical_payload() != pending.old_payload:
+        current = _to_domain(row)
+        current_payload = (
+            current.revision_payload()
+            if "prizes" in pending.old_payload
+            else current.canonical_payload()
+        )
+        if current_payload != pending.old_payload:
             raise CorrectionError("correction is stale; stored draw has changed")
         replacement = Draw.from_canonical_payload(
             pending.new_payload,
@@ -194,9 +216,15 @@ class DrawRepository:
         )
         if (replacement.game, replacement.draw_id) != (row.game, row.draw_id):
             raise CorrectionError("correction cannot change draw identity")
-        if replacement.source_sha256 != pending.new_sha256:
+        if replacement.revision_sha256 != pending.new_sha256:
             raise CorrectionError("correction payload hash mismatch")
         self._check_chronology(replacement, exclude_pk=row.id)
+        if replacement.prizes is None and current.prizes is not None:
+            replacement = replace(
+                replacement,
+                prizes=current.prizes,
+                prizes_retrieved_at=current.prizes_retrieved_at,
+            )
         row.draw_date = replacement.draw_date
         row.draw_time = replacement.draw_time
         row.main_numbers = list(replacement.main_numbers)
@@ -204,6 +232,12 @@ class DrawRepository:
         row.source_url = replacement.source_url
         row.source_retrieved_at = replacement.source_retrieved_at
         row.source_sha256 = replacement.source_sha256
+        row.prizes = (
+            [tier.payload() for tier in replacement.prizes]
+            if replacement.prizes is not None
+            else None
+        )
+        row.prizes_retrieved_at = replacement.prizes_retrieved_at
         row.updated_at = datetime.now(UTC)
         pending.status = "applied"
         pending.resolution_note = reason.strip()

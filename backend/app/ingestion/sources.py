@@ -6,6 +6,7 @@ from html.parser import HTMLParser
 
 from app.domain.draw import Draw, validate_draw_id
 from app.games.definitions import DomainValidationError, get_game
+from app.ingestion.prizes import parse_prizes
 
 
 class SourceParseError(ValueError):
@@ -146,6 +147,7 @@ def parse_result(
             special_number=specials[0] if specials else None,
             source_url=source_url,
             source_retrieved_at=retrieved_at,
+            prizes=parse_prizes(html, game),
         )
     except (ValueError, DomainValidationError) as exc:
         raise SourceParseError(f"{game}/{draw_id}: invalid source result: {exc}") from exc

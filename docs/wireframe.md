@@ -541,7 +541,14 @@ Time
 Main numbers
 Special number
 Source
+Prize tiers / match conditions / winner count / published VND amount
 ```
+
+Bổ sung theo yêu cầu 07/10/2026: bảng giải thưởng nằm dưới kết quả quay,
+loading/error/retry độc lập. Desktop/tablet dùng bảng, mobile hiển thị từng
+hạng thành card; nhấn mạnh Jackpot/Độc Đắc, phân biệt main và special trong
+điều kiện. Nguồn/thu thập của bảng riêng với kết quả quay; thiếu dữ liệu không
+thay bằng 0. Contract ở [API.md](API.md).
 
 Optional:
 

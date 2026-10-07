@@ -57,6 +57,22 @@ gần nhất kiểm tra lại 7 ID cuối; khác nội dung đi theo correction 
 
 ## Retry, duplicate, correction
 
+### Bảng giải thưởng
+
+Adapter đọc bảng `chitietketqua_table` đúng game cùng trang theo kỳ: 7 hạng
+Lotto, 4 hạng Mega; validate heading, tên/thứ tự hạng, điều kiện main/special
+và integer có dấu phân tách hàng nghìn. Thiếu bảng cho phép nhập kết quả quay
+với snapshot chưa biết; bảng hiện diện nhưng malformed phải báo lỗi.
+
+Collector/import lưu cả bảng nếu có. Kỳ đã lưu chưa có snapshot được bổ sung
+bằng import giới hạn đúng ID, `recheck=True`, khi gọi API bảng giải; dùng cùng
+advisory lock, throttle, retry, run/item và checkpoint. Counter `enriched` đếm
+snapshot được bổ sung lần đầu, không tăng số draw/`inserted`. Conflict bảng
+đã biết đi theo correction dưới đây; domain policy ở
+[DOMAIN.md](DOMAIN.md#bảng-giải-thưởng-công-bố).
+
+### Xử lý lỗi và thay đổi nguồn
+
 - HTTP connect/read timeout 10 giây mỗi request; tối đa 3 attempts với
   exponential backoff có jitter cho timeout/429/5xx. `Retry-After` trên 60 giây
   được hoãn sang lượt sau, không retry sớm. 4xx khác 429, HTML

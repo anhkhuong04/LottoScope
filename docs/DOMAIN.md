@@ -17,6 +17,21 @@ chuỗi số đã nhận diện thành integer trước validation; API JSON kh�
 kiểu. `special_number` là miền riêng, không tham gia main frequency, pair,
 overlap hay main-only exact match. Số được lưu là integer; UI định dạng 2 chữ số.
 
+## Bảng giải thưởng công bố
+
+Snapshot theo `(game, draw_id)` gồm các hạng theo thứ tự nguồn: tên, điều kiện
+trúng (`main_count`, `special` tách biệt), số lượng giải và giá trị VND nguyên
+không âm. Một hạng có thể có nhiều điều kiện, như Khuyến Khích Lotto. Không
+tính thưởng vé/checker hoặc tổng chi trả từ bảng này; giá trị giữ đúng công bố
+của Vietlott. Thiếu snapshot là chưa biết, khác với số lượng giải bằng 0.
+
+Bổ sung snapshot đầu tiên khi kết quả quay không đổi được phép; snapshot đã
+có thay đổi phải review correction. Thiếu bảng trong một lần fetch không xóa
+snapshot cũ và thời điểm thu thập, kể cả khi áp dụng correction kết quả quay
+không chứa bảng giải. Hash kết quả quay giữ nguyên; revision payload/hash có
+thêm bảng giải nếu biết, không bao gồm thời điểm fetch. Quyết định ở
+[ADR 0005](DECISIONS/0005-draw-prizes.md).
+
 ## Identity
 
 - Draw: `(game, draw_id)` unique. `draw_id` là chuỗi kỳ quay đúng 5 chữ số

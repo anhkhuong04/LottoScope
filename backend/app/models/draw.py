@@ -28,6 +28,12 @@ from app.db.base import Base
 class DrawRow(Base):
     __tablename__ = "draws"
     __table_args__ = (
+        CheckConstraint(
+            "(prizes IS NULL AND prizes_retrieved_at IS NULL) OR "
+            "(prizes IS NOT NULL AND prizes_retrieved_at IS NOT NULL "
+            "AND jsonb_typeof(prizes) = 'array' AND jsonb_array_length(prizes) > 0)",
+            name="ck_draws_prizes_snapshot",
+        ),
         CheckConstraint("game IN ('lotto_535', 'mega_645')", name="ck_draws_game"),
         CheckConstraint(
             "draw_id ~ '^[0-9]{5}$' AND draw_seq > 0 AND draw_seq = CAST(draw_id AS integer)",
@@ -57,6 +63,12 @@ class DrawRow(Base):
     source_url: Mapped[str] = mapped_column(Text, nullable=False)
     source_retrieved_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     source_sha256: Mapped[str] = mapped_column(CHAR(64), nullable=False)
+    prizes: Mapped[list[dict[str, object]] | None] = mapped_column(
+        JSONB(none_as_null=True), nullable=True
+    )
+    prizes_retrieved_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

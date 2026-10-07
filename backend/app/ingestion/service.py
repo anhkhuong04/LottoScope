@@ -275,6 +275,7 @@ class IngestionService:
             key: 0
             for key in (
                 "created",
+                "enriched",
                 "inserted",
                 "unchanged",
                 "skipped",

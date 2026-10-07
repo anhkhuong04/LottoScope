@@ -6,6 +6,9 @@ Phân tích ban đầu ngày 01/10/2026 từ `PROJECT_OVERVIEW.md` và `wirefram
 checklist trong `task.md`; bằng chứng nghiệm thu P8 ở
 [MVP_ACCEPTANCE.md](../docs/MVP_ACCEPTANCE.md). Frontend stack được chốt ở P7,
 cấu hình Compose frontend ở [ADR 0003](../docs/DECISIONS/0003-compose-frontend.md).
+Bổ sung sau MVP: bảng giải thưởng theo kỳ và bằng chứng kiểm chứng ở
+[ADR 0005](../docs/DECISIONS/0005-draw-prizes.md); contract ở Domain/Data Model/API,
+tiến độ nhóm PRIZE trong `task.md`.
 
 ## Phạm vi
 

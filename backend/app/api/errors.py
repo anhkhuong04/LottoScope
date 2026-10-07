@@ -9,7 +9,9 @@ from starlette.exceptions import HTTPException
 
 from app.analytics.service import CutoffNotFoundError
 from app.games.definitions import DomainValidationError
+from app.ingestion.service import JobOverlapError
 from app.services.generator import InsufficientHistoryError, InvalidRulesError
+from app.services.prizes import PrizeReviewPendingError, PrizeSourceUnavailableError
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +29,20 @@ def _error(status: int, code: str, message: str) -> JSONResponse:
 
 
 def install_error_handlers(application: FastAPI) -> None:
+    @application.exception_handler(PrizeSourceUnavailableError)
+    def prize_source_error(_request: Request, _exc: PrizeSourceUnavailableError) -> JSONResponse:
+        return _error(
+            503, "prize_source_unavailable", "Prize data source is temporarily unavailable"
+        )
+
+    @application.exception_handler(PrizeReviewPendingError)
+    def prize_review_error(_request: Request, _exc: PrizeReviewPendingError) -> JSONResponse:
+        return _error(409, "prize_review_pending", "Prize data requires source correction review")
+
+    @application.exception_handler(JobOverlapError)
+    def ingestion_busy(_request: Request, _exc: JobOverlapError) -> JSONResponse:
+        return _error(409, "ingestion_busy", "Ingestion is running; retry shortly")
+
     @application.exception_handler(DomainValidationError)
     def domain_error(_request: Request, exc: DomainValidationError) -> JSONResponse:
         if exc.field == "game":

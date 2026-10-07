@@ -8,6 +8,7 @@ from datetime import UTC, date, datetime, time
 from typing import cast
 from urllib.parse import urlsplit
 
+from app.domain.prizes import PrizeTier, validate_prizes
 from app.games.definitions import DomainValidationError, GameDefinition, get_game
 
 type CanonicalPayload = dict[str, object]
@@ -88,6 +89,8 @@ class Draw:
     special_number: int | None
     source_url: str
     source_retrieved_at: datetime
+    prizes: tuple[PrizeTier, ...] | None = None
+    prizes_retrieved_at: datetime | None = None
 
     def __post_init__(self) -> None:
         definition = get_game(self.game)
@@ -118,6 +121,14 @@ class Draw:
         if type(retrieved) is not datetime or retrieved.utcoffset() is None:
             raise DomainValidationError("source_retrieved_at", "expected an aware timestamp")
         object.__setattr__(self, "source_retrieved_at", retrieved.astimezone(UTC))
+        if self.prizes is not None:
+            validate_prizes(self.game, self.prizes)
+            prize_time = self.prizes_retrieved_at or self.source_retrieved_at
+            if prize_time.utcoffset() is None:
+                raise DomainValidationError("prizes_retrieved_at", "expected aware timestamp")
+            object.__setattr__(self, "prizes_retrieved_at", prize_time.astimezone(UTC))
+        elif self.prizes_retrieved_at is not None:
+            raise DomainValidationError("prizes", "timestamp requires a prize snapshot")
 
     @property
     def draw_seq(self) -> int:
@@ -138,6 +149,17 @@ class Draw:
         encoded = json.dumps(self.canonical_payload(), sort_keys=True, separators=(",", ":"))
         return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
 
+    def revision_payload(self) -> CanonicalPayload:
+        payload = self.canonical_payload()
+        if self.prizes is not None:
+            payload["prizes"] = [tier.payload() for tier in self.prizes]
+        return payload
+
+    @property
+    def revision_sha256(self) -> str:
+        encoded = json.dumps(self.revision_payload(), sort_keys=True, separators=(",", ":"))
+        return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
+
     @classmethod
     def from_canonical_payload(
         cls,
@@ -152,6 +174,14 @@ class Draw:
         raw_time = payload.get("draw_time")
         raw_numbers = payload.get("main_numbers")
         special = payload.get("special_number")
+        raw_prizes = payload.get("prizes")
+        if raw_prizes is not None and not isinstance(raw_prizes, list):
+            raise DomainValidationError("prizes", "expected prize list or null")
+        prizes = (
+            tuple(PrizeTier.from_payload(tier) for tier in cast(list[object], raw_prizes))
+            if raw_prizes is not None
+            else None
+        )
         if not isinstance(game, str) or not isinstance(draw_id, str):
             raise DomainValidationError("payload", "missing game or draw_id")
         if not isinstance(raw_date, str) or not isinstance(raw_numbers, list):
@@ -173,4 +203,5 @@ class Draw:
             special_number=_validate_special(get_game(game), special),
             source_url=source_url,
             source_retrieved_at=source_retrieved_at,
+            prizes=prizes,
         )

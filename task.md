@@ -343,7 +343,30 @@ luồng theo acceptance với bằng chứng lưu lại.
   danh sách ADR/migration, các vấn đề còn mở, kết quả gates, hướng dẫn vận hành
   import/collector/backup/restore và phạm vi Phase 2 để triển khai tiếp.
 
-## Mốc đánh dấu hoàn thành
+## Bổ sung sau MVP — Giải thưởng kỳ quay (07/10/2026)
+
+Thiết kế: [ADR 0005](docs/DECISIONS/0005-draw-prizes.md). Thực hiện lần lượt,
+viết test thất bại trước code và tạo commit sau khi cả nhóm được kiểm chứng.
+
+- [x] **PRIZE-01 — Parser và snapshot.** Fixture `535_00922_prizes.html`,
+  `645_01570_prizes.html`; domain `PrizeTier`/`PrizeMatch`; parser trong
+  `ingestion/prizes.py`, gọi từ `parse_result`. Test đúng 7/4 hạng, số 0,
+  khuyến khích ba điều kiện, malformed/duplicate/wrong game; không ảnh hưởng
+  canonical result hash. `uv run --locked pytest tests/test_draw_prizes.py`.
+- [x] **PRIZE-02 — Persistence và API.** Migration `0004_draw_prizes`,
+  model/repository enrich lần đầu, revision correction, counter `enriched`;
+  service `DrawPrizeService.get(game, draw_id)` và endpoint `/prizes` với tiền
+  chuỗi VND. PostgreSQL tests: giữ draw/hash/version cũ sau migration, enrich
+  một lần, không xóa khi nguồn thiếu bảng, conflict/apply audit, không gọi nguồn
+  khi snapshot có; 404/409/503 và kỳ cũ bổ sung đúng ID. Cập nhật domain/schema/
+  pipeline/API docs ở nguồn tương ứng. Ruff check/format, Pyright, toàn pytest.
+- [x] **PRIZE-03 — Giao diện và vận hành.** `DrawPrizes` trong chi tiết kỳ,
+  tải độc lập, bảng 4 cột/nhấn mạnh giải cao nhất, VND chính xác, mobile cards;
+  test cả game, 0/empty/error/retry và đổi context. Chạy lint/format/typecheck/
+  build/unit/E2E frontend; backup, migration và rebuild Compose local, đối
+  chiếu nguồn/database/API, kiểm tra enrichment chạy lặp, commit nhóm PRIZE.
+
+## Mốc đánh dấu hoàn thành MVP
 
 - [x] **Backend MVP hoàn thành:** P0–P6 và P8-01, P8-03–P8-07, P8-09 đạt;
   nghiệm thu theo overview mục 15. P7/P8-02/P8-08 có thể còn mở nếu
