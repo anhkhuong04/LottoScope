@@ -400,13 +400,21 @@ chờ picker game mới). Đã xem screenshot desktop/mobile; Axe detail không 
 
 POWER-05 **chưa hoàn thành vì nguồn 429/Cloudflare**. Backup/restore, migration
 ứng dụng, Compose build/readiness và runtime game/API/UI đã kiểm; 162 backend
-tests pass, E2E Compose trực tiếp 56 pass/4 skip. Đã nhập 45 draw Power có
+tests pass, E2E Compose trực tiếp 56 pass/4 skip. Lượt đầu đã nhập 45 draw Power có
 prizes (latest đã lưu `00048`, 18/11/2017), checkpoint `00071`, 26 failed;
 upper bound đã đọc trước khi nguồn chặn là `01410` ngày 13/10/2026.
 Audit đã chạy nhưng exit 1 do source 429; collector live cũng chưa đạt.
 Cấu hình local giảm tốc 2 giây/request; giữ trạng thái failed và resume, không
 coi dataset một phần là lịch sử đầy đủ. Bằng chứng/lệnh tiếp tục ở
 [POWER_ACCEPTANCE.md](docs/POWER_ACCEPTANCE.md#power-05--phần-đã-kiểm-chứng-và-phần-bị-chặn).
+
+Chạy lại POWER-05 lúc 08:16–08:21 ngày 14/10/2026: thêm 32 draw, tổng **77**
+kỳ liên tục `00001`–`00077` (25/01/2018), đủ năm hạng giải; lấp hết 26 lỗi cũ.
+Nguồn lại trả 429 từ `00078`; checkpoint `00101`, 24 failed, không còn run treo
+hay correction pending. Schema/readiness đạt, **15 Power E2E passed** trực tiếp
+trên Compose. Chưa chạy lại full audit/hai collector vì history còn thiếu;
+POWER-05 tiếp tục mở. Chi tiết tại
+[bằng chứng chạy lại](docs/POWER_ACCEPTANCE.md), mục “Chạy lại POWER-05”.
 
 ## Trạng thái nghiệm thu MVP ban đầu
 

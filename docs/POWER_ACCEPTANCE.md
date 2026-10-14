@@ -81,7 +81,7 @@ Startup collector của cả ba game tại mốc deploy cũng ghi failed/429; vi
 đăng ký lịch và logic collector đã được test, chưa chứng minh nguồn đang cho
 collector container cập nhật thành công.
 
-Snapshot khi bàn giao: **45 Power draws** có đủ prize snapshot, ID từ `00001`
+Snapshot bàn giao lượt đầu: **45 Power draws** có đủ prize snapshot, ID từ `00001`
 đến `00048` (còn lỗ hổng), latest đã lưu ngày **18/11/2017**. Checkpoint đã
 scan tới `00071`: 45 found + 26 failed. Upper bound nguồn trước khi bị chặn là
 `01410` ngày 13/10/2026; 1.339 ID còn chưa scan. Không coi 45 draw này là lịch
@@ -89,7 +89,7 @@ sử đầy đủ hay latest nguồn. Lotto giữ 944 draws và Mega giữ 1.574
 Không còn run `running`; dữ liệu cũ và provenance được giữ nguyên.
 
 **POWER-05 chưa hoàn thành:** cần nguồn truy cập lại để resume import từ
-checkpoint, retry 26 failed IDs và scan đến latest; sau đó audit đầy đủ và chạy
+checkpoint, retry failed IDs và scan đến latest; sau đó audit đầy đủ và chạy
 collector hai lượt, đối chiếu source/DB/API. Lệnh resume là import thường,
 không cần `--recheck` hoặc xóa dữ liệu; item found được bỏ qua idempotently.
 
@@ -101,3 +101,26 @@ docker compose run --rm --no-deps -e LOTTO_SCHEDULER_ENABLED=false backend pytho
 
 Chỉ chạy collector sau khi import/audit đầy đủ. Không bypass challenge hoặc
 thay dữ liệu nguồn bằng dữ liệu giả để đánh dấu milestone hoàn tất.
+
+### Chạy lại POWER-05 — 14/10/2026, 08:16–08:21 giờ Việt Nam
+
+- Import Compose run `298` vẫn thất bại tại latest page với HTTP 429, không
+  thay đổi dữ liệu. Import trên host Windows run `299`, dùng cùng nguồn chính
+  thức và nhịp 2 giây/request, đọc được latest `01410` và thêm **32 draws**.
+  Các item found được bỏ qua; toàn bộ 26 failed IDs của lượt trước đã được lấp.
+- Nguồn trả 429 liên tiếp từ `00078`; đã dừng import, giữ dữ liệu/checkpoint.
+  Lượt tiếp theo `300` đánh dấu run gián đoạn là failed theo workflow resume,
+  rồi cũng thất bại tại latest page. Counters run gián đoạn chưa được finalize;
+  số liệu bàn giao dưới đây lấy trực tiếp từ draws/ingestion_items/checkpoints.
+- Snapshot mới: **77 Power draws**, liên tục `00001`–`00077`, latest đã lưu
+  **25/01/2018**, cả 77 có đủ năm hạng giải. Checkpoint `00101`: 77 found +
+  **24 failed** (`00078`–`00101`); 1.309 ID chưa scan so với upper bound `01410`.
+  Không còn run running hoặc correction pending. Lotto vẫn 944 draws, Mega 1.574.
+- `alembic current` ở `0005_power_655 (head)`; `alembic check` không có upgrade
+  operations mới. Readiness đạt, ba service Compose healthy. Rerun browser
+  tests Power trực tiếp trên Compose, không relay: **15 passed** trên ba thiết
+  bị (24,8 giây). Không sửa code và không chạy lại toàn bộ backend/regression
+  suite trong lượt này; kết quả toàn suite phía trên thuộc lượt triển khai trước.
+- Chưa chạy lại full-history audit hoặc hai lượt collector: history vẫn thiếu
+  và nguồn tiếp tục chặn. POWER-05 giữ mở; resume bằng lệnh import thường phía
+  trên khi nguồn cho truy cập lại, không xóa dữ liệu hay bypass Cloudflare.
