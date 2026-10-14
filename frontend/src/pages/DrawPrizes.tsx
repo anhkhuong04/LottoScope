@@ -37,6 +37,9 @@ export function DrawPrizes({ gameId, drawId }: { gameId: string; drawId: string 
   const prizeError =
     result.error instanceof ApiError ? prizeErrorMessages[result.error.code ?? ''] : undefined
   const firstPrize = result.data?.items[0]
+  const featuredPrizes = result.data?.items.filter(
+    (prize, index) => index === 0 || /^Jackpot(?: [12])?$/.test(prize.name),
+  )
   return (
     <Card
       title="Giải thưởng kỳ quay"
@@ -52,11 +55,15 @@ export function DrawPrizes({ gameId, drawId }: { gameId: string; drawId: string 
         {result.data &&
           (firstPrize ? (
             <>
-              <div className="prize-jackpot">
-                <span>
-                  <Trophy size={21} aria-hidden="true" /> {firstPrize.name}
-                </span>
-                <strong>{integerFormat.format(BigInt(firstPrize.amount_vnd))} VND</strong>
+              <div className="prize-highlights">
+                {featuredPrizes?.map((prize) => (
+                  <div className="prize-jackpot" key={prize.name}>
+                    <span>
+                      <Trophy size={21} aria-hidden="true" /> {prize.name}
+                    </span>
+                    <strong>{integerFormat.format(BigInt(prize.amount_vnd))} VND</strong>
+                  </div>
+                ))}
               </div>
               <table className="prize-table" aria-label="Bảng giải thưởng">
                 <thead>

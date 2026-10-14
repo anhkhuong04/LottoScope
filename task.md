@@ -379,7 +379,7 @@ commit từng mốc sau kiểm chứng; nghiệm thu riêng với PostgreSQL và
   migration 0005, tests PostgreSQL/upgrade/downgrade và data preservation.
 - [x] **POWER-03 — Ingestion và jobs.** Fixture nguồn, adapter Power, năm
   hạng giải, CLI registry, poll/reconcile/startup, idempotency/correction tests.
-- [ ] **POWER-04 — API/analytics/frontend.** Fixture tính tay, 55 numbers,
+- [x] **POWER-04 — API/analytics/frontend.** Fixture tính tay, 55 numbers,
   1.485 pairs, checker/generator/main-only; hai Jackpot, game switch, E2E responsive.
 - [ ] **POWER-05 — Vận hành/nghiệm thu.** Backup/restore, migration/build,
   full import/audit/repeat collectors, gates và source/DB/API/UI đối chiếu.
@@ -394,6 +394,11 @@ POWER-03: Ruff/Pyright/format và 151 backend tests pass trên PostgreSQL riêng
 Compose config đạt. Live httpx fetch/parse `00001`, `01385`, latest `01410`
 khớp nguồn đủ năm hạng. Tests import/resume/collector lặp và prize correction
 Power đạt; scheduler kiểm đủ ba game/startup cùng lịch thứ Ba/Năm/Bảy.
+
+POWER-04: 156 backend tests và Ruff/Pyright/format pass; frontend lint/format/
+typecheck/build và 4 unit tests pass. 15 ca Power E2E desktop/tablet/mobile đã
+pass trên API clone (12 pass lượt đầu, ba ca checker pass sau sửa đồng bộ test
+chờ picker game mới). Đã xem screenshot desktop/mobile; Axe detail không lỗi.
 
 ## Trạng thái nghiệm thu MVP ban đầu
 
