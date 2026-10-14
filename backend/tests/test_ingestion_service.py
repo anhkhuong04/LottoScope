@@ -50,7 +50,7 @@ def engine():
     db_engine = create_engine(url)
     with db_engine.begin() as connection:
         assert (
-            connection.scalar(text("SELECT version_num FROM alembic_version")) == "0004_draw_prizes"
+            connection.scalar(text("SELECT version_num FROM alembic_version")) == "0005_power_655"
         )
         connection.execute(
             text(

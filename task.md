@@ -375,7 +375,7 @@ commit từng mốc sau kiểm chứng; nghiệm thu riêng với PostgreSQL và
 
 - [x] **POWER-01 — Contract.** Domain/main-only, source/lịch, schema/API/UX,
   ADR và consistency tài liệu đã rà; giữ nguyên bằng chứng MVP lịch sử.
-- [ ] **POWER-02 — Domain và migration.** Definition, special khác main,
+- [x] **POWER-02 — Domain và migration.** Definition, special khác main,
   migration 0005, tests PostgreSQL/upgrade/downgrade và data preservation.
 - [ ] **POWER-03 — Ingestion và jobs.** Fixture nguồn, adapter Power, năm
   hạng giải, CLI registry, poll/reconcile/startup, idempotency/correction tests.
@@ -383,6 +383,12 @@ commit từng mốc sau kiểm chứng; nghiệm thu riêng với PostgreSQL và
   1.485 pairs, checker/generator/main-only; hai Jackpot, game switch, E2E responsive.
 - [ ] **POWER-05 — Vận hành/nghiệm thu.** Backup/restore, migration/build,
   full import/audit/repeat collectors, gates và source/DB/API/UI đối chiếu.
+
+POWER-02: `uv sync --locked`, Ruff lint/format, Pyright đạt; 136 pytest pass
+trên PostgreSQL riêng `lotto_power_20261014_test` (10 deprecation warnings).
+Upgrade DB trống/alembic check đạt; clone restore 2.518 draw giữ nguyên toàn
+bộ row checksum ở sáu bảng sau migration. Chi tiết
+[POWER_ACCEPTANCE.md](docs/POWER_ACCEPTANCE.md).
 
 ## Trạng thái nghiệm thu MVP ban đầu
 

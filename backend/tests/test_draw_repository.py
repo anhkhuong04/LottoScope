@@ -26,7 +26,7 @@ def engine():
     with db_engine.connect() as connection:
         assert connection.dialect.name == "postgresql"
         assert (
-            connection.scalar(text("SELECT version_num FROM alembic_version")) == "0004_draw_prizes"
+            connection.scalar(text("SELECT version_num FROM alembic_version")) == "0005_power_655"
         )
     yield db_engine
     db_engine.dispose()

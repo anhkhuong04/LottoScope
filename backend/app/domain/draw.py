@@ -108,6 +108,8 @@ class Draw:
         object.__setattr__(
             self, "special_number", _validate_special(definition, self.special_number)
         )
+        if definition.special_excludes_main and self.special_number in self.main_numbers:
+            raise DomainValidationError("special_number", "must differ from every main number")
         if type(self.source_url) is not str:
             raise DomainValidationError("source_url", "expected an HTTP(S) URL")
         parsed = urlsplit(self.source_url)
