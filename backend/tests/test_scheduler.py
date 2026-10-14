@@ -11,7 +11,7 @@ from app.core.config import Settings
 from app.jobs.collection import VIETNAM_TZ, build_scheduler
 
 
-def test_restart_collects_both_games_without_blocking_http(monkeypatch) -> None:
+def test_restart_collects_all_games_without_blocking_http(monkeypatch) -> None:
     # Keep every cron poll in the future: only startup recovery can satisfy this test.
     later = (datetime.now(VIETNAM_TZ) + timedelta(hours=2)).strftime("%H:%M")
     settings = Settings(
@@ -19,11 +19,12 @@ def test_restart_collects_both_games_without_blocking_http(monkeypatch) -> None:
         lotto_poll_first=later,
         lotto_poll_second=later,
         mega_poll=later,
+        power_poll=later,
         reconcile_poll=later,
     )
     monkeypatch.setenv("LOTTO_SCHEDULER_ENABLED", "true")
     monkeypatch.setattr(main, "get_settings", lambda: settings)
-    started = {game: Event() for game in ("lotto_535", "mega_645")}
+    started = {game: Event() for game in ("lotto_535", "mega_645", "power_655")}
     finished = {game: Event() for game in started}
     release = Event()
 
@@ -69,18 +70,22 @@ def test_vietnam_schedule_registers_poll_and_reconcile() -> None:
         "lotto_first",
         "lotto_second",
         "mega",
+        "power",
         "lotto_reconcile",
         "mega_reconcile",
+        "power_reconcile",
         "lotto_535_startup",
         "mega_645_startup",
+        "power_655_startup",
     }
     assert "hour='23'" in jobs["lotto_second"]
     assert "minute='45'" in jobs["lotto_second"]
     assert "day_of_week='wed,fri,sun'" in jobs["mega"]
+    assert "day_of_week='tue,thu,sat'" in jobs["power"]
 
 
 def test_delayed_scheduler_start_does_not_discard_catchup(monkeypatch) -> None:
-    completed = {game: Event() for game in ("lotto_535", "mega_645")}
+    completed = {game: Event() for game in ("lotto_535", "mega_645", "power_655")}
     monkeypatch.setattr(collection, "run_collection", lambda game: completed[game].set())
     scheduler = build_scheduler(
         Settings(database_url="postgresql+psycopg://lotto:example@localhost/lotto")

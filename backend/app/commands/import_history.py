@@ -7,13 +7,14 @@ from datetime import date
 import httpx
 
 from app.db.session import get_engine
+from app.games.definitions import GAMES
 from app.ingestion.fetcher import VietlottFetcher
 from app.ingestion.service import IngestionService
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Import official Vietlott historical draws")
-    parser.add_argument("--game", required=True, choices=["lotto_535", "mega_645"])
+    parser.add_argument("--game", required=True, choices=list(GAMES))
     parser.add_argument("--start-id")
     parser.add_argument("--end-id")
     parser.add_argument("--from-date", type=date.fromisoformat)

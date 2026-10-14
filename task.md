@@ -377,7 +377,7 @@ commit từng mốc sau kiểm chứng; nghiệm thu riêng với PostgreSQL và
   ADR và consistency tài liệu đã rà; giữ nguyên bằng chứng MVP lịch sử.
 - [x] **POWER-02 — Domain và migration.** Definition, special khác main,
   migration 0005, tests PostgreSQL/upgrade/downgrade và data preservation.
-- [ ] **POWER-03 — Ingestion và jobs.** Fixture nguồn, adapter Power, năm
+- [x] **POWER-03 — Ingestion và jobs.** Fixture nguồn, adapter Power, năm
   hạng giải, CLI registry, poll/reconcile/startup, idempotency/correction tests.
 - [ ] **POWER-04 — API/analytics/frontend.** Fixture tính tay, 55 numbers,
   1.485 pairs, checker/generator/main-only; hai Jackpot, game switch, E2E responsive.
@@ -389,6 +389,11 @@ trên PostgreSQL riêng `lotto_power_20261014_test` (10 deprecation warnings).
 Upgrade DB trống/alembic check đạt; clone restore 2.518 draw giữ nguyên toàn
 bộ row checksum ở sáu bảng sau migration. Chi tiết
 [POWER_ACCEPTANCE.md](docs/POWER_ACCEPTANCE.md).
+
+POWER-03: Ruff/Pyright/format và 151 backend tests pass trên PostgreSQL riêng;
+Compose config đạt. Live httpx fetch/parse `00001`, `01385`, latest `01410`
+khớp nguồn đủ năm hạng. Tests import/resume/collector lặp và prize correction
+Power đạt; scheduler kiểm đủ ba game/startup cùng lịch thứ Ba/Năm/Bảy.
 
 ## Trạng thái nghiệm thu MVP ban đầu
 

@@ -4,19 +4,8 @@ import re
 from html.parser import HTMLParser
 
 from app.domain.prizes import PrizeMatch, PrizeTier, validate_prizes
+from app.ingestion.metadata import get_source
 
-_NAMES = {
-    "lotto_535": (
-        "Giải Độc Đắc",
-        "Giải Nhất",
-        "Giải Nhì",
-        "Giải Ba",
-        "Giải Tư",
-        "Giải Năm",
-        "Giải Khuyến Khích",
-    ),
-    "mega_645": ("Jackpot", "Giải Nhất", "Giải Nhì", "Giải Ba"),
-}
 _HEADERS = ("Giải thưởng", "Kết quả", "Số lượng giải", "Giá trị giải (đồng)")
 
 
@@ -31,6 +20,7 @@ class _PrizeHTML(HTMLParser):
     def __init__(self, game: str) -> None:
         super().__init__(convert_charrefs=True)
         self.game = game
+        self.source = get_source(game)
         self.depth = 0
         self.wrapper: int | None = None
         self.wrappers = 0
@@ -52,7 +42,7 @@ class _PrizeHTML(HTMLParser):
         if tag == "div":
             self.depth += 1
             if "chitietketqua_table" in classes:
-                expected = "maga535_table" if self.game == "lotto_535" else "maga645_table"
+                expected = self.source.prize_class
                 if expected not in classes:
                     raise ValueError("prize table game mismatch")
                 self.wrappers += 1
@@ -81,12 +71,12 @@ class _PrizeHTML(HTMLParser):
             return
         self.cell.append(data)
         if self.in_body and len(self.cells) == 1:
-            if re.search(r"[^O+\s]", data):
+            if re.search(r"[^O\s" + re.escape(self.source.special_separator) + "]", data):
                 raise ValueError("unknown prize match notation")
             for symbol in data:
                 if symbol.isspace():
                     continue
-                if symbol == "+":
+                if symbol == self.source.special_separator:
                     if (
                         self.span_depth
                         or not self.main_count
@@ -155,9 +145,14 @@ def parse_prizes(html: str, game: str) -> tuple[PrizeTier, ...] | None:
         or parser.cell is not None
         or _HEADERS not in parser.headers
         or tuple(tier.name.casefold() for tier in parser.rows)
-        != tuple(name.casefold() for name in _NAMES[game])
+        != tuple(name.casefold() for name in parser.source.prize_names)
     ):
         raise ValueError("prize table structure/tiers changed")
     prizes = tuple(parser.rows)
+    if (
+        tuple(tuple((match.main_count, match.special) for match in tier.matches) for tier in prizes)
+        != parser.source.prize_matches
+    ):
+        raise ValueError("prize match conditions changed")
     validate_prizes(game, prizes)
     return prizes

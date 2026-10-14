@@ -1,6 +1,6 @@
 # LottoScope — Vietlott Analytics
 
-Ứng dụng xem và phân tích **kết quả đã công bố** của Lotto 5/35 và Mega 6/45. MVP gồm lịch sử, frequency/gap/pairs, checker và generator theo rule có giải thích; không dự đoán kỳ tiếp theo. Phạm vi ở [docs/MVP.md](docs/MVP.md), tiến độ ở [task.md](task.md), bằng chứng nghiệm thu ở [docs/MVP_ACCEPTANCE.md](docs/MVP_ACCEPTANCE.md).
+Ứng dụng xem và phân tích **kết quả đã công bố** của Lotto 5/35, Mega 6/45 và Power 6/55. Gồm lịch sử, frequency/gap/pairs, checker và generator theo rule có giải thích; không dự đoán kỳ tiếp theo. Phạm vi ở [docs/MVP.md](docs/MVP.md), tiến độ ở [task.md](task.md), bằng chứng nghiệm thu MVP ở [docs/MVP_ACCEPTANCE.md](docs/MVP_ACCEPTANCE.md) và mở rộng Power ở [docs/POWER_ACCEPTANCE.md](docs/POWER_ACCEPTANCE.md).
 
 ## Chạy ứng dụng bằng Docker Compose
 
@@ -20,17 +20,17 @@ Invoke-RestMethod http://127.0.0.1:8088/api/v1/games
 
 Mở `http://127.0.0.1:8088` (frontend), `http://127.0.0.1:8000/docs` (API). Nginx phục vụ SPA deep links và proxy `/api/` cùng origin; có thể đổi `FRONTEND_PORT`, `BACKEND_PORT`, `POSTGRES_PORT` trong `.env` nếu cổng bận. Các cổng chỉ bind loopback. `/health/live` kiểm tra process; `/health/ready` đòi PostgreSQL kết nối được và migration ở head. `docker compose down` giữ volume; **không dùng `down -v` nếu muốn giữ dữ liệu**. `.env` không được commit. Cấu hình này dành cho triển khai thử cục bộ, chưa bao gồm TLS/public ingress.
 
-Sau khi cập nhật image, backup trước khi chạy migration mới, rồi chạy lại `alembic upgrade head` và `docker compose up -d backend frontend --wait`. Kiểm tra `docker compose ps`, `docker compose logs backend frontend postgres` và readiness. Một backend worker bật APScheduler; không scale backend khi scheduler còn nằm trong process này. Giờ poll có thể chỉnh bằng `LOTTO_LOTTO_POLL_FIRST`, `LOTTO_LOTTO_POLL_SECOND`, `LOTTO_MEGA_POLL`, `LOTTO_RECONCILE_POLL` (`HH:MM`, giờ Việt Nam).
+Sau khi cập nhật image, backup trước khi chạy migration mới, rồi chạy lại `alembic upgrade head` và `docker compose up -d backend frontend --wait`. Kiểm tra `docker compose ps`, `docker compose logs backend frontend postgres` và readiness. Một backend worker bật APScheduler; không scale backend khi scheduler còn nằm trong process này. Giờ poll có thể chỉnh bằng `LOTTO_LOTTO_POLL_FIRST`, `LOTTO_LOTTO_POLL_SECOND`, `LOTTO_MEGA_POLL`, `LOTTO_POWER_POLL`, `LOTTO_RECONCILE_POLL` (`HH:MM`, giờ Việt Nam). Power mặc định poll 19:30 thứ Ba/Năm/Bảy và reconcile 07:00 hằng ngày.
 
 ## Nhập dữ liệu và vận hành collector
 
-Chi tiết `/history/:drawId` có bảng giải thưởng theo kỳ cho cả hai game.
+Chi tiết `/history/:drawId` có bảng giải thưởng theo kỳ cho cả ba game.
 Collector/import thu thập cùng kết quả quay; kỳ cũ chưa có bảng được bổ sung
 khi mở chi tiết lần đầu và lưu PostgreSQL cho lần sau. Bảng có nguồn/thời điểm
 riêng, tải độc lập và có thể thử lại khi Vietlott lỗi hoặc ingestion đang chạy.
-Sau cập nhật bản này, chạy migration `0004_draw_prizes` theo quy trình ở trên.
+Sau cập nhật Power, chạy migration `0005_power_655` theo quy trình ở trên.
 
-Khi scheduler bật (mặc định trong Compose), backend tự đồng bộ nền cả hai game
+Khi scheduler bật (mặc định trong Compose), backend tự đồng bộ nền cả ba game
 mỗi lần khởi động để bù kỳ bỏ lỡ khi máy tắt, rồi tiếp tục lịch poll trong
 [DATA_PIPELINE.md](docs/DATA_PIPELINE.md#collector-kỳ-mới). Theo dõi kết quả bằng
 `docker compose logs -f backend`. Nút **Cập nhật** trên giao diện tải lại dữ liệu
@@ -41,15 +41,26 @@ Migration phải hoàn tất trước khi import. Các lệnh chạy trong backe
 ```powershell
 docker compose run --rm --no-deps -e LOTTO_SCHEDULER_ENABLED=false backend python -m app.commands.import_history --game lotto_535
 docker compose run --rm --no-deps -e LOTTO_SCHEDULER_ENABLED=false backend python -m app.commands.import_history --game mega_645
+docker compose run --rm --no-deps -e LOTTO_SCHEDULER_ENABLED=false backend python -m app.commands.import_history --game power_655
 docker compose run --rm --no-deps -e LOTTO_SCHEDULER_ENABLED=false backend python -m app.commands.audit_import --game lotto_535
 docker compose run --rm --no-deps -e LOTTO_SCHEDULER_ENABLED=false backend python -m app.commands.audit_import --game mega_645
+docker compose run --rm --no-deps -e LOTTO_SCHEDULER_ENABLED=false backend python -m app.commands.audit_import --game power_655
 docker compose run --rm --no-deps -e LOTTO_SCHEDULER_ENABLED=false backend python -m app.commands.collect --game lotto_535
 docker compose run --rm --no-deps -e LOTTO_SCHEDULER_ENABLED=false backend python -m app.commands.collect --game mega_645
+docker compose run --rm --no-deps -e LOTTO_SCHEDULER_ENABLED=false backend python -m app.commands.collect --game power_655
 ```
 
 Import mặc định quét từ `00001` đến ID mới nhất ở [Vietlott Lotto 5/35](https://vietlott.vn/vi/trung-thuong/ket-qua-trung-thuong/535) hoặc [Mega 6/45](https://vietlott.vn/vi/trung-thuong/ket-qua-trung-thuong/645), tối đa một request/giây mỗi game; chạy lại bỏ qua item đã `found`. Có thể giới hạn bằng `--start-id`, `--end-id`, `--from-date`, `--to-date`; `--recheck` kiểm lại draw đã có. Import theo phạm vi mẫu không chứng minh lịch sử đầy đủ. `audit_import` exit 0 chỉ khi ID từ đầu đến latest nguồn được quét, không có lỗi và các draw mẫu khớp nguồn. Collector yêu cầu checkpoint đầy đủ, kiểm tra kỳ mới và đối chiếu lại 7 kỳ gần nhất; chạy lặp phải giữ count/identity. Lỗi nguồn, parse hoặc conflict được ghi trong `ingestion_runs`, `ingestion_items`, `draw_corrections`; không áp dụng correction trước khi đối chiếu nguồn. Sau khi xác minh correction `123`, áp dụng có lý do bằng `docker compose run --rm --no-deps backend python -m app.commands.apply_correction 123 --reason "Đã đối chiếu nguồn"`. Xem policy chi tiết tại [docs/DATA_PIPELINE.md](docs/DATA_PIPELINE.md).
 
 ## Backup, restore và rollback
+
+Power có sáu số chính trong 01–55 và một số đặc biệt khác main. Analytics,
+checker và generator chỉ xử lý main; bảng giải mô tả Jackpot 2 là 5 main +
+special, không tính thưởng vé. Nguồn Power là trang
+[`655`](https://vietlott.vn/vi/trung-thuong/ket-qua-trung-thuong/655?nocatche=1).
+Import Power bắt đầu `00001` và dùng cùng throttle/resume/audit như hai game cũ.
+Downgrade `0005` từ chối khi còn dữ liệu Power; dùng backup trước migration
+nếu cần rollback. Không xóa dữ liệu Power hoặc volume để ép downgrade.
 
 Tạo custom-format dump của database `lotto`; sao chép archive **ra ngoài container** và lưu ở vị trí backup được quản lý:
 
@@ -110,6 +121,7 @@ Backend integration tests **truncate bảng trong test database**; tuyệt đố
 
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) và [ADR 0001–0003](docs/DECISIONS/0003-compose-frontend.md): boundaries, stack và Compose frontend.
 - [ADR 0004](docs/DECISIONS/0004-collector-startup-catchup.md): đồng bộ sau khởi động; [ADR 0005](docs/DECISIONS/0005-draw-prizes.md): bảng giải thưởng theo kỳ.
-- Migrations: `0001_baseline`, `0002_draw_storage`, `0003_ingestion_tracking`, `0004_draw_prizes`.
+- Migrations: `0001_baseline`, `0002_draw_storage`, `0003_ingestion_tracking`, `0004_draw_prizes`, `0005_power_655`.
+- [ADR 0006](docs/DECISIONS/0006-power-655.md): game Power, special khác main và kế hoạch mở rộng.
 - [docs/MVP_ACCEPTANCE.md](docs/MVP_ACCEPTANCE.md): phiên bản/môi trường, kết quả gates, dữ liệu nguồn, 12 tiêu chí backend, 15 tiêu chí frontend và giới hạn còn lại.
 - Phase 2 gồm strategy management/backtesting/random baseline/saved picks; phương pháp backtest còn phải chốt trước khi làm. Prediction, mua vé, thanh toán, ROI không thuộc MVP.

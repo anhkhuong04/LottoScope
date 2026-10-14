@@ -21,6 +21,21 @@ File ghi kết quả chạy thực; các bước còn mở không được coi l
   Draws checksum `4bbfff94f698d31889a3653a7565661d`; state
   `4642eb9ef3f636ecedf149f705a26d7c`; không có correction.
 
+## POWER-03
+
+- Source metadata giữ path/CSS/prize conventions theo game; URL/title/ID/count
+  được validate cùng nhau. Power dùng CSS Mega nhưng title Power; Jackpot 2
+  dùng `|`, điều kiện main/special năm hạng được kiểm chính xác.
+- Fixture chính thức 655/00001 và 655/01385 giữ number/table source. Tests cho
+  mất special markup, trùng main/out-of-range, title/path/ID sai, đổi ký hiệu/
+  điều kiện/names, import/resume/collector lặp, correction và enrichment đạt.
+- Ruff check/format, Pyright và **151 backend tests pass** trên PostgreSQL riêng;
+  Compose config đạt. Scheduler tests giữ HTTP hoạt động khi startup catch-up,
+  cả ba game qua hai lần restart, Power poll thứ Ba/Năm/Bảy và reconcile.
+- Live smoke bằng `httpx`/fetcher/parser thật đọc thành công `00001` ngày 01/08/2017,
+  `01385` ngày 15/08/2026 và latest `01410` ngày 13/10/2026. Mỗi draw có sáu
+  main, một special và năm hạng giải. Chưa coi smoke ba kỳ là full-history audit.
+
 ## Các mốc còn mở
 
-POWER-03 parser/jobs, POWER-04 API/UI và POWER-05 import/vận hành đang triển khai.
+POWER-04 API/UI và POWER-05 import/vận hành đang triển khai.

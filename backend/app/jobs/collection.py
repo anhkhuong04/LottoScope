@@ -11,6 +11,7 @@ from apscheduler.schedulers.background import (  # pyright: ignore[reportMissing
 
 from app.core.config import Settings
 from app.db.session import get_engine
+from app.games.definitions import GAMES
 from app.ingestion.fetcher import VietlottFetcher
 from app.ingestion.service import IngestionService, JobOverlapError
 
@@ -40,7 +41,7 @@ def build_scheduler(settings: Settings) -> BackgroundScheduler:
     scheduler = BackgroundScheduler(timezone=VIETNAM_TZ)
     # Cron jobs are rebuilt after a restart and cannot replay polls missed while offline.
     # The shared collector backfills from PostgreSQL's checkpoint, under its per-game lock.
-    for game in ("lotto_535", "mega_645"):
+    for game in GAMES:
         scheduler.add_job(  # pyright: ignore[reportUnknownMemberType]
             run_collection,
             "date",
@@ -52,8 +53,10 @@ def build_scheduler(settings: Settings) -> BackgroundScheduler:
         ("lotto_first", "lotto_535", settings.lotto_poll_first, "*"),
         ("lotto_second", "lotto_535", settings.lotto_poll_second, "*"),
         ("mega", "mega_645", settings.mega_poll, "wed,fri,sun"),
+        ("power", "power_655", settings.power_poll, "tue,thu,sat"),
         ("lotto_reconcile", "lotto_535", settings.reconcile_poll, "*"),
         ("mega_reconcile", "mega_645", settings.reconcile_poll, "*"),
+        ("power_reconcile", "power_655", settings.reconcile_poll, "*"),
     )
     for name, game, clock, day_of_week in schedules:
         hour, minute = _schedule_time(clock)

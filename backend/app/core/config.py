@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     lotto_poll_first: str = "14:00"
     lotto_poll_second: str = "22:30"
     mega_poll: str = "19:30"
+    power_poll: str = "19:30"
     reconcile_poll: str = "07:00"
 
 
