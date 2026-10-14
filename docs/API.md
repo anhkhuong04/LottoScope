@@ -6,7 +6,7 @@ lại analytics. Tất cả number trong JSON là integer; UI tự hiển thị 
 
 ## Quy ước chung
 
-- Path `game` là `lotto_535` hoặc `mega_645`. Game lạ → 404 `unknown_game`.
+- Path `game` là `lotto_535`, `mega_645` hoặc `power_655`. Game lạ → 404 `unknown_game`.
   Dates dùng `YYYY-MM-DD` theo Việt Nam; timestamps dùng RFC 3339 có `Z`.
   `draw_time` nếu có dùng `HH:MM:SS`, hiểu theo Việt Nam. `null` là thiếu
   dữ liệu/không áp dụng, không thay bằng 0 hoặc chuỗi rỗng.
@@ -46,7 +46,7 @@ lại analytics. Tất cả number trong JSON là integer; UI tự hiển thị 
 | `GET /games/{game}/draws` | `from_date`, `to_date`, `draw_id`, `page`, `page_size`, `sort=asc|desc` | Paginated draws, default newest trước |
 | `GET /games/{game}/draws/{draw_id}` | — | Một draw; 404 `draw_not_found` |
 | `GET /games/{game}/draws/{draw_id}/prizes` | — | Snapshot giải; bổ sung đúng kỳ từ nguồn nếu chưa có; 404 `draw_not_found` |
-| `GET /games/{game}/analytics/numbers` | Window + cutoff; `sort=number|frequency_desc|frequency_asc|gap_desc`; paging không cần vì tối đa 45 | `context`, `items:[{number,frequency,frequency_percent,frequency_rank,current_gap,average_gap,max_gap,last_seen_draw_id}]` |
+| `GET /games/{game}/analytics/numbers` | Window + cutoff; `sort=number|frequency_desc|frequency_asc|gap_desc`; paging không cần vì tối đa 55 | `context`, `items:[{number,frequency,frequency_percent,frequency_rank,current_gap,average_gap,max_gap,last_seen_draw_id}]` |
 | `GET /games/{game}/analytics/numbers/{number}` | Window + cutoff; `page`,`page_size` cho history | `context`, một number metrics, `appearance_draws` paginated, `pair_partners` top 10 và timeline draw IDs |
 | `GET /games/{game}/analytics/pairs` | Window + cutoff; `min_frequency>=0`, `sort=frequency_desc|frequency_asc|pair`, paging | `context`, paginated `{numbers:[a,b],frequency,percent_of_draws,current_gap,last_seen_draw_id}` |
 | `GET /games/{game}/analytics/pairs/{a}/{b}` | Window + cutoff; paging history | `context`, pair metrics, `appearance_draws` paginated, timeline draw IDs |

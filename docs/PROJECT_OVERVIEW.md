@@ -9,6 +9,9 @@ Phiên bản đầu tiên tập trung vào:
 - Lotto 5/35
 - Mega 6/45
 
+Mở rộng sau MVP ngày 14/10/2026: Power 6/55, cùng các luồng phân tích lịch sử.
+Scope ban đầu và bằng chứng nghiệm thu MVP được giữ theo mốc cũ.
+
 Hệ thống được xây dựng để:
 
 - tự động thu thập kết quả quay;
@@ -106,6 +109,15 @@ Mega 6/45 không sử dụng `special_number` theo domain model của Lotto 5/35
 ---
 
 ## 5. Core Domain Concepts
+
+### Power 6/55 — mở rộng sau MVP
+
+Game `power_655` có sáu main khác nhau trong 01–55 và một special trong 01–55,
+lấy từ 49 số còn lại, không được trùng main. Special chỉ hiển thị trong draw
+và điều kiện giải; checker/generator tiếp tục nhận sáu main. Năm hạng giải là
+Jackpot 1, Jackpot 2, Giải Nhất, Giải Nhì, Giải Ba. Nguồn chuẩn chi tiết ở
+[DOMAIN.md](DOMAIN.md), quyết định triển khai ở
+[ADR 0006](DECISIONS/0006-power-655.md).
 
 ### 5.1 Draw
 

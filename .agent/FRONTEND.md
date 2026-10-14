@@ -73,7 +73,7 @@
   contrast rõ. Drawer/modal quản lý focus đúng; chart có textual summary/
   fallback. Không dùng color làm tín hiệu duy nhất.
 - Frequency dùng bar chart/grid; gap dùng sorted bar/table; timeline đơn giản;
-  không dùng pie chart cho toàn 35/45 số hoặc roulette/slot animation.
+  không dùng pie chart cho toàn miền số hoặc roulette/slot animation.
 - Tables có sort/paging/empty/focus phù hợp; không client-filter toàn dataset
   khi API đã hỗ trợ.
 - UI wording dùng Frequency/Gap/Historical overlap/Backtest result; không

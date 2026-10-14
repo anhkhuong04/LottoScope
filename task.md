@@ -368,6 +368,24 @@ viết test thất bại trước code và tạo commit sau khi cả nhóm đư�
 
 ## Mốc đánh dấu hoàn thành MVP
 
+## Bổ sung sau MVP — Power 6/55 (14/10/2026)
+
+Thiết kế: [ADR 0006](docs/DECISIONS/0006-power-655.md). Triển khai lần lượt,
+commit từng mốc sau kiểm chứng; nghiệm thu riêng với PostgreSQL và dữ liệu thật.
+
+- [x] **POWER-01 — Contract.** Domain/main-only, source/lịch, schema/API/UX,
+  ADR và consistency tài liệu đã rà; giữ nguyên bằng chứng MVP lịch sử.
+- [ ] **POWER-02 — Domain và migration.** Definition, special khác main,
+  migration 0005, tests PostgreSQL/upgrade/downgrade và data preservation.
+- [ ] **POWER-03 — Ingestion và jobs.** Fixture nguồn, adapter Power, năm
+  hạng giải, CLI registry, poll/reconcile/startup, idempotency/correction tests.
+- [ ] **POWER-04 — API/analytics/frontend.** Fixture tính tay, 55 numbers,
+  1.485 pairs, checker/generator/main-only; hai Jackpot, game switch, E2E responsive.
+- [ ] **POWER-05 — Vận hành/nghiệm thu.** Backup/restore, migration/build,
+  full import/audit/repeat collectors, gates và source/DB/API/UI đối chiếu.
+
+## Trạng thái nghiệm thu MVP ban đầu
+
 - [x] **Backend MVP hoàn thành:** P0–P6 và P8-01, P8-03–P8-07, P8-09 đạt;
   nghiệm thu theo overview mục 15. P7/P8-02/P8-08 có thể còn mở nếu
   `docs/MVP.md` chốt bàn giao backend trước.

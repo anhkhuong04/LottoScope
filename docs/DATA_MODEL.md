@@ -9,13 +9,13 @@ Schema này ưu tiên draw là đơn vị đọc/ghi và giữ audit cho sửa n
 | Cột | Kiểu/constraint | Ý nghĩa |
 | --- | --- | --- |
 | `id` | bigint PK | Khóa nội bộ |
-| `game` | text NOT NULL, CHECK thuộc `lotto_535`,`mega_645` | Game |
+| `game` | text NOT NULL, CHECK thuộc `lotto_535`,`mega_645`,`power_655` | Game |
 | `draw_id` | char(5) NOT NULL, CHECK đúng 5 chữ số | ID nguồn có số 0 đầu |
 | `draw_seq` | integer NOT NULL, >0 | Số từ `draw_id` |
 | `draw_date` | date NOT NULL | Ngày quay ở Việt Nam |
 | `draw_time` | time NULL | Giờ kỳ quay khi nguồn có |
 | `main_numbers` | smallint[] NOT NULL | Canonical sorted unique main |
-| `special_number` | smallint NULL | Lotto bắt buộc 1–12; Mega NULL |
+| `special_number` | smallint NULL | Lotto bắt buộc 1–12; Mega NULL; Power bắt buộc 1–55, khác main |
 | `source_url` | text NOT NULL | Trang nguồn theo kỳ |
 | `source_retrieved_at` | timestamptz NOT NULL | Lúc fetch thành công |
 | `source_sha256` | char(64) NOT NULL | Hash canonical result payload; HTML layout đổi không tạo correction giả |
@@ -29,6 +29,12 @@ của `draw_id` qua validation ứng dụng. Range/unique/sort trong array đư�
 validate tại domain boundary và test database integration với đường ghi chính;
 không dùng direct SQL import không qua validator. Nếu cần bảo vệ ngoài đường
 ghi ứng dụng, thêm DB trigger/constraint trong migration tương ứng.
+
+Migration `0005_power_655` mở rộng CHECK game ở `draws`, `game_data_state`
+và ba bảng ingestion, thêm nhánh Power với 6 main, special NOT NULL 1–55 và
+`special_number <> ALL(main_numbers)`. Không thay đổi draw, hash, version,
+prizes hoặc audit đã có. Downgrade từ chối khi còn bất kỳ dữ liệu Power trong
+các bảng trên; không tự xóa dữ liệu để khôi phục constraint hai game.
 
 Indexes: unique hai khóa trên; B-tree `(game, draw_date DESC, draw_seq DESC)`
 cho latest/date/window; GIN `main_numbers` cho contains-number/pair và

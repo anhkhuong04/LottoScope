@@ -108,6 +108,14 @@ Khi người dùng đổi game:
 
 # 3. Information Architecture
 
+Mở rộng Power 6/55 (14/10/2026): game selector thêm Power, tái sử dụng mọi
+màn hình và flow A–D. Numbers có 55 số; checker/picker yêu cầu đúng 6 main
+trong 01–55, generator chỉ sinh main. History/dashboard/detail hiển thị
+special tách khỏi main; bảng giải có năm hạng và tóm tắt cả Jackpot 1/2.
+Đổi game phải reset input, hủy response muộn và giữ window còn hợp lệ.
+Nghiệm thu desktop/tablet/mobile, deep links, loading/empty/error và accessibility
+cho game thứ ba; tiêu chí MVP phía dưới ghi scope nghiệm thu ban đầu.
+
 Frontend được chia thành các khu vực chính:
 
 ```text

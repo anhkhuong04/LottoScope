@@ -10,6 +10,11 @@ Bổ sung sau MVP: bảng giải thưởng theo kỳ và bằng chứng kiểm c
 [ADR 0005](../docs/DECISIONS/0005-draw-prizes.md); contract ở Domain/Data Model/API,
 tiến độ nhóm PRIZE trong `task.md`.
 
+Mở rộng Power 6/55 được yêu cầu ngày 14/10/2026: quyết định ở
+[ADR 0006](../docs/DECISIONS/0006-power-655.md), tiến độ `POWER-01..05` trong
+`task.md`. Contract ba game ở Domain/Data Model/Data Pipeline/API; checker,
+generator và analytics tiếp tục main-only. Đây là milestone hậu MVP.
+
 ## Phạm vi
 
 - [MVP.md](../docs/MVP.md) chốt backend MVP trước, frontend MVP sau; ứng

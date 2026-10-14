@@ -70,7 +70,7 @@ Core logic phải có tests; bugfix logic quan trọng cần regression test.
 
 | Thay đổi | Kiểm chứng tối thiểu liên quan |
 | --- | --- |
-| Domain/normalize | Cả hai game; count/range/integer/duplicate; invalid game/special; permutation identity; không silently sửa input |
+| Domain/normalize | Mọi game được hỗ trợ; count/range/integer/duplicate; invalid game/special và Power special khác main; permutation identity; không silently sửa input |
 | Window/time | Ordering/tie-break, same-day draws, game isolation, cutoff/date endpoints, fewer-than-N và empty theo contract |
 | Frequency/gap/pairs/overlap | Dataset nhỏ tính tay; count 0; latest appearance; never-seen/window clipping theo spec; canonical pair; main/special isolation; exact-k/at-least-k theo contract |
 | Generator/rules | Rule pass/fail/disabled; threshold boundary; invalid/contradictory config; seeded reproducibility; bounded failure; output hợp lệ và explanation khớp metrics |

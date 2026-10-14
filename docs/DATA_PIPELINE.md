@@ -23,6 +23,25 @@ không truy cập được.
 
 ## Import lịch sử
 
+### Mở rộng Power 6/55 — 14/10/2026
+
+Trang nguồn: `https://vietlott.vn/vi/trung-thuong/ket-qua-trung-thuong/655?id={draw_id}&nocatche=1`.
+Đã đọc trực tiếp `00001` (01/08/2017, main `05 10 14 23 24 38`, special `35`)
+và `01385` (15/08/2026, main `16 20 25 27 30 50`, special `02`).
+Nguồn Power dùng CSS `mega645`/`maga645_table` như Mega; adapter phải kiểm
+đúng cả path `655`, tiêu đề `Power 6/55`, ID và số, không suy game từ CSS.
+Special có `active`; bảng Jackpot 2 dùng `O O O O O | <span class="active">O</span>`.
+Parser kiểm đúng năm hạng và điều kiện `(6,false),(5,true),(5,false),(4,false),(3,false)`.
+Core tests dùng fixture cố định; live fetch chỉ phục vụ import/audit/smoke.
+
+Power poll mặc định 19:30 thứ Ba/Năm/Bảy (`LOTTO_POWER_POLL`), reconcile 07:00
+hằng ngày và startup catch-up như các game hiện có. Lịch quay 18:00 lấy từ
+[hướng dẫn chơi](https://vietlott.vn/vi/choi/power-6-55/cach-choi); giờ poll
+không được lưu thành `draw_time`. Import phải quét `00001..latest` trước khi
+collector chạy; missing/failed/invalid không được xem là lịch sử đầy đủ.
+
+### Quy trình chung
+
 1. Fetch trang mới nhất của từng game và parse `draw_id` làm upper bound;
    kiểm tra ID hợp lệ, không tin số kỳ ghi ở query nếu nội dung khác.
 2. Từ `00001` đến upper bound, fetch từng ID 5 chữ số với `nocatche=1`.
