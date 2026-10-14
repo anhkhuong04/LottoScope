@@ -124,3 +124,16 @@ thay dữ liệu nguồn bằng dữ liệu giả để đánh dấu milestone h
 - Chưa chạy lại full-history audit hoặc hai lượt collector: history vẫn thiếu
   và nguồn tiếp tục chặn. POWER-05 giữ mở; resume bằng lệnh import thường phía
   trên khi nguồn cho truy cập lại, không xóa dữ liệu hay bypass Cloudflare.
+
+### Tiếp tục POWER-05 — 14/10/2026, 08:39–08:40 giờ Việt Nam
+
+- Đã thử resume trên host Windows (run `301`) và Compose (run `302`), cùng
+  nguồn chính thức với `LOTTO_SOURCE_REQUEST_INTERVAL=5.0` cho hai lượt này.
+  Cả hai exit 1, HTTP 429 ngay tại latest page; không nhập thêm draw và không
+  thay đổi cấu hình `.env`. Không tiếp tục gửi batch khi nguồn đang chặn.
+- Đối chiếu PostgreSQL sau hai lượt: vẫn **77 draws**, cả 77 đủ năm hạng giải,
+  latest `00077` ngày 25/01/2018; checkpoint `00101`, 77 found + 24 failed.
+  Không còn run running. Chưa chạy full audit/collector vì import chưa đủ.
+- POWER-05 vẫn chưa hoàn thành do nguồn bên ngoài. Không sửa code hoặc chạy
+  lại test suite trong lượt vận hành này; giữ provenance/checkpoint để resume
+  khi nguồn truy cập lại. Không đổi sang nguồn bên thứ ba hoặc bypass challenge.

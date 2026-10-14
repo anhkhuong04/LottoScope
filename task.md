@@ -416,6 +416,12 @@ trên Compose. Chưa chạy lại full audit/hai collector vì history còn thi�
 POWER-05 tiếp tục mở. Chi tiết tại
 [bằng chứng chạy lại](docs/POWER_ACCEPTANCE.md), mục “Chạy lại POWER-05”.
 
+Tiếp tục lúc 08:39–08:40 ngày 14/10/2026: host và Compose đều HTTP 429 ngay
+tại latest page dù giảm tốc xuống 5 giây/request (run `301`, `302`, exit 1).
+Không thêm kỳ mới; PostgreSQL vẫn 77 draw đủ bảng giải, checkpoint `00101`,
+24 failed, không có run treo. POWER-05 giữ mở, chờ nguồn truy cập lại để resume;
+full audit/hai collector chưa chạy. Bằng chứng trong `POWER_ACCEPTANCE.md`.
+
 ## Trạng thái nghiệm thu MVP ban đầu
 
 - [x] **Backend MVP hoàn thành:** P0–P6 và P8-01, P8-03–P8-07, P8-09 đạt;
