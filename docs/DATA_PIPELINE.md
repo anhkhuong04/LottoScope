@@ -97,6 +97,11 @@ snapshot được bổ sung lần đầu, không tăng số draw/`inserted`. Con
   được hoãn sang lượt sau, không retry sớm. 4xx khác 429, HTML
   không đúng schema, game/ID không khớp hoặc số sai được báo lỗi/quarantine,
   không retry mù. Tôn trọng `Retry-After` và giảm tốc nếu bị rate limit.
+  `LOTTO_SOURCE_REQUEST_INTERVAL` mặc định 1 giây, chỉ cho phép >=1 và hữu hạn;
+  tăng giá trị để giảm tốc cho import/collector/audit/enrichment. CLI host vẫn
+  dùng cùng nguồn/adapter và PostgreSQL, không chuyển sang bên thứ ba. Khi
+  website trả trang Cloudflare challenge/429, giữ trạng thái lỗi và retry sau,
+  không coi HTML challenge là draw hoặc thay bằng dữ liệu tự dựng.
 - `(game, draw_id)` unique ở PostgreSQL. Insert dùng transaction và DB
   conflict handling, không chỉ check-before-insert. Payload canonical bằng
   nhau: không đổi draw, ghi `attempted_at` trong `ingestion_items`; khác

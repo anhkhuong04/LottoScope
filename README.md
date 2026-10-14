@@ -52,8 +52,6 @@ docker compose run --rm --no-deps -e LOTTO_SCHEDULER_ENABLED=false backend pytho
 
 Import mặc định quét từ `00001` đến ID mới nhất ở [Vietlott Lotto 5/35](https://vietlott.vn/vi/trung-thuong/ket-qua-trung-thuong/535) hoặc [Mega 6/45](https://vietlott.vn/vi/trung-thuong/ket-qua-trung-thuong/645), tối đa một request/giây mỗi game; chạy lại bỏ qua item đã `found`. Có thể giới hạn bằng `--start-id`, `--end-id`, `--from-date`, `--to-date`; `--recheck` kiểm lại draw đã có. Import theo phạm vi mẫu không chứng minh lịch sử đầy đủ. `audit_import` exit 0 chỉ khi ID từ đầu đến latest nguồn được quét, không có lỗi và các draw mẫu khớp nguồn. Collector yêu cầu checkpoint đầy đủ, kiểm tra kỳ mới và đối chiếu lại 7 kỳ gần nhất; chạy lặp phải giữ count/identity. Lỗi nguồn, parse hoặc conflict được ghi trong `ingestion_runs`, `ingestion_items`, `draw_corrections`; không áp dụng correction trước khi đối chiếu nguồn. Sau khi xác minh correction `123`, áp dụng có lý do bằng `docker compose run --rm --no-deps backend python -m app.commands.apply_correction 123 --reason "Đã đối chiếu nguồn"`. Xem policy chi tiết tại [docs/DATA_PIPELINE.md](docs/DATA_PIPELINE.md).
 
-## Backup, restore và rollback
-
 Power có sáu số chính trong 01–55 và một số đặc biệt khác main. Analytics,
 checker và generator chỉ xử lý main; bảng giải mô tả Jackpot 2 là 5 main +
 special, không tính thưởng vé. Nguồn Power là trang
@@ -61,6 +59,16 @@ special, không tính thưởng vé. Nguồn Power là trang
 Import Power bắt đầu `00001` và dùng cùng throttle/resume/audit như hai game cũ.
 Downgrade `0005` từ chối khi còn dữ liệu Power; dùng backup trước migration
 nếu cần rollback. Không xóa dữ liệu Power hoặc volume để ép downgrade.
+
+Nhịp truy cập nguồn mặc định là 1 giây/request. Có thể tăng
+`LOTTO_SOURCE_REQUEST_INTERVAL` (ví dụ `2.0`) để giảm tốc khi Vietlott trả 429;
+cấu hình từ chối giá trị dưới 1 giây. Import, collector, audit và bổ sung prizes
+đều dùng cùng cấu hình. Giữ retry bounded/`Retry-After`; không tăng tốc hay
+coi lượt nhập lỗi/partial là thành công. CLI có thể chạy từ `backend/` trên host
+với `LOTTO_DATABASE_URL` trỏ đúng PostgreSQL ứng dụng ở `127.0.0.1` khi môi trường
+container không truy cập được nguồn; giữ cùng adapter, validation và checkpoint.
+
+## Backup, restore và rollback
 
 Tạo custom-format dump của database `lotto`; sao chép archive **ra ngoài container** và lưu ở vị trí backup được quản lý:
 
@@ -123,5 +131,6 @@ Backend integration tests **truncate bảng trong test database**; tuyệt đố
 - [ADR 0004](docs/DECISIONS/0004-collector-startup-catchup.md): đồng bộ sau khởi động; [ADR 0005](docs/DECISIONS/0005-draw-prizes.md): bảng giải thưởng theo kỳ.
 - Migrations: `0001_baseline`, `0002_draw_storage`, `0003_ingestion_tracking`, `0004_draw_prizes`, `0005_power_655`.
 - [ADR 0006](docs/DECISIONS/0006-power-655.md): game Power, special khác main và kế hoạch mở rộng.
+- Mốc Power ngày 14/10/2026: code/deploy đã kiểm; full import/audit **còn mở do Vietlott 429/Cloudflare**. Dữ liệu Power hiện là lịch sử một phần, chưa có latest nguồn. Bằng chứng và lệnh resume ở [POWER_ACCEPTANCE.md](docs/POWER_ACCEPTANCE.md).
 - [docs/MVP_ACCEPTANCE.md](docs/MVP_ACCEPTANCE.md): phiên bản/môi trường, kết quả gates, dữ liệu nguồn, 12 tiêu chí backend, 15 tiêu chí frontend và giới hạn còn lại.
 - Phase 2 gồm strategy management/backtesting/random baseline/saved picks; phương pháp backtest còn phải chốt trước khi làm. Prediction, mua vé, thanh toán, ROI không thuộc MVP.

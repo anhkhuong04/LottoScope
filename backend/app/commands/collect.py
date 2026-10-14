@@ -7,7 +7,7 @@ import httpx
 
 from app.db.session import get_engine
 from app.games.definitions import GAMES
-from app.ingestion.fetcher import VietlottFetcher
+from app.ingestion.fetcher import configured_fetcher
 from app.ingestion.service import IngestionService
 
 
@@ -16,7 +16,7 @@ def main() -> int:
     parser.add_argument("--game", required=True, choices=list(GAMES))
     args = parser.parse_args()
     with httpx.Client(follow_redirects=True) as client:
-        summary = IngestionService(get_engine(), VietlottFetcher(client)).collect(args.game)
+        summary = IngestionService(get_engine(), configured_fetcher(client)).collect(args.game)
     print(
         json.dumps(
             {

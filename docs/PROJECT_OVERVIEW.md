@@ -108,9 +108,7 @@ Mega 6/45 không sử dụng `special_number` theo domain model của Lotto 5/35
 
 ---
 
-## 5. Core Domain Concepts
-
-### Power 6/55 — mở rộng sau MVP
+### 4.3 Power 6/55 — mở rộng sau MVP
 
 Game `power_655` có sáu main khác nhau trong 01–55 và một special trong 01–55,
 lấy từ 49 số còn lại, không được trùng main. Special chỉ hiển thị trong draw
@@ -118,6 +116,10 @@ và điều kiện giải; checker/generator tiếp tục nhận sáu main. Năm
 Jackpot 1, Jackpot 2, Giải Nhất, Giải Nhì, Giải Ba. Nguồn chuẩn chi tiết ở
 [DOMAIN.md](DOMAIN.md), quyết định triển khai ở
 [ADR 0006](DECISIONS/0006-power-655.md).
+
+---
+
+## 5. Core Domain Concepts
 
 ### 5.1 Draw
 

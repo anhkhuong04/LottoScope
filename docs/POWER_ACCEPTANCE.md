@@ -36,8 +36,6 @@ File ghi kết quả chạy thực; các bước còn mở không được coi l
   `01385` ngày 15/08/2026 và latest `01410` ngày 13/10/2026. Mỗi draw có sáu
   main, một special và năm hạng giải. Chưa coi smoke ba kỳ là full-history audit.
 
-## Các mốc còn mở
-
 ## POWER-04
 
 - **156 backend tests pass**, Ruff check/format/Pyright đạt. Fixture tính tay
@@ -55,6 +53,51 @@ File ghi kết quả chạy thực; các bước còn mở không được coi l
 - Đã xem screenshot detail desktop/mobile: đủ hai highlights/năm hạng,
   special rõ và không overflow; Axe WCAG A/AA trên Power detail không lỗi.
 
-## Công việc còn mở
+## POWER-05 — phần đã kiểm chứng và phần bị chặn
 
-POWER-05 import/vận hành đang triển khai.
+- Compose config/build/up/readiness đạt; cả ba service healthy. DB ứng dụng ở
+  `0005_power_655`; checksum toàn draw row Lotto/Mega khớp trước/sau migration.
+  Có thêm backup ngay trước apply: `lotto-before-power-apply-20261014.dump`,
+  đã sao chép ra ngoài container. Snapshot cũ/DB clone dùng cho data preservation
+  ở POWER-02 được giữ; API thử nghiệm cổng 18005 đã dừng sau kiểm chứng.
+- Phiên bản cuối: **162 backend tests pass**, Ruff check/format/Pyright đạt,
+  frontend lint/format/typecheck/build/4 unit tests đạt. Browser suite cuối chạy
+  trực tiếp trên Compose (không relay API clone): **56 pass, 4 skip theo thiết bị**,
+  gồm đủ 15 ca Power và regression Lotto/Mega. Đã kiểm hình detail desktop/mobile.
+- Runtime trả ba games; Power numbers=55, pairs=1.485, bảng giải=5 hạng.
+  Scheduler đăng ký startup catch-up, poll 19:30 thứ Ba/Năm/Bảy, reconcile 07:00
+  hằng ngày theo Việt Nam. Cấu hình local `LOTTO_SOURCE_REQUEST_INTERVAL=2.0`
+  đã áp dụng để giảm tốc; gate từ chối giá trị dưới 1 giây/NaN/infinity.
+
+### Giới hạn nguồn thực tế
+
+Vietlott bắt đầu trả **HTTP 429**, body Cloudflare `Just a moment...`, không
+có `Retry-After`. Lượt import container và sau đó host Windows đã bị dừng khi
+429 lặp lại; job kế tiếp đánh dấu run gián đoạn là failed và giữ checkpoint.
+Host từng đọc được ID mà container trả 429, nhưng sau đó host cũng bị chặn.
+Các lần thử sau với nhịp 2 giây/request vẫn thất bại ngay ở latest page.
+`audit_import` đã chạy và exit 1 vì source 429; không có full-history audit đạt.
+Startup collector của cả ba game tại mốc deploy cũng ghi failed/429; việc
+đăng ký lịch và logic collector đã được test, chưa chứng minh nguồn đang cho
+collector container cập nhật thành công.
+
+Snapshot khi bàn giao: **45 Power draws** có đủ prize snapshot, ID từ `00001`
+đến `00048` (còn lỗ hổng), latest đã lưu ngày **18/11/2017**. Checkpoint đã
+scan tới `00071`: 45 found + 26 failed. Upper bound nguồn trước khi bị chặn là
+`01410` ngày 13/10/2026; 1.339 ID còn chưa scan. Không coi 45 draw này là lịch
+sử đầy đủ hay latest nguồn. Lotto giữ 944 draws và Mega giữ 1.574 draws.
+Không còn run `running`; dữ liệu cũ và provenance được giữ nguyên.
+
+**POWER-05 chưa hoàn thành:** cần nguồn truy cập lại để resume import từ
+checkpoint, retry 26 failed IDs và scan đến latest; sau đó audit đầy đủ và chạy
+collector hai lượt, đối chiếu source/DB/API. Lệnh resume là import thường,
+không cần `--recheck` hoặc xóa dữ liệu; item found được bỏ qua idempotently.
+
+```powershell
+docker compose run --rm --no-deps -e LOTTO_SCHEDULER_ENABLED=false backend python -m app.commands.import_history --game power_655
+docker compose run --rm --no-deps -e LOTTO_SCHEDULER_ENABLED=false backend python -m app.commands.audit_import --game power_655
+docker compose run --rm --no-deps -e LOTTO_SCHEDULER_ENABLED=false backend python -m app.commands.collect --game power_655
+```
+
+Chỉ chạy collector sau khi import/audit đầy đủ. Không bypass challenge hoặc
+thay dữ liệu nguồn bằng dữ liệu giả để đánh dấu milestone hoàn tất.

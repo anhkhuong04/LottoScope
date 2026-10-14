@@ -366,8 +366,6 @@ viết test thất bại trước code và tạo commit sau khi cả nhóm đư�
   build/unit/E2E frontend; backup, migration và rebuild Compose local, đối
   chiếu nguồn/database/API, kiểm tra enrichment chạy lặp, commit nhóm PRIZE.
 
-## Mốc đánh dấu hoàn thành MVP
-
 ## Bổ sung sau MVP — Power 6/55 (14/10/2026)
 
 Thiết kế: [ADR 0006](docs/DECISIONS/0006-power-655.md). Triển khai lần lượt,
@@ -399,6 +397,16 @@ POWER-04: 156 backend tests và Ruff/Pyright/format pass; frontend lint/format/
 typecheck/build và 4 unit tests pass. 15 ca Power E2E desktop/tablet/mobile đã
 pass trên API clone (12 pass lượt đầu, ba ca checker pass sau sửa đồng bộ test
 chờ picker game mới). Đã xem screenshot desktop/mobile; Axe detail không lỗi.
+
+POWER-05 **chưa hoàn thành vì nguồn 429/Cloudflare**. Backup/restore, migration
+ứng dụng, Compose build/readiness và runtime game/API/UI đã kiểm; 162 backend
+tests pass, E2E Compose trực tiếp 56 pass/4 skip. Đã nhập 45 draw Power có
+prizes (latest đã lưu `00048`, 18/11/2017), checkpoint `00071`, 26 failed;
+upper bound đã đọc trước khi nguồn chặn là `01410` ngày 13/10/2026.
+Audit đã chạy nhưng exit 1 do source 429; collector live cũng chưa đạt.
+Cấu hình local giảm tốc 2 giây/request; giữ trạng thái failed và resume, không
+coi dataset một phần là lịch sử đầy đủ. Bằng chứng/lệnh tiếp tục ở
+[POWER_ACCEPTANCE.md](docs/POWER_ACCEPTANCE.md#power-05--phần-đã-kiểm-chứng-và-phần-bị-chặn).
 
 ## Trạng thái nghiệm thu MVP ban đầu
 

@@ -20,7 +20,7 @@ và được phép có cùng giá trị với một main. Nguồn luật Power:
 Validation từ chối thiếu/thừa số, duplicate main, boolean/float/string thay
 integer trong domain, số ngoài miền và game lạ. Parser nguồn có thể chuyển
 chuỗi số đã nhận diện thành integer trước validation; API JSON không tự ép
-kiểu. `special_number` là miền riêng, không tham gia main frequency, pair,
+kiểu. `special_number` có vai trò riêng theo game, không tham gia main frequency, pair,
 overlap hay main-only exact match. Số được lưu là integer; UI định dạng 2 chữ số.
 
 ## Bảng giải thưởng công bố

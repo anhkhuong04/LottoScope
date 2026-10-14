@@ -12,7 +12,7 @@ from apscheduler.schedulers.background import (  # pyright: ignore[reportMissing
 from app.core.config import Settings
 from app.db.session import get_engine
 from app.games.definitions import GAMES
-from app.ingestion.fetcher import VietlottFetcher
+from app.ingestion.fetcher import configured_fetcher
 from app.ingestion.service import IngestionService, JobOverlapError
 
 logger = logging.getLogger(__name__)
@@ -22,7 +22,7 @@ VIETNAM_TZ = ZoneInfo("Asia/Ho_Chi_Minh")
 def run_collection(game: str) -> None:
     try:
         with httpx.Client(follow_redirects=True) as client:
-            summary = IngestionService(get_engine(), VietlottFetcher(client)).collect(game)
+            summary = IngestionService(get_engine(), configured_fetcher(client)).collect(game)
         log_summary = logger.info if summary.status == "success" else logger.error
         log_summary(
             "collector game=%s run=%s status=%s counters=%s",

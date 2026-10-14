@@ -8,7 +8,7 @@ import httpx
 
 from app.db.session import get_engine
 from app.games.definitions import GAMES
-from app.ingestion.fetcher import VietlottFetcher
+from app.ingestion.fetcher import configured_fetcher
 from app.ingestion.service import IngestionService
 
 
@@ -24,7 +24,7 @@ def main() -> int:
     with httpx.Client(follow_redirects=True) as client:
         summary = IngestionService(
             get_engine(),
-            VietlottFetcher(client),
+            configured_fetcher(client),
             progress=lambda sequence, counts: print(
                 json.dumps({"draw_seq": sequence, "counters": counts}), flush=True
             ),

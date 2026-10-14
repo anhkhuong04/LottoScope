@@ -9,6 +9,8 @@ from threading import Lock
 
 import httpx
 
+from app.core.config import get_settings
+
 
 class SourceFetchError(RuntimeError):
     def __init__(self, url: str, detail: str, *, missing: bool = False) -> None:
@@ -84,3 +86,8 @@ class VietlottFetcher:
                 raise SourceFetchError(url, "Retry-After exceeds 60 seconds; deferred")
             self.sleep(delay)
         raise AssertionError("bounded fetch loop did not return or raise")
+
+
+def configured_fetcher(client: httpx.Client) -> VietlottFetcher:
+    """Allow operators to slow source requests while keeping the one-request/s ceiling."""
+    return VietlottFetcher(client, min_interval=get_settings().source_request_interval)

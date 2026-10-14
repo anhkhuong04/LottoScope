@@ -8,7 +8,7 @@ import httpx
 from sqlalchemy import Engine
 
 from app.domain.prizes import PrizeTier
-from app.ingestion.fetcher import VietlottFetcher
+from app.ingestion.fetcher import configured_fetcher
 from app.ingestion.service import IngestionService, PageFetcher, RunSummary
 from app.services.history import DrawHistoryService
 
@@ -45,7 +45,7 @@ class DrawPrizeService:
                 summary = self._enrich(game, draw_id, self.fetcher)
             else:
                 with httpx.Client(follow_redirects=True) as client:
-                    summary = self._enrich(game, draw_id, VietlottFetcher(client))
+                    summary = self._enrich(game, draw_id, configured_fetcher(client))
             if summary.status != "success":
                 if summary.counters["conflict"]:
                     raise PrizeReviewPendingError("source change requires review")

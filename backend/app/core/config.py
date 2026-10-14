@@ -2,7 +2,7 @@
 
 from functools import lru_cache
 
-from pydantic import PostgresDsn
+from pydantic import Field, PostgresDsn
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     mega_poll: str = "19:30"
     power_poll: str = "19:30"
     reconcile_poll: str = "07:00"
+    source_request_interval: float = Field(default=1.0, ge=1.0, allow_inf_nan=False)
 
 
 class SchedulerSwitch(BaseSettings):
