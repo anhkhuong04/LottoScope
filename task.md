@@ -424,6 +424,20 @@ full audit/hai collector chưa chạy. Bằng chứng trong `POWER_ACCEPTANCE.md
 Thử thêm lúc 08:43: run `303` tiếp tục exit 1/HTTP 429 tại latest page,
 không thêm draw; checkpoint và dữ liệu giữ nguyên, không có run treo.
 
+## Bổ sung UX — nhảy trực tiếp tới trang (14/10/2026)
+
+- [x] **UX-PAGE-01:** Pager dùng chung thêm “Đến trang” + tổng trang + nút
+  “Đi”; Enter để gửi, Escape khôi phục. Validate số nguyên 1..tổng trang,
+  không request khi gõ/số sai/trang hiện tại; single-page vô hiệu hóa.
+  Giữ trước/sau và URL/filter/back/forward hiện có; mobile wrap, hai mũi tên
+  cùng nhóm, input/nút bấm tối thiểu 44px. Không đổi API hoặc dữ liệu.
+- Kiểm chứng: lint, format, typecheck, build đạt; **17 unit tests pass**.
+  E2E toàn bộ trên Vite local + API Compose: **62 pass, 4 skip theo thiết bị**,
+  gồm 6 ca mới history/pairs trên desktop/tablet/mobile. Đã xem screenshot
+  thanh phân trang desktop/mobile; Axe trên pager và các màn hình đạt,
+  regression breakpoint không overflow. Không rebuild/deploy Compose trong
+  task này; frontend container hiện tại chưa chứa thay đổi mới.
+
 ## Trạng thái nghiệm thu MVP ban đầu
 
 - [x] **Backend MVP hoàn thành:** P0–P6 và P8-01, P8-03–P8-07, P8-09 đạt;

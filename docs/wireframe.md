@@ -531,6 +531,14 @@ MVP:
 
 Không cần advanced filtering theo từng number ở MVP.
 
+Bổ sung 14/10/2026: phân trang dùng chung ở history, number/pair detail,
+pair list và checker có ô “Đến trang”, tổng số trang và nút “Đi”. Nhập số
+trang rồi Enter hoặc nhấn “Đi” để chuyển; gõ chưa gửi request. Chỉ nhận số
+nguyên trong 1..tổng trang, báo lỗi tại ô nhập; Escape khôi phục trang hiện
+tại. Giữ nút trước/sau, bộ lọc và URL/back/forward hiện có. Khi chỉ một trang,
+vô hiệu hóa điều hướng. Mobile xuống dòng, không yêu cầu cuộn ngang, controls
+có touch target ít nhất 44px; label/focus/lỗi hỗ trợ bàn phím và screen reader.
+
 ---
 
 ## 8.4 Draw Detail

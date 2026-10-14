@@ -8,7 +8,7 @@ import {
   RefreshCw,
 } from 'lucide-react'
 import { Link, useLocation } from 'react-router'
-import { useState, type ReactNode } from 'react'
+import { useId, useState, type ReactNode } from 'react'
 import {
   ApiError,
   globalSearch,
@@ -310,27 +310,97 @@ export function Pager({
 }) {
   const pages = Math.max(1, Math.ceil(total / pageSize))
   return (
-    <div className="pagination">
-      <span>
+    <nav className="pagination" aria-label="Phân trang">
+      <span className="pagination-summary" aria-live="polite">
         Trang {page}/{pages} · {total} mục
       </span>
-      <button
-        aria-label="Trang trước"
-        className="btn"
-        disabled={page <= 1}
-        onClick={() => setPage(page - 1)}
-      >
-        <ArrowLeft size={16} />
-      </button>
-      <button
-        aria-label="Trang sau"
-        className="btn"
-        disabled={page >= pages}
-        onClick={() => setPage(page + 1)}
-      >
-        <ArrowRight size={16} />
-      </button>
-    </div>
+      <PageJump key={`${page}:${pages}:${total}`} page={page} pages={pages} setPage={setPage} />
+      <div className="pagination-arrows">
+        <button
+          aria-label="Trang trước"
+          className="btn"
+          disabled={page <= 1}
+          onClick={() => setPage(page - 1)}
+        >
+          <ArrowLeft size={16} />
+        </button>
+        <button
+          aria-label="Trang sau"
+          className="btn"
+          disabled={page >= pages}
+          onClick={() => setPage(page + 1)}
+        >
+          <ArrowRight size={16} />
+        </button>
+      </div>
+    </nav>
+  )
+}
+
+function PageJump({
+  page,
+  pages,
+  setPage,
+}: {
+  page: number
+  pages: number
+  setPage: (page: number) => void
+}) {
+  const id = useId()
+  const [draft, setDraft] = useState(String(page))
+  const [error, setError] = useState<string | null>(null)
+  return (
+    <form
+      className="page-jump"
+      noValidate
+      onSubmit={(event) => {
+        event.preventDefault()
+        const value = draft.trim()
+        const target = Number(value)
+        if (!/^\d+$/.test(value) || !Number.isSafeInteger(target) || target < 1 || target > pages) {
+          setError(`Nhập số trang từ 1 đến ${pages}.`)
+          return
+        }
+        setError(null)
+        setDraft(String(target))
+        if (target !== page) setPage(target)
+      }}
+    >
+      <div className="page-jump-controls">
+        <label htmlFor={id}>Đến trang</label>
+        <input
+          id={id}
+          className="text-input"
+          type="text"
+          inputMode="numeric"
+          value={draft}
+          disabled={pages <= 1}
+          aria-invalid={!!error}
+          aria-describedby={`${id}-hint${error ? ` ${id}-error` : ''}`}
+          onChange={(event) => {
+            setDraft(event.target.value)
+            setError(null)
+          }}
+          onKeyDown={(event) => {
+            if (event.key === 'Escape') {
+              setDraft(String(page))
+              setError(null)
+            }
+          }}
+        />
+        <span id={`${id}-hint`} className="muted">
+          / {pages}
+        </span>
+        <button className="btn" type="submit" disabled={pages <= 1}>
+          Đi
+        </button>
+      </div>
+      {error && (
+        <span id={`${id}-error`} className="page-jump-error" role="alert">
+          {error}
+        </span>
+      )}
+    </form>
   )
 }
 export function ContextNote({ count, version }: { count: number; version: number }) {
