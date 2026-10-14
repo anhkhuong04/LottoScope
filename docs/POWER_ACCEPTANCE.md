@@ -137,3 +137,6 @@ thay dữ liệu nguồn bằng dữ liệu giả để đánh dấu milestone h
 - POWER-05 vẫn chưa hoàn thành do nguồn bên ngoài. Không sửa code hoặc chạy
   lại test suite trong lượt vận hành này; giữ provenance/checkpoint để resume
   khi nguồn truy cập lại. Không đổi sang nguồn bên thứ ba hoặc bypass challenge.
+- Thử thêm lúc 08:43 cùng ngày theo yêu cầu: host run `303`, nhịp 5 giây/request,
+  tiếp tục exit 1/HTTP 429 tại latest page. Đối chiếu DB vẫn 77 draws đủ bảng
+  giải, checkpoint `00101`, không có run running; không nhập thêm kỳ mới.

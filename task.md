@@ -421,6 +421,8 @@ tại latest page dù giảm tốc xuống 5 giây/request (run `301`, `302`, ex
 Không thêm kỳ mới; PostgreSQL vẫn 77 draw đủ bảng giải, checkpoint `00101`,
 24 failed, không có run treo. POWER-05 giữ mở, chờ nguồn truy cập lại để resume;
 full audit/hai collector chưa chạy. Bằng chứng trong `POWER_ACCEPTANCE.md`.
+Thử thêm lúc 08:43: run `303` tiếp tục exit 1/HTTP 429 tại latest page,
+không thêm draw; checkpoint và dữ liệu giữ nguyên, không có run treo.
 
 ## Trạng thái nghiệm thu MVP ban đầu
 
