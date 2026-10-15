@@ -3,8 +3,9 @@
 from collections import deque
 from collections.abc import Callable, Iterable
 from concurrent.futures import Future, ThreadPoolExecutor
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import UTC, date, datetime
+from threading import Event
 from typing import Literal, Protocol
 
 from sqlalchemy import Engine, func, select, text
@@ -14,10 +15,12 @@ from sqlalchemy.orm import Session
 
 from app.domain.draw import Draw, validate_draw_id
 from app.games.definitions import DomainValidationError, get_game
-from app.ingestion.fetcher import SourceFetchError
+from app.ingestion.fetcher import SourceDeferredError, SourceFetchError
 from app.ingestion.sources import SourceParseError, parse_result, result_url
 from app.models.ingestion import IngestionCheckpointRow, IngestionItemRow, IngestionRunRow
 from app.repositories.draws import DrawRepository
+
+COLLECTOR_BATCH_LIMIT = 20
 
 
 class PageFetcher(Protocol):
@@ -82,6 +85,7 @@ class IngestionService:
         sequence: int,
         status: str,
         error: str | None,
+        advance_checkpoint: bool = True,
     ) -> None:
         session.execute(
             insert(IngestionItemRow)
@@ -103,6 +107,8 @@ class IngestionService:
                 },
             )
         )
+        if not advance_checkpoint:
+            return
         session.execute(
             insert(IngestionCheckpointRow)
             .values(game=game, last_scanned_seq=sequence, updated_at=self.now())
@@ -125,15 +131,24 @@ class IngestionService:
         *,
         from_date: date | None,
         to_date: date | None,
+        prefetched: Draw | None = None,
+        on_deferred: Callable[[], None] | None = None,
     ) -> str:
         draw_id = f"{sequence:05d}"
         url = result_url(game, draw_id)
         try:
-            html, retrieved_at = self.fetcher.fetch(url)
-            draw = parse_result(
-                html, game=game, expected_id=draw_id, source_url=url, retrieved_at=retrieved_at
-            )
+            if prefetched is not None:
+                if (prefetched.game, prefetched.draw_id) != (game, draw_id):
+                    raise DomainValidationError("prefetched", "draw identity mismatch")
+                draw = replace(prefetched, source_url=url)
+            else:
+                html, retrieved_at = self.fetcher.fetch(url)
+                draw = parse_result(
+                    html, game=game, expected_id=draw_id, source_url=url, retrieved_at=retrieved_at
+                )
         except SourceFetchError as exc:
+            if isinstance(exc, SourceDeferredError) and on_deferred is not None:
+                on_deferred()
             status = "missing" if exc.missing else "failed"
             with Session(self.engine) as session, session.begin():
                 self._record_item(
@@ -143,7 +158,10 @@ class IngestionService:
                     sequence=sequence,
                     status=status,
                     error=str(exc)[:500],
+                    advance_checkpoint=prefetched is None,
                 )
+            if isinstance(exc, SourceDeferredError):
+                raise
             return status
         except (SourceParseError, DomainValidationError) as exc:
             with Session(self.engine) as session, session.begin():
@@ -154,6 +172,7 @@ class IngestionService:
                     sequence=sequence,
                     status="invalid",
                     error=f"{url}: {exc}"[:500],
+                    advance_checkpoint=prefetched is None,
                 )
             return "invalid"
 
@@ -168,6 +187,7 @@ class IngestionService:
                     sequence=sequence,
                     status="excluded",
                     error=None,
+                    advance_checkpoint=prefetched is None,
                 )
             return "excluded"
 
@@ -185,6 +205,7 @@ class IngestionService:
                         if result.status == "conflict"
                         else None
                     ),
+                    advance_checkpoint=prefetched is None,
                 )
             return result.status
         except DomainValidationError as exc:
@@ -196,6 +217,7 @@ class IngestionService:
                     sequence=sequence,
                     status="invalid",
                     error=f"{url}: {exc}"[:500],
+                    advance_checkpoint=prefetched is None,
                 )
             return "invalid"
         except SQLAlchemyError as exc:
@@ -207,6 +229,7 @@ class IngestionService:
                     sequence=sequence,
                     status="failed",
                     error=f"{url}: database {type(exc).__name__}"[:500],
+                    advance_checkpoint=prefetched is None,
                 )
             return "failed"
 
@@ -307,8 +330,11 @@ class IngestionService:
             run_id = run.id
         status: Literal["success", "partial", "failed"] = "failed"
         error: str | None = None
+        latest_source: Draw | None = None
         try:
-            sequences, latest_source = self._plan_ids(game, kind, start_id=start_id, end_id=end_id)
+            sequences, latest_source = self._plan_ids(
+                game, kind, start_id=start_id, end_id=end_id, recheck_recent=recheck
+            )
             with Session(self.engine) as session, session.begin():
                 planned_run = session.get(IngestionRunRow, run_id)
                 if planned_run is None:
@@ -329,13 +355,37 @@ class IngestionService:
                             continue
                 pending.append(sequence)
 
+            stop_submitting = Event()
+
             def process(sequence: int) -> str:
-                return self._process_one(
-                    game, sequence, run_id, from_date=from_date, to_date=to_date
-                )
+                try:
+                    return self._process_one(
+                        game,
+                        sequence,
+                        run_id,
+                        from_date=from_date,
+                        to_date=to_date,
+                        prefetched=latest_source
+                        if kind == "collector"
+                        and latest_source
+                        and sequence == latest_source.draw_seq
+                        else None,
+                        on_deferred=stop_submitting.set,
+                    )
+                except SourceDeferredError:
+                    stop_submitting.set()
+                    raise
+
+            def record(outcome: str) -> None:
+                counts[outcome] += 1
+                if outcome == "created":
+                    counts["inserted"] += 1
+                elif outcome == "unchanged":
+                    counts["skipped"] += 1
 
             if kind == "import":
                 with ThreadPoolExecutor(max_workers=3) as pool:
+                    deferred: SourceDeferredError | None = None
                     iterator = iter(pending)
                     active: deque[tuple[int, Future[str]]] = deque()
                     for sequence in iterator:
@@ -344,27 +394,29 @@ class IngestionService:
                             break
                     while active:
                         sequence, future = active.popleft()
-                        outcome = future.result()
-                        counts[outcome] += 1
-                        if outcome == "created":
-                            counts["inserted"] += 1
-                        elif outcome == "unchanged":
-                            counts["skipped"] += 1
+                        try:
+                            record(future.result())
+                        except SourceDeferredError as exc:
+                            counts["failed"] += 1
+                            deferred = exc
                         if self.progress is not None and sequence % 50 == 0:
                             self.progress(sequence, counts.copy())
+                        if stop_submitting.is_set():
+                            continue  # Drain already running work, but submit no further IDs.
                         try:
                             following = next(iterator)
                         except StopIteration:
                             continue
                         active.append((following, pool.submit(process, following)))
+                if deferred is not None:
+                    raise deferred
             else:
                 for sequence in pending:
-                    outcome = process(sequence)
-                    counts[outcome] += 1
-                    if outcome == "created":
-                        counts["inserted"] += 1
-                    elif outcome == "unchanged":
-                        counts["skipped"] += 1
+                    try:
+                        record(process(sequence))
+                    except SourceDeferredError:
+                        counts["failed"] += 1
+                        raise
             status = (
                 "partial"
                 if any(counts[key] for key in ("conflict", "missing", "invalid", "failed"))
@@ -372,12 +424,22 @@ class IngestionService:
             )
         except (SourceFetchError, SourceParseError, ImportPrerequisiteError) as exc:
             error = str(exc)[:500]
-            status = "failed"
+            status = (
+                "partial"
+                if any(counts[key] for key in ("created", "enriched", "unchanged", "conflict"))
+                else "failed"
+            )
         except Exception as exc:
             # Job boundary records failure, then propagates unexpected bugs for logs/exit status.
             error = f"{type(exc).__name__}: {exc}"[:500]
             raise
         finally:
+            if kind == "collector" and latest_source is not None:
+                counts["remaining_unresolved"] = self._finish_collector_checkpoint(
+                    game, latest_source.draw_seq
+                )
+                if status == "success" and counts["remaining_unresolved"]:
+                    status = "partial"
             with Session(self.engine) as session, session.begin():
                 row = session.get(IngestionRunRow, run_id)
                 if row is None:
@@ -388,6 +450,40 @@ class IngestionService:
                 row.error_summary = error
         return RunSummary(run_id, game, kind, status, counts)
 
+    def _finish_collector_checkpoint(self, game: str, upper: int) -> int:
+        """Latest-first writes must not advance the checkpoint across unattempted IDs."""
+        with Session(self.engine) as session, session.begin():
+            scanned = (
+                session.scalar(
+                    select(func.count())
+                    .select_from(IngestionItemRow)
+                    .where(
+                        IngestionItemRow.game == game,
+                        IngestionItemRow.draw_seq <= upper,
+                        IngestionItemRow.status != "excluded",
+                    )
+                )
+                or 0
+            )
+            if scanned == upper:
+                checkpoint = session.get(IngestionCheckpointRow, game)
+                if checkpoint is not None:
+                    checkpoint.last_scanned_seq = upper
+                    checkpoint.updated_at = self.now()
+            found = (
+                session.scalar(
+                    select(func.count())
+                    .select_from(IngestionItemRow)
+                    .where(
+                        IngestionItemRow.game == game,
+                        IngestionItemRow.draw_seq <= upper,
+                        IngestionItemRow.status == "found",
+                    )
+                )
+                or 0
+            )
+            return upper - found
+
     def _plan_ids(
         self,
         game: str,
@@ -395,6 +491,7 @@ class IngestionService:
         *,
         start_id: str | None,
         end_id: str | None,
+        recheck_recent: bool = True,
     ) -> tuple[Iterable[int], Draw]:
         latest = self._latest_source(game)
         if end_id is not None and int(end_id) > latest.draw_seq:
@@ -438,17 +535,19 @@ class IngestionService:
                 )
             start = checkpoint.last_scanned_seq + 1
             unresolved = session.scalars(
-                select(IngestionItemRow.draw_seq).where(
+                select(IngestionItemRow.draw_seq)
+                .where(
                     IngestionItemRow.game == game,
                     IngestionItemRow.status.in_(["missing", "invalid", "failed"]),
                     IngestionItemRow.draw_seq <= upper,
                 )
+                .order_by(IngestionItemRow.attempted_at, IngestionItemRow.draw_seq)
             ).all()
-        return sorted(
-            set(range(start, upper + 1))
-            | set(range(max(1, upper - 6), upper + 1))
-            | set(unresolved)
-        ), latest
+        rechecks = [*range(upper - 1, max(0, upper - 7), -1), *unresolved] if recheck_recent else []
+        # Publish validated latest before any slow history work. New IDs remain ascending
+        # so a deferred batch can resume without creating an unscanned checkpoint gap.
+        planned = dict.fromkeys([upper, *range(start, upper), *rechecks])
+        return list(planned)[:COLLECTOR_BATCH_LIMIT], latest
 
     def import_history(
         self,
@@ -470,7 +569,7 @@ class IngestionService:
             recheck=recheck,
         )
 
-    def collect(self, game: str) -> RunSummary:
+    def collect(self, game: str, *, recheck_recent: bool = True) -> RunSummary:
         return self._run(
             game,
             "collector",
@@ -478,7 +577,7 @@ class IngestionService:
             end_id=None,
             from_date=None,
             to_date=None,
-            recheck=True,
+            recheck=recheck_recent,
         )
 
     def status(self, game: str) -> IngestionStatus:

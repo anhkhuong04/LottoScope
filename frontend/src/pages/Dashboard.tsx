@@ -120,6 +120,9 @@ export function Dashboard() {
           <DataState {...status} hasData={!!status.data}>
             {status.data && (
               <div className="stack">
+                <p className="muted">
+                  Kỳ mới được đồng bộ tự động. Nút Tải lại chỉ đọc dữ liệu đã lưu.
+                </p>
                 <div>
                   <strong>Kỳ mới nhất:</strong> {status.data.latest_draw_id ?? 'Chưa có'}
                 </div>

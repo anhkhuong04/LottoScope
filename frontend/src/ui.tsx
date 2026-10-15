@@ -184,7 +184,7 @@ export function DataState({
       {children}
       <div className="refresh-row">
         <button className="btn ghost" disabled={loading} onClick={retry}>
-          <RefreshCw size={15} /> Cập nhật
+          <RefreshCw size={15} /> Tải lại dữ liệu
         </button>
       </div>
     </>

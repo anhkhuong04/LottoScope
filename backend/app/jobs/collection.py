@@ -13,10 +13,33 @@ from app.core.config import Settings
 from app.db.session import get_engine
 from app.games.definitions import GAMES
 from app.ingestion.fetcher import configured_fetcher
-from app.ingestion.service import IngestionService, JobOverlapError
+from app.ingestion.service import IngestionService, JobOverlapError, RunSummary
 
 logger = logging.getLogger(__name__)
 VIETNAM_TZ = ZoneInfo("Asia/Ho_Chi_Minh")
+
+
+def run_collections(*, recheck_recent: bool = False) -> tuple[RunSummary, ...]:
+    """Sequential games share one connection pool/throttle; cheap polls read latest once."""
+    summaries: list[RunSummary] = []
+    with httpx.Client(follow_redirects=True) as client:
+        service = IngestionService(get_engine(), configured_fetcher(client))
+        for game in GAMES:
+            try:
+                summary = service.collect(game, recheck_recent=recheck_recent)
+            except JobOverlapError:
+                logger.info("collector game=%s skipped: ingestion already running", game)
+                continue
+            summaries.append(summary)
+            log = logger.info if summary.status == "success" else logger.warning
+            log(
+                "collector game=%s run=%s status=%s counters=%s",
+                game,
+                summary.run_id,
+                summary.status,
+                summary.counters,
+            )
+    return tuple(summaries)
 
 
 def run_collection(game: str) -> None:
@@ -39,6 +62,15 @@ def run_collection(game: str) -> None:
 
 def build_scheduler(settings: Settings) -> BackgroundScheduler:
     scheduler = BackgroundScheduler(timezone=VIETNAM_TZ)
+    scheduler.add_job(  # pyright: ignore[reportUnknownMemberType]
+        run_collections,
+        "interval",
+        minutes=settings.latest_poll_minutes,
+        id="latest_poll",
+        max_instances=1,
+        coalesce=True,
+        misfire_grace_time=300,
+    )
     # Cron jobs are rebuilt after a restart and cannot replay polls missed while offline.
     # The shared collector backfills from PostgreSQL's checkpoint, under its per-game lock.
     for game in GAMES:

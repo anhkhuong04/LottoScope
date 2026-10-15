@@ -68,11 +68,23 @@ và [Mega](https://vietlott.vn/vi/trung-thuong/ket-qua-trung-thuong/645?id=01530
 Giờ poll là giờ **kiểm tra**, không là `draw_time` và không bảo đảm kết quả
 đã được đăng đúng lúc đó.
 
-Mỗi lần poll lấy latest ID, rồi backfill mọi ID từ ID đã xử lý gần nhất đến
-latest và retry các lỗ hổng tồn. Nếu chưa có local history, dùng import riêng
+Ngoài cron, scheduler kiểm tra latest mỗi 5 phút (`LOTTO_LATEST_POLL_MINUTES`,
+5–60). Ba game chạy tuần tự, chung fetcher/throttle; poll nhanh không recheck
+lịch sử cũ. Cron/startup/lệnh `collect` vẫn đối chiếu recent và retry backlog.
+
+Mỗi lần poll lấy latest ID, rồi bù các ID mới trong giới hạn batch. Lượt
+cron/startup/`collect` đối chiếu thêm recent và các lỗ hổng tồn. Nếu chưa có local history, dùng import riêng
 thay vì ngầm backfill toàn lịch sử trong một poll. Không dùng điều kiện
 "latest page không đổi" để bỏ qua các ID còn thiếu/correction. Reconcile
 gần nhất kiểm tra lại 7 ID cuối; khác nội dung đi theo correction policy.
+
+Mỗi collector xử lý tối đa 20 ID: lưu draw latest đã validate ngay từ lần
+fetch đầu, không tải lại cùng ID; sau đó bù ID chưa scan theo thứ tự tăng,
+recent và backlog theo lần thử cũ nhất. Latest ghi trước không được đẩy
+checkpoint qua ID chưa thử, kể cả khi persist latest lỗi. Chỉ nâng checkpoint
+đến latest khi mọi ID trước đó đã scan. `remaining_unresolved` đếm ID chưa
+found đến source latest; còn thiếu thì run `partial`, không tuyên bố history
+đầy đủ. Quyết định/vận hành local ở [ADR 0007](DECISIONS/0007-fast-collection.md).
 
 ## Retry, duplicate, correction
 
@@ -102,6 +114,10 @@ snapshot được bổ sung lần đầu, không tăng số draw/`inserted`. Con
   dùng cùng nguồn/adapter và PostgreSQL, không chuyển sang bên thứ ba. Khi
   website trả trang Cloudflare challenge/429, giữ trạng thái lỗi và retry sau,
   không coi HTML challenge là draw hoặc thay bằng dữ liệu tự dựng.
+  Header `cf-mitigated: challenge` dừng ngay, không retry request đó. HTTP 429
+  thường sau tối đa 3 attempts hoặc Retry-After quá dài cũng hoãn cả batch.
+  Import ngừng submit ID mới, chờ tối đa 3 task đang chạy và ghi counters đúng;
+  collector dừng ở ID lỗi. Không tiếp tục hàng nghìn request khi đã bị chặn.
 - `(game, draw_id)` unique ở PostgreSQL. Insert dùng transaction và DB
   conflict handling, không chỉ check-before-insert. Payload canonical bằng
   nhau: không đổi draw, ghi `attempted_at` trong `ingestion_items`; khác

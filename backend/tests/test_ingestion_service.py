@@ -9,10 +9,11 @@ from urllib.parse import parse_qs, urlsplit
 
 import pytest
 from sqlalchemy import create_engine, func, select, text
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.ingestion.audit import audit_history
-from app.ingestion.fetcher import SourceFetchError
+from app.ingestion.fetcher import SourceDeferredError, SourceFetchError
 from app.ingestion.service import IngestionService, JobOverlapError
 from app.models.draw import DrawCorrectionRow, DrawRow, GameDataStateRow
 from app.models.ingestion import IngestionCheckpointRow, IngestionItemRow, IngestionRunRow
@@ -234,7 +235,7 @@ def test_collector_deduplicates_backfill_and_recent_recheck(engine) -> None:
     assert summary.status == "success"
     assert summary.counters["created"] == 2
     assert summary.counters["unchanged"] == 5
-    assert fetcher.calls == ["00008", "00002", "00003", "00004", "00005", "00006", "00007", "00008"]
+    assert fetcher.calls == ["00008", "00007", "00006", "00005", "00004", "00003", "00002"]
 
 
 @pytest.mark.integration
@@ -292,3 +293,181 @@ def test_audit_requires_full_coverage_and_matches_source_samples(engine) -> None
     )
     unavailable = audit_history(engine, unavailable_fetcher, "lotto_535")
     assert "00002:source_unavailable_or_invalid" in unavailable.sample_mismatches
+
+
+@pytest.mark.integration
+def test_latest_is_committed_before_backfill_and_not_fetched_twice(engine) -> None:
+    template = fixture("535", "00001")
+    pages = {f"{seq:05d}": template.replace("#00001", f"#{seq:05d}") for seq in range(1, 11)}
+
+    class ObservingFetcher(FixtureFetcher):
+        inspect_backfill = False
+
+        def fetch(self, url: str) -> tuple[str, datetime]:
+            if self.inspect_backfill and "?id=" in url:
+                with Session(engine) as session:
+                    assert session.scalar(select(func.max(DrawRow.draw_id))) == "00010"
+            return super().fetch(url)
+
+    fetcher = ObservingFetcher(latest="00010", pages=pages)
+    service = IngestionService(engine, fetcher)
+    service.import_history("lotto_535", end_id="00006")
+    fetcher.calls.clear()
+    fetcher.inspect_backfill = True
+    result = service.collect("lotto_535")
+    assert result.status == "success"
+    assert fetcher.calls.count("00010") == 1
+    assert result.counters["created"] == 4
+    with Session(engine) as session:
+        assert session.get(IngestionCheckpointRow, "lotto_535").last_scanned_seq == 10
+        assert session.scalar(select(func.count()).select_from(DrawRow)) == 10
+        assert session.scalar(select(DrawRow.source_url).where(DrawRow.draw_id == "00010")) == (
+            "https://vietlott.vn/vi/trung-thuong/ket-qua-trung-thuong/535?id=00010&nocatche=1"
+        )
+
+
+@pytest.mark.integration
+def test_deferred_batch_stops_and_checkpoint_resumes_unattempted_new_ids(engine) -> None:
+    template = fixture("535", "00001")
+    pages = {f"{seq:05d}": template.replace("#00001", f"#{seq:05d}") for seq in range(1, 11)}
+    fetcher = FixtureFetcher(latest="00010", pages=pages.copy())
+    service = IngestionService(engine, fetcher)
+    service.import_history("lotto_535", end_id="00006")
+    fetcher.calls.clear()
+    fetcher.pages["00007"] = SourceDeferredError("source", "challenge; deferred")
+    result = service.collect("lotto_535")
+    assert result.status == "partial"
+    assert fetcher.calls == ["00010", "00007"]
+    assert result.counters["failed"] == 1
+    with Session(engine) as session:
+        assert session.get(IngestionCheckpointRow, "lotto_535").last_scanned_seq == 7
+        assert session.get(IngestionItemRow, ("lotto_535", 8)) is None
+        assert session.scalar(select(func.max(DrawRow.draw_id))) == "00010"
+        assert "deferred" in session.get(IngestionRunRow, result.run_id).error_summary
+    fetcher.pages = pages
+    assert service.collect("lotto_535").status == "success"
+    with Session(engine) as session:
+        assert session.scalar(select(func.count()).select_from(DrawRow)) == 10
+
+
+@pytest.mark.integration
+def test_collector_bounds_large_retry_backlog_and_reports_remaining_history(engine) -> None:
+    template = fixture("535", "00001")
+    pages = {f"{seq:05d}": template.replace("#00001", f"#{seq:05d}") for seq in range(1, 51)}
+    fetcher = FixtureFetcher(latest="00050", pages=pages)
+    service = IngestionService(engine, fetcher)
+    service.import_history("lotto_535", end_id="00050")
+    with Session(engine) as session, session.begin():
+        for seq in range(2, 50):
+            session.get(IngestionItemRow, ("lotto_535", seq)).status = "failed"
+    fetcher.calls.clear()
+    result = service.collect("lotto_535")
+    assert result.status == "partial"
+    assert len(fetcher.calls) <= 20
+    assert 0 < result.counters["remaining_unresolved"] < 48
+
+
+@pytest.mark.integration
+def test_import_stops_submitting_after_source_deferral_and_counts_inflight_results(engine) -> None:
+    template = fixture("535", "00001")
+    pages: dict[str, str | SourceFetchError] = {
+        f"{seq:05d}": template.replace("#00001", f"#{seq:05d}") for seq in range(1, 31)
+    }
+    pages["00001"] = SourceDeferredError("source", "HTTP 429; deferred")
+    fetcher = FixtureFetcher(latest="00030", pages=pages)
+    result = IngestionService(engine, fetcher).import_history("lotto_535")
+    assert result.status == "partial"
+    assert len(fetcher.calls) <= 4  # upper-bound page + at most three in flight
+    assert result.counters["failed"] == 1
+    assert result.counters["created"] == 2
+
+
+@pytest.mark.integration
+def test_import_deferral_in_later_future_does_not_submit_more_ids(engine) -> None:
+    blocked = Event()
+    template = fixture("535", "00001")
+
+    class OutOfOrderFetcher(FixtureFetcher):
+        def fetch(self, url: str) -> tuple[str, datetime]:
+            if "?id=00001" in url:
+                assert blocked.wait(timeout=5)
+            if "?id=00002" in url:
+                blocked.set()
+                raise SourceDeferredError(url, "challenge; deferred")
+            return super().fetch(url)
+
+    pages = {f"{seq:05d}": template.replace("#00001", f"#{seq:05d}") for seq in range(1, 11)}
+    fetcher = OutOfOrderFetcher(latest="00010", pages=pages)
+    result = IngestionService(engine, fetcher).import_history("lotto_535")
+    assert result.counters["created"] == 2
+    assert fetcher.calls == ["00010", "00001", "00003"] or fetcher.calls == [
+        "00010",
+        "00003",
+        "00001",
+    ]
+
+
+@pytest.mark.integration
+def test_latest_only_poll_uses_one_request_and_keeps_backfill_gaps_visible(engine) -> None:
+    template = fixture("535", "00001")
+    pages = {f"{seq:05d}": template.replace("#00001", f"#{seq:05d}") for seq in range(1, 4)}
+    fetcher = FixtureFetcher(latest="00003", pages=pages)
+    service = IngestionService(engine, fetcher)
+    service.import_history("lotto_535")
+    fetcher.calls.clear()
+    assert service.collect("lotto_535", recheck_recent=False).status == "success"
+    assert fetcher.calls == ["00003"]
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("failure", ["chronology", "database"])
+def test_prefetched_write_failure_never_advances_over_unattempted_ids(engine, monkeypatch, failure):
+    from app.repositories.draws import DrawRepository
+
+    template = fixture("535", "00001")
+    pages = {f"{seq:05d}": template.replace("#00001", f"#{seq:05d}") for seq in range(1, 101)}
+    fetcher = FixtureFetcher(latest="00100", pages=pages)
+    service = IngestionService(engine, fetcher)
+    service.import_history("lotto_535", end_id="00001")
+    if failure == "chronology":
+        assert "29/06/2025" in pages["00100"]
+        fetcher.pages["00100"] = pages["00100"].replace("29/06/2025", "28/06/2025")
+    else:
+        original_add = DrawRepository.add
+
+        def fail_latest(repo, draw):
+            if draw.draw_id == "00100":
+                raise SQLAlchemyError("injected database failure")
+            return original_add(repo, draw)
+
+        monkeypatch.setattr(DrawRepository, "add", fail_latest)
+    first = service.collect("lotto_535")
+    assert first.status == "partial"
+    with Session(engine) as session:
+        assert session.get(IngestionCheckpointRow, "lotto_535").last_scanned_seq == 20
+        assert session.get(IngestionItemRow, ("lotto_535", 21)) is None
+    second = service.collect("lotto_535")
+    with Session(engine) as session:
+        assert session.get(IngestionRunRow, second.run_id).error_summary is None
+        assert session.get(IngestionCheckpointRow, "lotto_535").last_scanned_seq > 20
+
+
+@pytest.mark.integration
+def test_permanent_recent_failures_do_not_starve_older_recoverable_ids(engine):
+    template = fixture("535", "00001")
+    pages = {f"{seq:05d}": template.replace("#00001", f"#{seq:05d}") for seq in range(1, 51)}
+    fetcher = FixtureFetcher(latest="00050", pages=pages)
+    service = IngestionService(engine, fetcher)
+    service.import_history("lotto_535")
+    with Session(engine) as session, session.begin():
+        for seq in range(2, 50):
+            item = session.get(IngestionItemRow, ("lotto_535", seq))
+            item.status = "failed"
+            item.attempted_at = datetime(2000, 1, 1, tzinfo=UTC)
+    for seq in range(4, 50):
+        del fetcher.pages[f"{seq:05d}"]
+    for _ in range(2):
+        assert service.collect("lotto_535").status == "partial"
+    with Session(engine) as session:
+        assert session.get(IngestionItemRow, ("lotto_535", 2)).status == "found"
+        assert session.get(IngestionItemRow, ("lotto_535", 3)).status == "found"

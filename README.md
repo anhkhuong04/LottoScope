@@ -33,8 +33,40 @@ Sau cập nhật Power, chạy migration `0005_power_655` theo quy trình ở tr
 Khi scheduler bật (mặc định trong Compose), backend tự đồng bộ nền cả ba game
 mỗi lần khởi động để bù kỳ bỏ lỡ khi máy tắt, rồi tiếp tục lịch poll trong
 [DATA_PIPELINE.md](docs/DATA_PIPELINE.md#collector-kỳ-mới). Theo dõi kết quả bằng
-`docker compose logs -f backend`. Nút **Cập nhật** trên giao diện tải lại dữ liệu
+`docker compose logs -f backend`. Có poll latest mỗi 5 phút (cấu hình
+`LOTTO_LATEST_POLL_MINUTES=5`, giới hạn 5–60), ngoài lịch đối chiếu cũ.
+Nút **Tải lại dữ liệu** trên giao diện tải lại dữ liệu
 đã lưu; dùng lệnh `collect` bên dưới nếu cần thu thập ngay khi backend đang chạy.
+
+### Collector trên Windows khi nguồn chặn Docker
+
+Ngày 15/10, Vietlott trả challenge/429 từ Docker; host Windows đọc được trong
+lượt khôi phục nhưng cũng có thể bị chặn lại. Có thể dùng cùng collector trên
+host, kết nối PostgreSQL Compose; không thay nguồn hoặc bypass challenge.
+
+Đặt `LOTTO_SCHEDULER_ENABLED=false` trong `.env`, chạy `docker compose up -d
+backend --wait`, rồi từ root:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-local-sync.ps1
+Get-ScheduledTask -TaskName 'LottoScope*'
+Get-ScheduledTaskInfo -TaskName 'LottoScope-LocalSync'
+Get-Content .\collector-local.log -Tail 20
+```
+
+Installer dùng uv hiện có, tạo task dưới user hiện tại: `LottoScope-LocalSync`
+mỗi 5 phút + khi đăng nhập; `LottoScope-Reconcile` lúc 07:00 giờ Windows
+(máy hiện tại UTC+07). Task chạy ẩn, cần Windows đăng nhập và Docker/API ready;
+Docker tắt thì bỏ lượt. Chỉ một bên sở hữu lịch chạy: không bật đồng thời
+Docker scheduler. File `.env` được đọc lúc chạy, credential không nằm trong
+task arguments. Lượt partial/failed có exit 1; xem logs và DB, không coi là đã
+nhập đủ history. Nguồn 429 thì giữ dữ liệu và đợi lượt sau.
+
+Chạy một lượt ngay: `powershell.exe -NoProfile -ExecutionPolicy Bypass -File
+.\scripts\sync-local.ps1`; thêm `-Reconcile` để kiểm recent/backlog, tối đa
+20 ID/game. Để chuyển về Docker: dừng/gỡ hai task bằng
+`Unregister-ScheduledTask -TaskName 'LottoScope-LocalSync','LottoScope-Reconcile'
+-Confirm:$false`, đặt `LOTTO_SCHEDULER_ENABLED=true`, recreate backend.
 
 Migration phải hoàn tất trước khi import. Các lệnh chạy trong backend container nên dùng đúng URL database trong `.env`:
 

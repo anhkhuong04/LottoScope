@@ -135,3 +135,20 @@ def test_server_error_retries_then_succeeds() -> None:
         html, _ = VietlottFetcher(client, sleep=lambda _: None, jitter=lambda: 0.0).fetch(URL)
     assert html == "ok"
     assert calls == 2
+
+
+@pytest.mark.parametrize("code", [200, 403, 429])
+def test_cloudflare_challenge_defers_immediately_without_retries(code: int) -> None:
+    calls = 0
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal calls
+        calls += 1
+        return httpx.Response(
+            code, headers={"cf-mitigated": "challenge"}, text="challenge", request=request
+        )
+
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        with pytest.raises(SourceFetchError, match="challenge"):
+            VietlottFetcher(client, sleep=lambda _: None).fetch(URL)
+    assert calls == 1

@@ -15,6 +15,10 @@ Mở rộng Power 6/55 được yêu cầu ngày 14/10/2026: quyết định ở
 `task.md`. Contract ba game ở Domain/Data Model/Data Pipeline/API; checker,
 generator và analytics tiếp tục main-only. Đây là milestone hậu MVP.
 
+Sửa cập nhật latest ngày 15/10/2026: [ADR 0007](../docs/DECISIONS/0007-fast-collection.md),
+contract collector ở Data Pipeline; Windows local tasks và cách đổi owner
+scheduler ở README. Không nhầm khôi phục latest với full-history Power.
+
 ## Phạm vi
 
 - [MVP.md](../docs/MVP.md) chốt backend MVP trước, frontend MVP sau; ứng

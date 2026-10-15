@@ -18,6 +18,10 @@ class SourceFetchError(RuntimeError):
         self.missing = missing
 
 
+class SourceDeferredError(SourceFetchError):
+    """Source is rate limited/challenged; stop this batch instead of trying every ID."""
+
+
 class VietlottFetcher:
     def __init__(
         self,
@@ -73,6 +77,8 @@ class VietlottFetcher:
                 if attempt == 3:
                     raise SourceFetchError(url, type(exc).__name__) from exc
             else:
+                if response.headers.get("cf-mitigated", "").lower() == "challenge":
+                    raise SourceDeferredError(url, "Cloudflare challenge; deferred")
                 if response.status_code == 200:
                     return response.text, self.now()
                 if response.status_code == 404:
@@ -80,10 +86,12 @@ class VietlottFetcher:
                 if response.status_code != 429 and response.status_code < 500:
                     raise SourceFetchError(url, f"HTTP {response.status_code}")
                 if attempt == 3:
+                    if response.status_code == 429:
+                        raise SourceDeferredError(url, "HTTP 429; deferred")
                     raise SourceFetchError(url, f"HTTP {response.status_code}")
             delay = self._retry_delay(response, attempt)
             if delay > 60.0:
-                raise SourceFetchError(url, "Retry-After exceeds 60 seconds; deferred")
+                raise SourceDeferredError(url, "Retry-After exceeds 60 seconds; deferred")
             self.sleep(delay)
         raise AssertionError("bounded fetch loop did not return or raise")
 

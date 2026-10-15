@@ -3,6 +3,7 @@
 from datetime import UTC, datetime, timedelta
 from threading import Event
 
+from apscheduler.events import EVENT_JOB_REMOVED
 from fastapi.testclient import TestClient
 
 import app.jobs.collection as collection
@@ -77,6 +78,7 @@ def test_vietnam_schedule_registers_poll_and_reconcile() -> None:
         "lotto_535_startup",
         "mega_645_startup",
         "power_655_startup",
+        "latest_poll",
     }
     assert "hour='23'" in jobs["lotto_second"]
     assert "minute='45'" in jobs["lotto_second"]
@@ -90,6 +92,11 @@ def test_delayed_scheduler_start_does_not_discard_catchup(monkeypatch) -> None:
     scheduler = build_scheduler(
         Settings(database_url="postgresql+psycopg://lotto:example@localhost/lotto")
     )
+    removed = {f"{game}_startup": Event() for game in completed}
+    scheduler.add_listener(
+        lambda event: removed[event.job_id].set() if event.job_id in removed else None,
+        EVENT_JOB_REMOVED,
+    )
     # Simulate time passing between job creation and scheduler start, without sleeping.
     for game in completed:
         scheduler.modify_job(
@@ -98,5 +105,16 @@ def test_delayed_scheduler_start_does_not_discard_catchup(monkeypatch) -> None:
     scheduler.start()
     try:
         assert all(event.wait(timeout=3) for event in completed.values())
+        assert all(event.wait(timeout=3) for event in removed.values())
     finally:
         scheduler.shutdown(wait=True)
+
+
+def test_frequent_latest_poll_is_bounded_and_coalesced() -> None:
+    scheduler = build_scheduler(
+        Settings(database_url="postgresql+psycopg://lotto:example@localhost/lotto")
+    )
+    job = scheduler.get_job("latest_poll")
+    assert job is not None
+    assert job.trigger.interval == timedelta(minutes=5)
+    assert job.max_instances == 1 and job.coalesce is True

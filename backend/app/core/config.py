@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     power_poll: str = "19:30"
     reconcile_poll: str = "07:00"
     source_request_interval: float = Field(default=1.0, ge=1.0, allow_inf_nan=False)
+    latest_poll_minutes: int = Field(default=5, ge=5, le=60)
 
 
 class SchedulerSwitch(BaseSettings):

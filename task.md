@@ -438,6 +438,25 @@ không thêm draw; checkpoint và dữ liệu giữ nguyên, không có run treo
   regression breakpoint không overflow. Không rebuild/deploy Compose trong
   task này; frontend container hiện tại chưa chứa thay đổi mới.
 
+## Sửa đồng bộ kỳ mới — 15/10/2026
+
+- [x] **SYNC-01 — Chặn retry storm và ưu tiên latest.** Challenge hoãn ngay;
+  import dừng submit/drain in-flight đúng counters. Collector lưu latest từ
+  trang đã validate, không refetch, giới hạn 20 ID, checkpoint an toàn ở cả
+  đường lỗi; backlog xoay theo attempted_at, còn thiếu báo partial.
+- [x] **SYNC-02 — Poll và vận hành local.** Poll latest 5 phút, ba game dùng
+  chung throttle tuần tự. Hỗ trợ Windows local tasks (poll/logon + daily),
+  một scheduler owner, đọc `.env` khi chạy, giữ PostgreSQL nguồn duy nhất.
+  Đã cài trên máy hiện tại, tắt scheduler Docker, phục hồi latest ba game.
+- [x] **SYNC-03 — Kiểm chứng và tài liệu.** 175 backend tests, Ruff/Pyright/
+  format; frontend lint/type/build/format, 17 unit và Compose E2E 62 pass/
+  4 skip. Backup trước recovery; source/DB/API latest khớp trong lượt nguồn
+  truy cập được. Review độc lập, README/Data Pipeline/ADR đã cập nhật.
+
+Bằng chứng, tốc độ đo và giới hạn nguồn ở [ADR 0007](docs/DECISIONS/0007-fast-collection.md).
+Vietlott vẫn có thể trả 429 cả từ host; lịch tự động đã chạy nhưng không cam kết
+nguồn luôn mở. Power đã có latest 01410, full history/audit POWER-05 còn mở.
+
 ## Trạng thái nghiệm thu MVP ban đầu
 
 - [x] **Backend MVP hoàn thành:** P0–P6 và P8-01, P8-03–P8-07, P8-09 đạt;
