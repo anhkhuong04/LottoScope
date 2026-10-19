@@ -417,6 +417,12 @@ def test_latest_only_poll_uses_one_request_and_keeps_backfill_gaps_visible(engin
     fetcher.calls.clear()
     assert service.collect("lotto_535", recheck_recent=False).status == "success"
     assert fetcher.calls == ["00003"]
+    with Session(engine) as session, session.begin():
+        session.get(IngestionItemRow, ("lotto_535", 1)).status = "failed"
+    result = service.collect("lotto_535", recheck_recent=False)
+    assert result.status == "partial"
+    assert result.counters["remaining_unresolved"] == 1
+    assert result.latest_poll_succeeded is True
 
 
 @pytest.mark.integration

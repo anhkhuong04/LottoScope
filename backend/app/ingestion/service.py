@@ -43,6 +43,24 @@ class RunSummary:
     status: Literal["success", "partial", "failed"]
     counters: dict[str, int]
 
+    @property
+    def latest_poll_succeeded(self) -> bool:
+        """An old backlog alone does not make an otherwise healthy latest poll fail."""
+        return self.kind == "collector" and (
+            self.status == "success"
+            or (
+                self.status == "partial"
+                and self.counters.get("remaining_unresolved", 0) > 0
+                and any(
+                    self.counters.get(key, 0) > 0 for key in ("created", "enriched", "unchanged")
+                )
+                and not any(
+                    self.counters.get(key, 0)
+                    for key in ("failed", "invalid", "missing", "conflict", "excluded")
+                )
+            )
+        )
+
 
 @dataclass(frozen=True, slots=True)
 class IngestionStatus:

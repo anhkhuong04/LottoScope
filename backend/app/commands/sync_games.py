@@ -16,7 +16,14 @@ def main() -> int:
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     summaries = run_collections(recheck_recent=args.recheck_recent)
-    return int(any(summary.status != "success" for summary in summaries))
+    return int(
+        any(
+            summary.status != "success"
+            if args.recheck_recent
+            else not summary.latest_poll_succeeded
+            for summary in summaries
+        )
+    )
 
 
 if __name__ == "__main__":

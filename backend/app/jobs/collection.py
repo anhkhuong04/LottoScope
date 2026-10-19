@@ -31,7 +31,10 @@ def run_collections(*, recheck_recent: bool = False) -> tuple[RunSummary, ...]:
                 logger.info("collector game=%s skipped: ingestion already running", game)
                 continue
             summaries.append(summary)
-            log = logger.info if summary.status == "success" else logger.warning
+            healthy = summary.status == "success" or (
+                not recheck_recent and summary.latest_poll_succeeded
+            )
+            log = logger.info if healthy else logger.warning
             log(
                 "collector game=%s run=%s status=%s counters=%s",
                 game,

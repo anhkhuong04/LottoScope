@@ -59,8 +59,15 @@ mỗi 5 phút + khi đăng nhập; `LottoScope-Reconcile` lúc 07:00 giờ Windo
 (máy hiện tại UTC+07). Task chạy ẩn, cần Windows đăng nhập và Docker/API ready;
 Docker tắt thì bỏ lượt. Chỉ một bên sở hữu lịch chạy: không bật đồng thời
 Docker scheduler. File `.env` được đọc lúc chạy, credential không nằm trong
-task arguments. Lượt partial/failed có exit 1; xem logs và DB, không coi là đã
-nhập đủ history. Nguồn 429 thì giữ dữ liệu và đợi lượt sau.
+task arguments. Poll latest trả exit 0 nếu latest đã được xác thực/lưu và chỉ
+còn backlog lịch sử cũ; run trong DB vẫn `partial`. Với `-Reconcile`, còn
+partial/failed vẫn exit 1. Lỗi nguồn, parse, DB hoặc conflict luôn báo lỗi;
+exit 0 của poll không chứng minh history đầy đủ. Nguồn 429 giữ dữ liệu và đợi lượt sau.
+
+Nếu task ở trạng thái `Disabled`, bật lại bằng
+`Enable-ScheduledTask -TaskName 'LottoScope-LocalSync'`, rồi chạy
+`Start-ScheduledTask -TaskName 'LottoScope-LocalSync'`. Kiểm tra `LastRunTime`,
+`LastTaskResult`, `NextRunTime` và log để xác nhận lượt sau thực sự chạy.
 
 Chạy một lượt ngay: `powershell.exe -NoProfile -ExecutionPolicy Bypass -File
 .\scripts\sync-local.ps1`; thêm `-Reconcile` để kiểm recent/backlog, tối đa

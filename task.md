@@ -453,9 +453,18 @@ không thêm draw; checkpoint và dữ liệu giữ nguyên, không có run treo
   4 skip. Backup trước recovery; source/DB/API latest khớp trong lượt nguồn
   truy cập được. Review độc lập, README/Data Pipeline/ADR đã cập nhật.
 
+- [x] **SYNC-04 — Khôi phục lịch local và sửa báo lỗi (19/10/2026).** Bật lại
+  `LottoScope-LocalSync` đang Disabled; latest-only không trả lỗi chỉ vì backlog
+  cũ khi latest đã xử lý và không có lỗi hiện tại. Giữ DB `partial`, reconcile
+  vẫn kiểm tra đầy đủ; cập nhật cảnh báo Dashboard và hướng dẫn vận hành.
+  Đã phục hồi latest Lotto/Mega/Power **00954/01577/01412**. Lượt tự động 11:27
+  trả 0, ba nguồn 200, không tạo trùng. 185 backend tests, Ruff/Pyright/format,
+  frontend lint/format/typecheck/build và 17 unit tests đạt; Compose healthy,
+  E2E 62 pass/4 skip theo thiết bị.
+
 Bằng chứng, tốc độ đo và giới hạn nguồn ở [ADR 0007](docs/DECISIONS/0007-fast-collection.md).
 Vietlott vẫn có thể trả 429 cả từ host; lịch tự động đã chạy nhưng không cam kết
-nguồn luôn mở. Power đã có latest 01410, full history/audit POWER-05 còn mở.
+nguồn luôn mở. Power đã có latest 01412, full history/audit POWER-05 còn mở.
 
 ## Trạng thái nghiệm thu MVP ban đầu
 

@@ -64,3 +64,27 @@ batch khi bị chặn, giữ lỗi/provenance và thử ở lượt sau, không 
   unchanged trong **1,16/1,86 giây**, mỗi game một request; Power vẫn 429.
   Kiểm chứng task hoạt động, vẫn phân biệt lỗi
   nguồn với lỗi collector, không coi lịch chạy đúng là nguồn luôn trả dữ liệu.
+
+## Khôi phục lịch và sửa báo lỗi — 19/10/2026
+
+Task `LottoScope-LocalSync` bị Disabled, Docker scheduler vẫn false, nên poll
+5 phút dừng. Task Scheduler Operational log không bật, chưa xác định ai/tiến
+trình nào đã disable. Đã enable và chạy lại: runs 442–444 thêm 4 Lotto, 1 Mega,
+1 Power, đưa latest lên 00954/01577/01412. Daily task trước đó bị gián đoạn
+(`0xC000013A`), không có bằng chứng khóa PostgreSQL đang treo.
+
+Sửa exit code latest-only: partial chỉ vì backlog cũ, đã xử lý latest và không
+có failed/invalid/missing/conflict/excluded → exit 0. Các lỗi hiện tại vẫn
+exit 1; reconcile vẫn yêu cầu success đầy đủ. Không thay status/counters trong
+DB hoặc coi Power history đã hoàn tất. Dashboard dùng “chưa hoàn tất” cho
+partial thay vì gán nhãn thất bại. Regression kiểm cả code CLI và run thật
+trên PostgreSQL test.
+
+Kiểm chứng: Ruff lint/format, Pyright và **185 backend tests pass**; frontend
+lint/format/typecheck/build và **17 unit tests pass**. Compose rebuild/readiness
+đạt. Lịch tự chạy lúc 11:27 (runs 448–450) đọc nguồn 200 cho cả ba game, mỗi
+game một request, không thêm draw trùng; task trả **0**, lượt kế tiếp 11:32.
+Power vẫn `partial`, còn 1.246 ID lịch sử chưa được giải quyết; không có lỗi
+failed/invalid/missing/conflict/excluded trong lượt này. Review độc lập không
+phát hiện vấn đề trọng yếu. E2E trên Compose mới: **62 pass, 4 skip theo thiết
+bị**, gồm desktop/tablet/mobile, accessibility và breakpoint regression.

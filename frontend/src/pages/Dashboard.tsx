@@ -140,7 +140,7 @@ export function Dashboard() {
                     status.data.last_failed_ingestion_at >
                       status.data.last_successful_ingestion_at) && (
                     <span className="pill warn">
-                      Lần đồng bộ gần nhất thất bại:{' '}
+                      Lần đồng bộ gần nhất chưa hoàn tất:{' '}
                       {formatVietnamTime(status.data.last_failed_ingestion_at)}
                     </span>
                   )}
