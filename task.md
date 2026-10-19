@@ -462,6 +462,11 @@ không thêm draw; checkpoint và dữ liệu giữ nguyên, không có run treo
   frontend lint/format/typecheck/build và 17 unit tests đạt; Compose healthy,
   E2E 62 pass/4 skip theo thiết bị.
 
+- [x] **SYNC-05 — Đổi lịch local (19/10/2026).** Cài hai trigger hằng ngày
+  18:30/21:15 UTC+07; bỏ lịch 5 phút/logon/catch-up, tắt reconcile tự động
+  07:00. Kiểm tra XML task, trạng thái Ready/NextRun 18:30, PowerShell syntax
+  và Docker scheduler vẫn tắt; chưa tới giờ để kiểm chứng trigger thực chạy.
+
 Bằng chứng, tốc độ đo và giới hạn nguồn ở [ADR 0007](docs/DECISIONS/0007-fast-collection.md).
 Vietlott vẫn có thể trả 429 cả từ host; lịch tự động đã chạy nhưng không cam kết
 nguồn luôn mở. Power đã có latest 01412, full history/audit POWER-05 còn mở.

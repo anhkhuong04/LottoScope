@@ -55,9 +55,11 @@ Get-Content .\collector-local.log -Tail 20
 ```
 
 Installer dùng uv hiện có, tạo task dưới user hiện tại: `LottoScope-LocalSync`
-mỗi 5 phút + khi đăng nhập; `LottoScope-Reconcile` lúc 07:00 giờ Windows
-(máy hiện tại UTC+07). Task chạy ẩn, cần Windows đăng nhập và Docker/API ready;
-Docker tắt thì bỏ lượt. Chỉ một bên sở hữu lịch chạy: không bật đồng thời
+lúc **18:30 và 21:15 hằng ngày**, theo giờ Windows (máy hiện tại UTC+07,
+trùng giờ Việt Nam). Thay thế lịch 5 phút/đăng nhập và tắt task cũ
+`LottoScope-Reconcile` lúc 07:00. Cài lại không tự chạy collector ngay.
+Task chạy ẩn, cần Windows đăng nhập và Docker/API ready; máy/Docker tắt
+thì bỏ lượt, không chạy bù ngoài hai khung giờ. Chỉ một bên sở hữu lịch chạy: không bật đồng thời
 Docker scheduler. File `.env` được đọc lúc chạy, credential không nằm trong
 task arguments. Poll latest trả exit 0 nếu latest đã được xác thực/lưu và chỉ
 còn backlog lịch sử cũ; run trong DB vẫn `partial`. Với `-Reconcile`, còn

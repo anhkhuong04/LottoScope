@@ -15,21 +15,18 @@ foreach ($taskName in $taskNames) {
     }
 }
 $principal = New-ScheduledTaskPrincipal -UserId $userName -LogonType Interactive -RunLevel Limited
-$taskSettings = New-ScheduledTaskSettingsSet -MultipleInstances IgnoreNew -StartWhenAvailable `
+$taskSettings = New-ScheduledTaskSettingsSet -MultipleInstances IgnoreNew `
     -ExecutionTimeLimit (New-TimeSpan -Minutes 10) -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
 $baseArgs = "-NoProfile -NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$workerPath`" -UvPath `"$uvPath`""
 $pollAction = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument $baseArgs -WorkingDirectory $repoPath
 $pollTriggers = @(
-    (New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(5) -RepetitionInterval (New-TimeSpan -Minutes 5)),
-    (New-ScheduledTaskTrigger -AtLogOn -User $userName)
+    (New-ScheduledTaskTrigger -Daily -At '18:30'),
+    (New-ScheduledTaskTrigger -Daily -At '21:15')
 )
 $null = Register-ScheduledTask -TaskName $taskNames[0] -Action $pollAction -Trigger $pollTriggers `
-    -Settings $taskSettings -Principal $principal -Description 'Latest-only LottoScope sync while local Docker is ready.' -Force
-$reconcileAction = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument "$baseArgs -Reconcile" -WorkingDirectory $repoPath
-$reconcileSettings = New-ScheduledTaskSettingsSet -MultipleInstances IgnoreNew -StartWhenAvailable `
-    -ExecutionTimeLimit (New-TimeSpan -Hours 2) -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
-$dailyTrigger = New-ScheduledTaskTrigger -Daily -At '07:00'
-$null = Register-ScheduledTask -TaskName $taskNames[1] -Action $reconcileAction -Trigger $dailyTrigger `
-    -Settings $reconcileSettings -Principal $principal -Description 'Bounded LottoScope recent/history reconciliation.' -Force
-Start-ScheduledTask -TaskName $taskNames[0]
-Write-Output 'Installed LottoScope-LocalSync (5 minutes + logon) and LottoScope-Reconcile (07:00 local).'
+    -Settings $taskSettings -Principal $principal -Description 'Latest-only LottoScope sync at 18:30 and 21:15 Windows local time.' -Force
+# Retire the previous daily schedule; reconciliation remains available manually.
+if (Get-ScheduledTask -TaskName $taskNames[1] -ErrorAction SilentlyContinue) {
+    $null = Disable-ScheduledTask -TaskName $taskNames[1]
+}
+Write-Output 'Installed LottoScope-LocalSync (18:30 and 21:15 local); automatic reconciliation disabled.'

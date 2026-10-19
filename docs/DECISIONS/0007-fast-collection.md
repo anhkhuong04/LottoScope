@@ -88,3 +88,15 @@ Power vẫn `partial`, còn 1.246 ID lịch sử chưa được giải quyết; 
 failed/invalid/missing/conflict/excluded trong lượt này. Review độc lập không
 phát hiện vấn đề trọng yếu. E2E trên Compose mới: **62 pass, 4 skip theo thiết
 bị**, gồm desktop/tablet/mobile, accessibility và breakpoint regression.
+
+## Đổi lịch local theo yêu cầu — 19/10/2026
+
+Lịch Windows thay bằng hai trigger hằng ngày **18:30 và 21:15 (UTC+07)**.
+Bỏ repetition 5 phút, logon, chạy ngay sau cài và chạy bù ngoài giờ; tắt task
+reconcile 07:00 cũ, giữ lệnh đối chiếu thủ công. Docker scheduler vẫn tắt;
+cấu hình scheduler Docker dự phòng không thay đổi.
+
+Đã chạy installer trên máy và kiểm XML task: đúng hai calendar triggers,
+không repetition/logon/catch-up, task Ready, lượt kế tiếp 18:30 cùng ngày;
+reconcile Disabled, runtime Docker scheduler false. PowerShell parse và
+diff check đạt. Chưa tới giờ nên chưa kiểm chứng trigger thực chạy lúc 18:30.

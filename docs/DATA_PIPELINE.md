@@ -68,9 +68,14 @@ và [Mega](https://vietlott.vn/vi/trung-thuong/ket-qua-trung-thuong/645?id=01530
 Giờ poll là giờ **kiểm tra**, không là `draw_time` và không bảo đảm kết quả
 đã được đăng đúng lúc đó.
 
-Ngoài cron, scheduler kiểm tra latest mỗi 5 phút (`LOTTO_LATEST_POLL_MINUTES`,
-5–60). Ba game chạy tuần tự, chung fetcher/throttle; poll nhanh không recheck
+Với scheduler trong Docker, ngoài cron còn kiểm tra latest mỗi 5 phút
+(`LOTTO_LATEST_POLL_MINUTES`, 5–60). Ba game chạy tuần tự, chung fetcher/throttle; poll nhanh không recheck
 lịch sử cũ. Cron/startup/lệnh `collect` vẫn đối chiếu recent và retry backlog.
+
+Cấu hình local Windows hiện dùng hai lượt latest-only **18:30 và 21:15 mỗi
+ngày, UTC+07**, thay lịch 5 phút/đăng nhập và reconcile tự động 07:00.
+Docker scheduler tắt; thao tác cài lịch và đối chiếu thủ công ở
+[README](../README.md#collector-trên-windows-khi-nguồn-chặn-docker).
 
 Mỗi lần poll lấy latest ID, rồi bù các ID mới trong giới hạn batch. Lượt
 cron/startup/`collect` đối chiếu thêm recent và các lỗ hổng tồn. Nếu chưa có local history, dùng import riêng
