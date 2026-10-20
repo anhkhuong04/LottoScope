@@ -140,3 +140,27 @@ thay dữ liệu nguồn bằng dữ liệu giả để đánh dấu milestone h
 - Thử thêm lúc 08:43 cùng ngày theo yêu cầu: host run `303`, nhịp 5 giây/request,
   tiếp tục exit 1/HTTP 429 tại latest page. Đối chiếu DB vẫn 77 draws đủ bảng
   giải, checkpoint `00101`, không có run running; không nhập thêm kỳ mới.
+
+### Tiếp tục POWER-05 — 20/10/2026, 09:18–09:19 giờ Việt Nam
+
+- Trước lượt này: 167 draw, latest `01412` (17/10/2026). Import cũ bị
+  429/Cloudflare; nút UI latest-only không backfill toàn lịch sử
+  ([ADR 0008](DECISIONS/0008-manual-sync.md)). Đây là dữ liệu thiếu trong DB,
+  không phải lỗi phân trang. Đã tạo/copy backup
+  `lotto-before-power-resume-20261020.dump` trước khi nhập.
+- Host import thường, nhịp 2 giây/request, run `463`: **thêm 30 draw**, bỏ qua
+  166 item found, không invalid/missing/conflict. Source trả Cloudflare
+  challenge tại `00129` và `00130`; pipeline drain rồi dừng, run `partial`,
+  exit 1. Không tiếp tục batch khi nguồn đang chặn hoặc đổi nguồn im lặng.
+- Sau lượt này: **197/1.412 draw**, đều có năm hạng giải; `00001..00128`
+  liên tục, có thêm `00131` và các kỳ đã lưu trước đó. Còn **1.215 ID thiếu
+  draw**. Checkpoint `01412` là scan coverage, không chứng minh import đủ.
+  Items có 196 found/1.216 failed; `01410` có draw đã lưu nhưng lần fetch
+  trước lỗi, nên số failed lớn hơn số draw thiếu một đơn vị.
+- Checksum toàn bộ 167 row Power cũ và toàn bộ row Lotto/Mega khớp trước/sau.
+  Không có run running/correction. API history total 197, latest `01412`,
+  kỳ mới `00128` trả đủ năm hạng giải. Không sửa code/chạy lại test suite;
+  kiểm chứng lần này là DB preservation, coverage/prizes và API thực tế.
+- **POWER-05 giữ mở**: chưa thể full import/audit/hai collector vì source
+  đang chặn. Resume bằng import thường ở trên khi nguồn cho truy cập lại;
+  giữ nguyên dữ liệu/checkpoint, không xóa để nhập lại từ đầu.

@@ -424,6 +424,10 @@ full audit/hai collector chưa chạy. Bằng chứng trong `POWER_ACCEPTANCE.md
 Thử thêm lúc 08:43: run `303` tiếp tục exit 1/HTTP 429 tại latest page,
 không thêm draw; checkpoint và dữ liệu giữ nguyên, không có run treo.
 
+Power recovery 20/10/2026: thêm 30 draw, tổng **197/1.412**, còn 1.215 ID thiếu.
+Nguồn tiếp tục Cloudflare challenge; **POWER-05 vẫn mở**. Backup và bằng chứng
+bảo toàn dữ liệu/API ở [POWER_ACCEPTANCE.md](docs/POWER_ACCEPTANCE.md).
+
 ## Bổ sung UX — nhảy trực tiếp tới trang (14/10/2026)
 
 - [x] **UX-PAGE-01:** Pager dùng chung thêm “Đến trang” + tổng trang + nút
