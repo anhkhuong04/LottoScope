@@ -19,6 +19,9 @@ Sửa cập nhật latest ngày 15/10/2026: [ADR 0007](../docs/DECISIONS/0007-fa
 contract collector ở Data Pipeline; Windows local tasks và cách đổi owner
 scheduler ở README. Không nhầm khôi phục latest với full-history Power.
 
+Đồng bộ thủ công từ UI (20/10/2026): [ADR 0008](../docs/DECISIONS/0008-manual-sync.md),
+contract POST/cooldown ở API, vận hành mặc định không scheduler ở README.
+
 ## Phạm vi
 
 - [MVP.md](../docs/MVP.md) chốt backend MVP trước, frontend MVP sau; ứng

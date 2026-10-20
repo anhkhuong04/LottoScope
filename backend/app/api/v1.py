@@ -25,6 +25,8 @@ from app.schemas.v1 import (
     PairsOut,
     PrizesOut,
     StatusOut,
+    StrictBody,
+    SyncOut,
     WindowIn,
 )
 from app.services.checker import CheckerService
@@ -32,6 +34,7 @@ from app.services.generator import GeneratorService
 from app.services.history import DrawHistoryService
 from app.services.prizes import DrawPrizeService
 from app.services.status import game_status
+from app.services.sync import ManualSyncService
 
 router = APIRouter(prefix="/api/v1", tags=["v1"])
 Database = Annotated[Engine, Depends(get_engine)]
@@ -39,6 +42,17 @@ Database = Annotated[Engine, Depends(get_engine)]
 
 def get_prize_service(engine: Database) -> DrawPrizeService:
     return DrawPrizeService(engine)
+
+
+def get_sync_service(engine: Database) -> ManualSyncService:
+    return ManualSyncService(engine)
+
+
+@router.post("/games/{game}/sync", response_model=SyncOut)
+def sync_game(
+    game: str, _body: StrictBody, service: Annotated[ManualSyncService, Depends(get_sync_service)]
+) -> SyncOut:
+    return SyncOut.model_validate(service.sync(game))
 
 
 def analysis_window(

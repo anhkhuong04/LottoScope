@@ -72,9 +72,11 @@ Với scheduler trong Docker, ngoài cron còn kiểm tra latest mỗi 5 phút
 (`LOTTO_LATEST_POLL_MINUTES`, 5–60). Ba game chạy tuần tự, chung fetcher/throttle; poll nhanh không recheck
 lịch sử cũ. Cron/startup/lệnh `collect` vẫn đối chiếu recent và retry backlog.
 
-Cấu hình local Windows hiện dùng hai lượt latest-only **18:30 và 21:15 mỗi
-ngày, UTC+07**, thay lịch 5 phút/đăng nhập và reconcile tự động 07:00.
-Docker scheduler tắt; thao tác cài lịch và đối chiếu thủ công ở
+Cấu hình mặc định từ 20/10/2026 dùng nút **Tải dữ liệu**, đồng bộ latest-only
+cho game đang chọn rồi làm mới số liệu. Docker scheduler và hai task Windows
+đều tắt; lịch 18:30/21:15 cũ chỉ còn là tùy chọn. API/cooldown ở
+[API](API.md#đồng-bộ-thủ-công), quyết định ở [ADR 0008](DECISIONS/0008-manual-sync.md),
+thao tác chuyển chế độ và đối chiếu thủ công ở
 [README](../README.md#collector-trên-windows-khi-nguồn-chặn-docker).
 
 Mỗi lần poll lấy latest ID, rồi bù các ID mới trong giới hạn batch. Lượt

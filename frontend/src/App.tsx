@@ -21,6 +21,7 @@ import { Checker } from './pages/Checker'
 import { Generator } from './pages/Generator'
 import { globalSearch } from './api'
 import './index.css'
+import { SyncControls } from './SyncControls'
 
 const links = [
   { to: '/dashboard', label: 'Tổng quan', icon: LayoutDashboard },
@@ -99,6 +100,7 @@ function Shell() {
           </label>
         </header>
         <main id="main-content" className="content">
+          <SyncControls />
           {gameError && (
             <div className="notice error" role="alert">
               {gameError} <button onClick={retryGames}>Thử lại</button>

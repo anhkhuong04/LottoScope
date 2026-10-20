@@ -467,6 +467,16 @@ không thêm draw; checkpoint và dữ liệu giữ nguyên, không có run treo
   07:00. Kiểm tra XML task, trạng thái Ready/NextRun 18:30, PowerShell syntax
   và Docker scheduler vẫn tắt; chưa tới giờ để kiểm chứng trigger thực chạy.
 
+- [x] **SYNC-06 — Đồng bộ thủ công từ UI (20/10/2026).** Nút Tải dữ liệu
+  đồng bộ latest-only cho game đang chọn, pending/error/success và refresh
+  query theo context. POST dùng service/pipeline hiện có, PG lock và cooldown
+  60 giây; giữ partial backlog, correction policy và idempotence. Hai task
+  Windows Disabled, Compose mặc định scheduler false. 192 backend tests,
+  Ruff/Pyright/format, frontend lint/typecheck/build/format và 19 unit đạt.
+  E2E 68 ca pass/4 skip (ba ca retry đã rerun sau sửa selector nhãn cũ).
+  Bấm thật thêm hai Lotto, latest 00956. Chi tiết kiểm chứng/giới hạn ở
+  [ADR 0008](docs/DECISIONS/0008-manual-sync.md).
+
 Bằng chứng, tốc độ đo và giới hạn nguồn ở [ADR 0007](docs/DECISIONS/0007-fast-collection.md).
 Vietlott vẫn có thể trả 429 cả từ host; lịch tự động đã chạy nhưng không cam kết
 nguồn luôn mở. Power đã có latest 01412, full history/audit POWER-05 còn mở.

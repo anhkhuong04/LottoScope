@@ -121,7 +121,8 @@ export function Dashboard() {
             {status.data && (
               <div className="stack">
                 <p className="muted">
-                  Kỳ mới được đồng bộ tự động. Nút Tải lại chỉ đọc dữ liệu đã lưu.
+                  Nhấn Tải dữ liệu để lấy kỳ mới cho game đang chọn. Làm mới hiển thị chỉ đọc dữ
+                  liệu đã lưu.
                 </p>
                 <div>
                   <strong>Kỳ mới nhất:</strong> {status.data.latest_draw_id ?? 'Chưa có'}

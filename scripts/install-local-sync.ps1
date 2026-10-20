@@ -1,3 +1,5 @@
+param([switch]$Manual)
+
 $ErrorActionPreference = 'Stop'
 $repoPath = Split-Path -Parent $PSScriptRoot
 if (-not (Select-String -LiteralPath (Join-Path $repoPath '.env') `
@@ -5,7 +7,6 @@ if (-not (Select-String -LiteralPath (Join-Path $repoPath '.env') `
     throw 'Set LOTTO_SCHEDULER_ENABLED=false in .env and recreate backend before installing.'
 }
 $workerPath = Join-Path $PSScriptRoot 'sync-local.ps1'
-$uvPath = (Get-Command uv -ErrorAction Stop).Source
 $userName = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
 $taskNames = @('LottoScope-LocalSync', 'LottoScope-Reconcile')
 foreach ($taskName in $taskNames) {
@@ -14,6 +15,16 @@ foreach ($taskName in $taskNames) {
         throw "Task $taskName exists for another location; inspect it before installing."
     }
 }
+if ($Manual) {
+    foreach ($taskName in $taskNames) {
+        if (Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue) {
+            $null = Disable-ScheduledTask -TaskName $taskName
+        }
+    }
+    Write-Output 'Automatic LottoScope tasks disabled; use the UI or sync-local.ps1 manually.'
+    return
+}
+$uvPath = (Get-Command uv -ErrorAction Stop).Source
 $principal = New-ScheduledTaskPrincipal -UserId $userName -LogonType Interactive -RunLevel Limited
 $taskSettings = New-ScheduledTaskSettingsSet -MultipleInstances IgnoreNew `
     -ExecutionTimeLimit (New-TimeSpan -Minutes 10) -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries

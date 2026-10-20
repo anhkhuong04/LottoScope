@@ -18,6 +18,18 @@ from app.services.generator import (
 )
 
 
+class SyncOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    game: str
+    run_id: int
+    status: Literal["success", "partial", "failed"]
+    created: int
+    enriched: int
+    unchanged: int
+    remaining_unresolved: int
+
+
 class StrictBody(BaseModel):
     model_config = ConfigDict(extra="forbid")
 

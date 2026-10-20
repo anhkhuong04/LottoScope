@@ -11,6 +11,8 @@ type AppContext = {
   setGame: (id: string) => void
   window: AnalysisWindow
   setWindow: (value: AnalysisWindow) => void
+  dataRevision: number
+  refreshData: () => void
 }
 const Context = createContext<AppContext | null>(null)
 const allowedCounts = [10, 20, 30, 50, 100]
@@ -38,6 +40,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [games, setGames] = useState<Game[]>([])
   const [gameError, setGameError] = useState<string | null>(null)
   const [gamesAttempt, setGamesAttempt] = useState(0)
+  const [dataRevision, setDataRevision] = useState(0)
   useEffect(() => {
     const controller = new AbortController()
     api<{ items: Game[] }>('/games', controller.signal)
@@ -103,6 +106,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setGame,
     window,
     setWindow,
+    dataRevision,
+    refreshData: () => setDataRevision((value) => value + 1),
   }
   return <Context.Provider value={context}>{children}</Context.Provider>
 }
@@ -114,6 +119,7 @@ export function useApp() {
 }
 
 export function useQuery<T>(key: string, load: (signal: AbortSignal) => Promise<T>) {
+  const dataRevision = useContext(Context)?.dataRevision ?? 0
   const [state, setState] = useState<{
     key: string
     data: T | null
@@ -145,7 +151,7 @@ export function useQuery<T>(key: string, load: (signal: AbortSignal) => Promise<
     return () => controller.abort()
     // Key captures request parameters; attempt explicitly retries.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key, attempt])
+  }, [key, attempt, dataRevision])
   return {
     data: state.key === key ? state.data : null,
     error: state.key === key ? state.error : null,

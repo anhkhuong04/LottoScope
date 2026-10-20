@@ -7,6 +7,15 @@ export type Game = {
   special_min: number | null
   special_max: number | null
 }
+export type SyncResult = {
+  game: string
+  run_id: number
+  status: 'success' | 'partial' | 'failed'
+  created: number
+  enriched: number
+  unchanged: number
+  remaining_unresolved: number
+}
 export type Draw = {
   draw_id: string
   draw_date: string

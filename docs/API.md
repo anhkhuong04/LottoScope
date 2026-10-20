@@ -30,11 +30,36 @@ lại analytics. Tất cả number trong JSON là integer; UI tự hiển thị 
   `data_version` tăng khi insert/correction, không là thời gian quay.
 - Request validation server-side; invalid path/game/cutoff → 404; invalid
   field/window/rule/page → 422; history thiếu với rule bắt buộc → 409;
-  lỗi upstream khi trigger ingestion (nếu có endpoint sau MVP) → 502/503;
+  lỗi upstream khi trigger ingestion → 502/503;
   internal error → 500. Không lộ traceback/SQL/secrets.
 - Error JSON: `{"error":{"code":"invalid_window","message":"...",
   "details":{...}}}`. `code` ổn định cho client; `message` dễ đọc, không
   chứa HTML từ nguồn. Thông tin không có exact match là response 200 hợp lệ.
+
+## Đồng bộ thủ công
+
+`POST /games/{game}/sync`, JSON body `{}`. Chỉ đồng bộ game trong path bằng
+collector latest-only hiện có, tối đa 20 ID/lượt; không nhập toàn lịch sử.
+Request chạy trong worker thread và trả sau khi xử lý xong. Body thiếu,
+form hoặc field lạ → 422; GET không kích hoạt đồng bộ.
+
+Response 200: `{game,run_id,status,created,enriched,unchanged,remaining_unresolved}`.
+`status` giữ nguyên `success|partial` của run trong DB. Partial chỉ vì backlog
+cũ, latest đã xử lý và không có lỗi hiện tại vẫn trả 200; client phải nêu
+`remaining_unresolved`, không diễn giải thành history đầy đủ. `created=0` có
+thể là đã có kỳ mới nhất, không phải lỗi.
+
+- 409 `ingestion_busy`: đang có lượt manual khác hoặc ingestion cùng game.
+- 429 `sync_cooldown`, `Retry-After: 60`: một collector cùng game vừa hoàn
+  tất trong 60 giây, kể cả thất bại; không gọi nguồn thêm.
+- 503 `sync_source_unavailable`: lượt hiện tại chưa hoàn tất vì nguồn/parse
+  hoặc validation. Phần đã commit vẫn giữ; client đọc lại DB nhưng báo lỗi.
+- 409 `sync_review_pending`: nguồn khác dữ liệu đã lưu, cần correction review.
+
+Endpoint dùng trong ứng dụng local/nhóm kín hiện tại, cùng origin với UI,
+không thêm quyền quản trị hoặc public deployment. Giao diện chặn click trùng,
+giữ context và tải lại các query sau lượt sync kể cả khi lỗi. Collector vẫn
+ghi run/counters và giữ idempotence/lock/correction policy hiện có.
 
 ## Endpoints đọc
 

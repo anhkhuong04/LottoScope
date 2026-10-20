@@ -105,7 +105,7 @@ test('network error, retry and same-context stale data', async ({ page }) => {
   await page.getByRole('button', { name: 'Thử lại' }).click()
   await expect(page.locator('.number-tile')).toHaveCount(35)
   fail = true
-  await page.getByRole('button', { name: 'Tải lại dữ liệu' }).click()
+  await page.getByRole('button', { name: 'Làm mới hiển thị' }).click()
   await expect(page.getByText(/Dữ liệu cũ trong cùng phạm vi/)).toBeVisible()
   await expect(page.locator('.number-tile')).toHaveCount(35)
 })

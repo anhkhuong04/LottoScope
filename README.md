@@ -20,7 +20,7 @@ Invoke-RestMethod http://127.0.0.1:8088/api/v1/games
 
 Mở `http://127.0.0.1:8088` (frontend), `http://127.0.0.1:8000/docs` (API). Nginx phục vụ SPA deep links và proxy `/api/` cùng origin; có thể đổi `FRONTEND_PORT`, `BACKEND_PORT`, `POSTGRES_PORT` trong `.env` nếu cổng bận. Các cổng chỉ bind loopback. `/health/live` kiểm tra process; `/health/ready` đòi PostgreSQL kết nối được và migration ở head. `docker compose down` giữ volume; **không dùng `down -v` nếu muốn giữ dữ liệu**. `.env` không được commit. Cấu hình này dành cho triển khai thử cục bộ, chưa bao gồm TLS/public ingress.
 
-Sau khi cập nhật image, backup trước khi chạy migration mới, rồi chạy lại `alembic upgrade head` và `docker compose up -d backend frontend --wait`. Kiểm tra `docker compose ps`, `docker compose logs backend frontend postgres` và readiness. Một backend worker bật APScheduler; không scale backend khi scheduler còn nằm trong process này. Giờ poll có thể chỉnh bằng `LOTTO_LOTTO_POLL_FIRST`, `LOTTO_LOTTO_POLL_SECOND`, `LOTTO_MEGA_POLL`, `LOTTO_POWER_POLL`, `LOTTO_RECONCILE_POLL` (`HH:MM`, giờ Việt Nam). Power mặc định poll 19:30 thứ Ba/Năm/Bảy và reconcile 07:00 hằng ngày.
+Sau khi cập nhật image, backup trước khi chạy migration mới, rồi chạy lại `alembic upgrade head` và `docker compose up -d backend frontend --wait`. Kiểm tra `docker compose ps`, `docker compose logs backend frontend postgres` và readiness. Mặc định đồng bộ thủ công; nếu chủ động bật APScheduler, chỉ dùng một API worker và xem lịch/config tại [Data Pipeline](docs/DATA_PIPELINE.md#collector-kỳ-mới).
 
 ## Nhập dữ liệu và vận hành collector
 
@@ -30,13 +30,16 @@ khi mở chi tiết lần đầu và lưu PostgreSQL cho lần sau. Bảng có n
 riêng, tải độc lập và có thể thử lại khi Vietlott lỗi hoặc ingestion đang chạy.
 Sau cập nhật Power, chạy migration `0005_power_655` theo quy trình ở trên.
 
-Khi scheduler bật (mặc định trong Compose), backend tự đồng bộ nền cả ba game
-mỗi lần khởi động để bù kỳ bỏ lỡ khi máy tắt, rồi tiếp tục lịch poll trong
-[DATA_PIPELINE.md](docs/DATA_PIPELINE.md#collector-kỳ-mới). Theo dõi kết quả bằng
-`docker compose logs -f backend`. Có poll latest mỗi 5 phút (cấu hình
-`LOTTO_LATEST_POLL_MINUTES=5`, giới hạn 5–60), ngoài lịch đối chiếu cũ.
-Nút **Tải lại dữ liệu** trên giao diện tải lại dữ liệu
-đã lưu; dùng lệnh `collect` bên dưới nếu cần thu thập ngay khi backend đang chạy.
+Chọn game rồi nhấn **Tải dữ liệu** để backend lấy kỳ mới từ Vietlott, lưu
+PostgreSQL và tải lại số liệu đang xem. Nút khóa trong lúc chạy; không có
+kỳ mới thì báo đã kiểm tra nguồn. Mỗi game chờ ít nhất 60 giây giữa hai lượt;
+nguồn lỗi thì giữ dữ liệu đã lưu và báo lỗi. Power còn thiếu lịch sử cũ sẽ
+được nêu riêng, không quét toàn lịch sử khi bấm nút. **Làm mới hiển thị** ở
+từng vùng chỉ đọc lại dữ liệu đã lưu.
+
+Mặc định `LOTTO_SCHEDULER_ENABLED=false`; không có collector tự chạy khi
+Docker khởi động. Máy đã từng cài task Windows cần tắt cả hai task bằng lệnh
+bên dưới. Theo dõi backend bằng `docker compose logs -f backend`.
 
 ### Collector trên Windows khi nguồn chặn Docker
 
@@ -48,28 +51,22 @@ host, kết nối PostgreSQL Compose; không thay nguồn hoặc bypass challeng
 backend --wait`, rồi từ root:
 
 ```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-local-sync.ps1
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-local-sync.ps1 -Manual
 Get-ScheduledTask -TaskName 'LottoScope*'
 Get-ScheduledTaskInfo -TaskName 'LottoScope-LocalSync'
 Get-Content .\collector-local.log -Tail 20
 ```
 
-Installer dùng uv hiện có, tạo task dưới user hiện tại: `LottoScope-LocalSync`
-lúc **18:30 và 21:15 hằng ngày**, theo giờ Windows (máy hiện tại UTC+07,
-trùng giờ Việt Nam). Thay thế lịch 5 phút/đăng nhập và tắt task cũ
-`LottoScope-Reconcile` lúc 07:00. Cài lại không tự chạy collector ngay.
-Task chạy ẩn, cần Windows đăng nhập và Docker/API ready; máy/Docker tắt
-thì bỏ lượt, không chạy bù ngoài hai khung giờ. Chỉ một bên sở hữu lịch chạy: không bật đồng thời
-Docker scheduler. File `.env` được đọc lúc chạy, credential không nằm trong
+`-Manual` tắt `LottoScope-LocalSync` và `LottoScope-Reconcile`, không tạo lịch
+mới hoặc chạy collector. Script không có `-Manual` là phương án tùy chọn để
+khôi phục lịch 18:30/21:15 theo giờ Windows; không chạy lệnh đó nếu muốn giữ
+đồng bộ thủ công. File `.env` được đọc lúc chạy, credential không nằm trong
 task arguments. Poll latest trả exit 0 nếu latest đã được xác thực/lưu và chỉ
 còn backlog lịch sử cũ; run trong DB vẫn `partial`. Với `-Reconcile`, còn
 partial/failed vẫn exit 1. Lỗi nguồn, parse, DB hoặc conflict luôn báo lỗi;
 exit 0 của poll không chứng minh history đầy đủ. Nguồn 429 giữ dữ liệu và đợi lượt sau.
 
-Nếu task ở trạng thái `Disabled`, bật lại bằng
-`Enable-ScheduledTask -TaskName 'LottoScope-LocalSync'`, rồi chạy
-`Start-ScheduledTask -TaskName 'LottoScope-LocalSync'`. Kiểm tra `LastRunTime`,
-`LastTaskResult`, `NextRunTime` và log để xác nhận lượt sau thực sự chạy.
+Hai task ở trạng thái `Disabled` là đúng trong chế độ thủ công.
 
 Chạy một lượt ngay: `powershell.exe -NoProfile -ExecutionPolicy Bypass -File
 .\scripts\sync-local.ps1`; thêm `-Reconcile` để kiểm recent/backlog, tối đa
