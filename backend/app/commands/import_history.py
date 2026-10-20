@@ -20,11 +20,19 @@ def main() -> int:
     parser.add_argument("--from-date", type=date.fromisoformat)
     parser.add_argument("--to-date", type=date.fromisoformat)
     parser.add_argument("--recheck", action="store_true")
+    parser.add_argument(
+        "--workers",
+        type=int,
+        choices=(1, 2, 3),
+        default=3,
+        help="Concurrent history requests; use 1 for strictly sequential import",
+    )
     args = parser.parse_args()
     with httpx.Client(follow_redirects=True) as client:
         summary = IngestionService(
             get_engine(),
             configured_fetcher(client),
+            import_workers=args.workers,
             progress=lambda sequence, counts: print(
                 json.dumps({"draw_seq": sequence, "counters": counts}), flush=True
             ),

@@ -164,3 +164,27 @@ thay dữ liệu nguồn bằng dữ liệu giả để đánh dấu milestone h
 - **POWER-05 giữ mở**: chưa thể full import/audit/hai collector vì source
   đang chặn. Resume bằng import thường ở trên khi nguồn cho truy cập lại;
   giữ nguyên dữ liệu/checkpoint, không xóa để nhập lại từ đầu.
+
+### Thử một worker, nhịp 2 giây — 20/10/2026, 09:28–09:29
+
+- Lượt trước đã giãn request 2 giây nhưng có tối đa ba request in-flight.
+  Bổ sung `import_history --workers 1` để kiểm tra tuần tự; mặc định vẫn 3,
+  cho phép 1–3. Backup `lotto-before-power-serial-20261020.dump` trước thử.
+- Host run `464` dùng một worker và interval 2.0, ghi thời điểm request cùng
+  status/header chẩn đoán (không cookie). Gap nhỏ nhất đo được **2,000 giây**.
+  Nguồn cho nhập thêm **18 draw**, rồi trả **HTTP 429**, `cf-mitigated: challenge`
+  tại `00148`, không có `Retry-After`. Đã dừng ngay, không submit kỳ kế tiếp;
+  run `partial`, exit 1, một failed, không invalid/missing/conflict.
+- Kết luận thực nghiệm: **một worker và nhịp 2 giây vẫn bị chặn**. Header xác
+  nhận Challenge Page theo [Cloudflare](https://developers.cloudflare.com/cloudflare-challenges/challenge-types/challenge-pages/detect-response/).
+  [Challenge có thể do WAF/Bot Management/rate limiting](https://developers.cloudflare.com/cloudflare-challenges/challenge-types/challenge-pages/); chỉ log phía website
+  mới xác định được rule cụ thể, không kết luận chỉ do tốc độ hoặc IP.
+- Hiện **215/1.412 draw**, đủ năm hạng giải, còn **1.197 ID thiếu**. Checksum
+  197 row Power trước lượt này và toàn bộ Lotto/Mega không đổi; không có run
+  running. POWER-05 giữ mở, full-history audit chưa đạt.
+- Regression serial stop/worker bounds RED/GREEN; Ruff lint/format, Pyright
+  và **195 backend tests pass** trên PostgreSQL test riêng (10 deprecation
+  warnings hiện có). Review độc lập không có vấn đề trọng yếu. Không đổi UI,
+  không chạy lại frontend tests. Compose backend build/up/readiness đạt;
+  CLI trong container có `--workers`, API history total 215, kỳ `00147`
+  trả đủ năm hạng giải. Docker/Windows scheduler tiếp tục tắt.

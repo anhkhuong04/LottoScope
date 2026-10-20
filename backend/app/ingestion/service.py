@@ -81,11 +81,15 @@ class IngestionService:
         *,
         now: Callable[[], datetime] = lambda: datetime.now(UTC),
         progress: Callable[[int, dict[str, int]], None] | None = None,
+        import_workers: int = 3,
     ) -> None:
+        if not 1 <= import_workers <= 3:
+            raise ValueError("import_workers must be between 1 and 3")
         self.engine = engine
         self.fetcher = fetcher
         self.now = now
         self.progress = progress
+        self.import_workers = import_workers
 
     def _latest_source(self, game: str) -> Draw:
         url = result_url(game)
@@ -402,13 +406,13 @@ class IngestionService:
                     counts["skipped"] += 1
 
             if kind == "import":
-                with ThreadPoolExecutor(max_workers=3) as pool:
+                with ThreadPoolExecutor(max_workers=self.import_workers) as pool:
                     deferred: SourceDeferredError | None = None
                     iterator = iter(pending)
                     active: deque[tuple[int, Future[str]]] = deque()
                     for sequence in iterator:
                         active.append((sequence, pool.submit(process, sequence)))
-                        if len(active) == 3:
+                        if len(active) == self.import_workers:
                             break
                     while active:
                         sequence, future = active.popleft()

@@ -57,6 +57,11 @@ collector chạy; missing/failed/invalid không được xem là lịch sử đ�
 Import là resumable; một transaction cho **một draw và cập nhật checkpoint**.
 Draw lỗi không làm rollback toàn lịch sử, nhưng job tổng thể là `partial`/
 `failed`, không báo `success`. Chạy lại không tạo bản sao.
+CLI `import_history --workers 1|2|3` chọn mức concurrency, mặc định 3.
+`--workers 1` chỉ xử lý một kỳ tại một thời điểm và không submit kỳ kế tiếp
+sau challenge; throttle theo `LOTTO_SOURCE_REQUEST_INTERVAL` vẫn áp dụng
+cho mọi request, kể cả latest/retry. Giảm concurrency không bảo đảm nguồn
+cho phép import; không coi challenge là HTML kết quả hợp lệ.
 
 ## Collector kỳ mới
 

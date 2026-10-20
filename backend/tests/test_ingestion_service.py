@@ -477,3 +477,30 @@ def test_permanent_recent_failures_do_not_starve_older_recoverable_ids(engine):
     with Session(engine) as session:
         assert session.get(IngestionItemRow, ("lotto_535", 2)).status == "found"
         assert session.get(IngestionItemRow, ("lotto_535", 3)).status == "found"
+
+
+@pytest.mark.integration
+def test_serial_import_does_not_queue_more_draws_after_challenge(engine):
+    template = fixture("535", "00001")
+    fetcher = FixtureFetcher(
+        latest="00003",
+        pages={
+            "00001": SourceDeferredError("source", "Cloudflare challenge"),
+            "00002": template.replace("#00001", "#00002"),
+            "00003": template.replace("#00001", "#00003"),
+        },
+    )
+    result = IngestionService(engine, fetcher, import_workers=1).import_history("lotto_535")
+    assert result.status == "failed"
+    assert result.counters["failed"] == 1
+    assert result.counters["created"] == 0
+    assert fetcher.calls == ["00003", "00001"]
+    with Session(engine) as session:
+        assert session.get(IngestionItemRow, ("lotto_535", 2)) is None
+        assert session.get(IngestionItemRow, ("lotto_535", 3)) is None
+
+
+@pytest.mark.parametrize("workers", [0, 4])
+def test_import_rejects_unbounded_worker_counts(workers):
+    with pytest.raises(ValueError, match="import_workers"):
+        IngestionService(None, None, import_workers=workers)

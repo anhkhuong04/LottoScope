@@ -74,6 +74,12 @@ Chạy một lượt ngay: `powershell.exe -NoProfile -ExecutionPolicy Bypass -F
 `Unregister-ScheduledTask -TaskName 'LottoScope-LocalSync','LottoScope-Reconcile'
 -Confirm:$false`, đặt `LOTTO_SCHEDULER_ENABLED=true`, recreate backend.
 
+Import lịch sử có `--workers 1` để xử lý tuần tự (mặc định 3, tối đa 3).
+Kết hợp `LOTTO_SOURCE_REQUEST_INTERVAL=2.0` để giãn thời điểm bắt đầu request
+ít nhất 2 giây; thời gian chờ nguồn có thể khiến mỗi kỳ lâu hơn. Đây là giới
+hạn lưu lượng, không bảo đảm tránh Cloudflare. Challenge vẫn dừng batch và
+giữ checkpoint; chi tiết lần thử ở [Power acceptance](docs/POWER_ACCEPTANCE.md).
+
 Migration phải hoàn tất trước khi import. Các lệnh chạy trong backend container nên dùng đúng URL database trong `.env`:
 
 ```powershell

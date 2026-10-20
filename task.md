@@ -424,8 +424,10 @@ full audit/hai collector chưa chạy. Bằng chứng trong `POWER_ACCEPTANCE.md
 Thử thêm lúc 08:43: run `303` tiếp tục exit 1/HTTP 429 tại latest page,
 không thêm draw; checkpoint và dữ liệu giữ nguyên, không có run treo.
 
-Power recovery 20/10/2026: thêm 30 draw, tổng **197/1.412**, còn 1.215 ID thiếu.
-Nguồn tiếp tục Cloudflare challenge; **POWER-05 vẫn mở**. Backup và bằng chứng
+Power recovery 20/10/2026: lượt đầu thêm 30 draw; thử tiếp một worker/interval
+2 giây thêm 18 draw, tổng **215/1.412**, còn 1.197 ID thiếu. Tùy chọn CLI
+`--workers 1` đã kiểm bằng 195 backend tests và Ruff/Pyright/format.
+Nguồn vẫn Cloudflare challenge; **POWER-05 vẫn mở**. Backup và bằng chứng
 bảo toàn dữ liệu/API ở [POWER_ACCEPTANCE.md](docs/POWER_ACCEPTANCE.md).
 
 ## Bổ sung UX — nhảy trực tiếp tới trang (14/10/2026)
