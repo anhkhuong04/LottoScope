@@ -13,6 +13,8 @@ quy tắc; mỗi lần sửa behavior phải cập nhật nguồn chuẩn và te
   trước compare; special không tham gia main metrics/checker/generator MVP.
 - Cùng game/window/cutoff/data phải cho kết quả và thứ tự output deterministic.
   Không hard-code UI default 30 draws trong core.
+  Mô phỏng vật lý cục bộ là use case riêng, không phải analytics/generator
+  deterministic; contract ở [DRAW_SIMULATION.md](../docs/DRAW_SIMULATION.md).
 - Null có nghĩa là chưa xác định/không quan sát được trong window; không thay
   bằng 0. Frequency, gap và pair phải dùng đúng denominator/interval của spec.
 - Generator chỉ áp dụng rule bật, validate cấu hình, giới hạn attempts,

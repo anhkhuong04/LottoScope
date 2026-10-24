@@ -18,6 +18,9 @@
   game selector, analysis window, number ball, metric card, table và states.
 - Frontend làm presentation và validation input; không tính core frequency,
   gap, pair, checker, generator hoặc backtest thay backend.
+  Ngoại lệ được người dùng chốt: lồng cầu Mega/Power chạy vật lý cục bộ theo
+  [DRAW_SIMULATION.md](../docs/DRAW_SIMULATION.md); không dùng generator backend
+  để quyết định bóng ra và không ghi kết quả mô phỏng vào lịch sử thật.
 
 ## 2. Context, state và dữ liệu
 
@@ -74,6 +77,8 @@
   fallback. Không dùng color làm tín hiệu duy nhất.
 - Frequency dùng bar chart/grid; gap dùng sorted bar/table; timeline đơn giản;
   không dùng pie chart cho toàn miền số hoặc roulette/slot animation.
+  Lồng cầu mô phỏng là màn hình riêng được phép chuyển động/va chạm vật lý;
+  phải có pause, giảm chuyển động và xử lý lỗi theo specification riêng.
 - Tables có sort/paging/empty/focus phù hợp; không client-filter toàn dataset
   khi API đã hỗ trợ.
 - UI wording dùng Frequency/Gap/Historical overlap/Backtest result; không

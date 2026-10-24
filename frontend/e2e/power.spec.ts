@@ -78,19 +78,11 @@ test('Power detail separates special and shows both Jackpots and five prize tier
   })
 })
 
-test('Power generator yields six main numbers with explanation and pair detail works', async ({
-  page,
-}) => {
+test('Power draw machine replaces rule generator and pair detail works', async ({ page }) => {
   await page.goto('/generator?game=power_655')
-  await page.getByRole('checkbox', { name: 'Giới hạn trùng kỳ trước' }).check()
-  await page.getByRole('button', { name: 'Tạo bộ số' }).click()
-  await expect(page.locator('.result-list .result-item')).toHaveCount(5)
-  await expect(page.locator('.result-list .result-item').first().locator('.ball')).toHaveCount(6)
-  await expect(page.locator('.result-list .ball.special')).toHaveCount(0)
-  await page.getByRole('button', { name: 'Xem giải thích' }).first().click()
-  await expect(page.getByRole('dialog')).toBeVisible()
-  await expect(page.getByRole('dialog').getByText('Giới hạn trùng kỳ trước')).toBeVisible()
-  await page.getByRole('button', { name: 'Đóng' }).click()
+  await expect(page.getByRole('heading', { name: 'Lồng cầu mô phỏng' })).toBeVisible()
+  await expect(page.getByRole('checkbox', { name: 'Giới hạn trùng kỳ trước' })).toHaveCount(0)
+  await expect(page.locator('.draw-result-slots li')).toHaveCount(6)
   await page.goto('/pairs/24-38?game=power_655&window=all_time')
   await expect(page.getByRole('heading', { name: 'Cặp 24-38' })).toBeVisible()
   await expect(page.locator('.draw-row')).not.toHaveCount(0)

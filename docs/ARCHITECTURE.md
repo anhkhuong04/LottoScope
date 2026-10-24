@@ -19,6 +19,9 @@ cùng origin với `/api` theo [ADR 0003](DECISIONS/0003-compose-frontend.md).
 UI chỉ gọi API, không giữ domain
 analytics riêng.
 
+Ngoại lệ cục bộ sau MVP: [lồng cầu](DRAW_SIMULATION.md) dùng Three.js/Fiber/Rapier
+để mô phỏng chuyển động và lấy sáu main; không thay analytics backend hay schema.
+
 ## Luồng và boundaries
 
 ```text

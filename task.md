@@ -500,6 +500,25 @@ Bằng chứng, tốc độ đo và giới hạn nguồn ở [ADR 0007](docs/DEC
 Vietlott vẫn có thể trả 429 cả từ host; lịch tự động đã chạy nhưng không cam kết
 nguồn luôn mở. Power đã có latest 01412, full history/audit POWER-05 còn mở.
 
+## Lồng cầu vật lý — 24/10/2026
+
+- [x] **SIM-01 — Cơ chế Rapier:** thành rỗng/cửa/vật lý bóng; chỉ ghi nhận
+  crossing thực, giữ thứ tự và dừng sáu main, timeout/pause/reset an toàn.
+- [x] **SIM-02 — Giao diện Mega/Power:** cảnh React Three Fiber lazy-load,
+  responsive, controls, reduced motion/lỗi WebGL, copy/checker; giữ UI Lotto.
+- [x] **SIM-03 — Nghiệm thu:** quality gates và browser desktop/tablet/mobile,
+  review, cập nhật docs/agent và commit. Contract ở
+  [DRAW_SIMULATION.md](docs/DRAW_SIMULATION.md), quyết định ở
+  [ADR 0009](docs/DECISIONS/0009-physical-draw-simulation.md).
+
+Kiểm chứng SIM: lint/format/typecheck/build đạt, **32 unit tests pass**;
+suite E2E đầy đủ **83 pass/4 skip theo thiết bị**. Sau chỉnh vị trí controls,
+rerun UI unit đạt và **10 feature E2E pass trực tiếp trên Compose** (desktop/
+mobile, vật lý thật, cả hai game, reset/context loss, checker/copy, Axe).
+Đã xem ảnh desktop/mobile, review độc lập không còn finding trọng yếu.
+Frontend image đã build/up; ba service healthy. Không đổi backend/schema/
+ingestion; số draw Lotto/Mega/Power giữ **964/1.577/1.414**.
+
 ## Trạng thái nghiệm thu MVP ban đầu
 
 - [x] **Backend MVP hoàn thành:** P0–P6 và P8-01, P8-03–P8-07, P8-09 đạt;

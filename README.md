@@ -1,6 +1,6 @@
 # LottoScope — Vietlott Analytics
 
-Ứng dụng xem và phân tích **kết quả đã công bố** của Lotto 5/35, Mega 6/45 và Power 6/55. Gồm lịch sử, frequency/gap/pairs, checker và generator theo rule có giải thích; không dự đoán kỳ tiếp theo. Phạm vi ở [docs/MVP.md](docs/MVP.md), tiến độ ở [task.md](task.md), bằng chứng nghiệm thu MVP ở [docs/MVP_ACCEPTANCE.md](docs/MVP_ACCEPTANCE.md) và mở rộng Power ở [docs/POWER_ACCEPTANCE.md](docs/POWER_ACCEPTANCE.md).
+Ứng dụng xem và phân tích **kết quả đã công bố** của Lotto 5/35, Mega 6/45 và Power 6/55. Gồm lịch sử, frequency/gap/pairs, checker, generator theo rule cho Lotto và [lồng cầu mô phỏng Mega/Power](docs/DRAW_SIMULATION.md); không dự đoán kỳ tiếp theo. Phạm vi ở [docs/MVP.md](docs/MVP.md), tiến độ ở [task.md](task.md), bằng chứng nghiệm thu MVP ở [docs/MVP_ACCEPTANCE.md](docs/MVP_ACCEPTANCE.md) và mở rộng Power ở [docs/POWER_ACCEPTANCE.md](docs/POWER_ACCEPTANCE.md).
 
 ## Chạy ứng dụng bằng Docker Compose
 

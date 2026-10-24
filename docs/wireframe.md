@@ -842,6 +842,10 @@ Không bắt đầu bằng một score tổng hợp.
 
 # 14. Generator
 
+Cập nhật sau MVP (24/10/2026): Mega 6/45 và Power 6/55 tại `/generator` dùng
+[lồng cầu mô phỏng](DRAW_SIMULATION.md). Mục 14 bên dưới giữ áp dụng cho
+Lotto 5/35; phạm vi phân tích không quyết định kết quả lồng cầu.
+
 ## 14.1 Goal
 
 Cho phép người dùng sinh combination theo rule rõ ràng.

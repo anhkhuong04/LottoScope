@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { api, type GenerateResponse, type GeneratedItem } from '../api'
 import { useApp } from '../state'
 import { Balls, Card, PageHead, WindowSelector } from '../ui'
+import DrawMachine from '../features/draw-machine/DrawMachine'
 
 type RuleId =
   | 'exclude_exact_within_days'
@@ -75,6 +76,15 @@ function initialValues(count: number): Values {
 }
 
 export function Generator() {
+  const { game, window } = useApp()
+  return game!.id === 'mega_645' || game!.id === 'power_655' ? (
+    <DrawMachine key={game!.id} game={game!} analysisWindow={window} />
+  ) : (
+    <RuleGenerator />
+  )
+}
+
+function RuleGenerator() {
   const { game, window } = useApp()
   const [enabled, setEnabled] = useState<RuleId[]>([])
   const [values, setValues] = useState<Values>(() => initialValues(game!.main_count))

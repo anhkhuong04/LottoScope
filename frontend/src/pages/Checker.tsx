@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 import { api, globalSearch, type CheckResponse } from '../api'
 import { useApp } from '../state'
 import { Ball, Balls, Card, DrawRows, PageHead, Pager, WindowSelector, formatPercent } from '../ui'
+import { parseCombination } from '../features/draw-machine/checkerLink'
 
 export function validateNumbers(
   numbers: number[],
@@ -19,7 +20,10 @@ export function validateNumbers(
 
 export function Checker() {
   const { game, window } = useApp()
-  const [selected, setSelected] = useState<number[]>([])
+  const [search] = useSearchParams()
+  const [selected, setSelected] = useState<number[]>(() =>
+    parseCombination(search.get('numbers'), game!.main_min, game!.main_max, game!.main_count),
+  )
   const [input, setInput] = useState('')
   const [inputError, setInputError] = useState<string | null>(null)
   const [similarPage, setSimilarPage] = useState(1)
