@@ -68,6 +68,27 @@ sau challenge; throttle theo `LOTTO_SOURCE_REQUEST_INTERVAL` vẫn áp dụng
 cho mọi request, kể cả latest/retry. Giảm concurrency không bảo đảm nguồn
 cho phép import; không coi challenge là HTML kết quả hợp lệ.
 
+## Nhập bảng Power do người dùng cung cấp
+
+CLI `import_power_file --file <path> [--dry-run]` đọc Markdown có ba cột:
+`Kỳ quay | Ngày quay | Kết quả (6 số chính; số đặc biệt)`, ngày `DD/MM/YYYY`.
+Toàn file phải hợp lệ trước khi ghi: ID 5 chữ số, không trùng, ngày đúng thứ
+tự, main/special theo domain. Không thực thi nội dung file hoặc nhập giải.
+`--dry-run` chỉ validate file, không truy cập/ghi DB.
+
+Lượt nhập dùng cùng advisory lock theo game và repository; **một transaction
+cho cả file**. Lỗi DB/chronology rollback cả lượt; dữ liệu khác nội dung đi
+vào correction review và run `partial`, không overwrite. Row trùng giữ
+nguyên provenance/prizes; item/checkpoint cập nhật trong cùng transaction.
+Run `success` nghĩa là xử lý đủ file, không chứng minh history đầy đủ.
+
+Nguồn thực là file người dùng: scope lưu `source_kind=user_file`, basename,
+SHA-256 và giờ đọc. `source_url` của row mới là URL Vietlott **để tham chiếu**,
+không chứng minh đã fetch live; `source_retrieved_at` là lúc đọc file.
+Scope đánh dấu `official_reference_not_live_fetch` để phân biệt. Sau nhập,
+CLI liệt kê ID thiếu từ 1 đến latest đã lưu; tra cứu nguồn riêng để xác nhận
+upper bound hiện tại và bổ sung ngoài phạm vi file.
+
 ## Collector kỳ mới
 
 Lịch ban đầu theo giờ Việt Nam, có thể đổi bằng config khi lịch Vietlott đổi:

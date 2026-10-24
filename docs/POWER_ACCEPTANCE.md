@@ -208,3 +208,28 @@ thay dữ liệu nguồn bằng dữ liệu giả để đánh dấu milestone h
   backend build/up/readiness đạt, CLI có cờ mới. API history total 233, latest
   `01414`, kỳ `00163` trả đúng sáu main và special; không gọi endpoint giải
   thưởng khi kiểm chứng để tránh kích hoạt lazy enrichment.
+
+### Nạp file ngày/kết quả và tra cứu khoảng thiếu — 24/10/2026, 07:53–07:54
+
+- File người dùng `kq (1).md`: 1.344 kỳ `00001..01344`, có ngày quay; SHA-256
+  `8964eb99fe353745ecbb8d2783852672c16246854d61e92bfc50b045329a4c81`.
+  Không ID trùng/invalid/đảo ngày; 216 row trùng DB khớp date/main/special.
+  Backup trước nhập: `lotto-before-power-file-20261024.dump`.
+- Run `475` import offline atomic: **1.128 created, 216 unchanged**, không
+  conflict, success cho scope file. Provenance file/hash/read time nằm trong
+  scope; URL từng row là tham chiếu chính thức, không gán nhãn đã fetch live.
+  Nạp xong có 1.361 draw, còn 53 ID ngoài file.
+- Tra cứu tiếp từ Vietlott, run `476`, một worker/2 giây/results-only: thêm
+  **16 kỳ** `01345..01358`, `01360..01361`; bỏ qua `01359` đã có. Source
+  latest xác nhận `01414` ngày 22/10, rồi challenge tại `01362`, run partial.
+  Không tiếp tục batch khi bị chặn; full-history audit/POWER-05 vẫn mở.
+- Hiện **1.377/1.414 kỳ**, liên tục `00001..01361` và `01399..01414`.
+  **Thiếu đúng 37 ID `01362..01398`**. Toàn bộ 1.144 row mới không có bảng
+  giải/timestamp giải. Checksum 233 row Power cũ và toàn bộ Lotto/Mega không
+  đổi; không lỗi chronology hoặc run treo. API total 1.377, kỳ `01000`
+  trả đúng ngày/sáu main/special. Không gọi endpoint prizes khi kiểm chứng.
+- CLI `import_power_file` hỗ trợ dry-run và in ID thiếu; invalid file từ chối
+  trước DB write, conflicts audit không overwrite, lỗi chronology rollback.
+  **208 backend tests pass**, Ruff/Pyright/format đạt (10 warnings hiện có),
+  review độc lập không có vấn đề trọng yếu. Backend Compose build/up/readiness
+  và CLI help đã kiểm; không đổi UI/schema, không chạy lại frontend suite.
