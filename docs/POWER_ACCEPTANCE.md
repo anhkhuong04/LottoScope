@@ -233,3 +233,21 @@ thay dữ liệu nguồn bằng dữ liệu giả để đánh dấu milestone h
   **208 backend tests pass**, Ruff/Pyright/format đạt (10 warnings hiện có),
   review độc lập không có vấn đề trọng yếu. Backend Compose build/up/readiness
   và CLI help đã kiểm; không đổi UI/schema, không chạy lại frontend suite.
+
+### Bổ sung hết 37 ID thiếu — 24/10/2026, 08:02 giờ Việt Nam
+
+- Nguồn là [bảng người dùng cung cấp](imports/power-01362-01398-user.md),
+  37 kỳ `01362..01398`; SHA-256
+  `54bdd6d51a95dbf64aca06525e008ca141cc6ec53d90a0330597beba49c612fe`.
+  Dry-run hợp lệ; backup trước nhập: `lotto-before-power-completion-20261024.dump`.
+- Run `477` success: **37 created**, không conflict/invalid/failed/enrichment.
+  Tất cả row mới có prizes/timestamp giải SQL NULL; provenance ghi nguồn file,
+  URL là tham chiếu chính thức, không phải bằng chứng fetch live.
+- PostgreSQL hiện **1.414 kỳ liên tục `00001..01414`**, không ID thiếu hoặc
+  lỗi thứ tự ngày; kỳ cuối đã lưu ngày 22/10/2026. Checksum toàn bộ 1.377 row
+  Power cũ và toàn bộ Lotto/Mega khớp trước/sau; không có run running.
+  API history total 1.414, cả 37 kỳ trả đúng ngày/main/special so với bảng.
+- Lượt này chỉ nhập dữ liệu và cập nhật tài liệu, không đổi code/schema hoặc
+  chạy lại test suite. Không gọi nguồn/endpoint giải thưởng. Đã đủ lịch sử
+  trong dải kiểm tra; **POWER-05 vẫn mở** vì full audit nguồn chính thức và
+  hai collector lặp chưa được thực hiện.

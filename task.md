@@ -388,8 +388,12 @@ commit từng mốc sau kiểm chứng; nghiệm thu riêng với PostgreSQL và
 - [x] **POWER-07 — Import file có ngày và rà soát thiếu (24/10/2026).**
   CLI offline validate toàn file, atomic/shared lock, idempotent, hash/nguồn
   rõ và giữ dữ liệu cũ. File nạp thêm 1.128 kỳ; tra cứu nguồn thêm 16 kỳ.
-  Hiện 1.377/1.414, còn 37 kỳ `01362..01398` do source challenge; POWER-05
-  vẫn mở. 208 backend tests và Ruff/Pyright/format đạt, Compose/API đã kiểm.
+  Bảng bổ sung của người dùng nạp tiếp 37 kỳ `01362..01398` (run 477):
+  **đủ 1.414/1.414 kỳ `00001..01414`, không còn ID thiếu trong dải này**.
+  Đã đối chiếu cả 37 kết quả qua API và checksum dữ liệu cũ; chỉ nhập kết quả.
+  Implementation trước đó đạt 208 backend tests và Ruff/Pyright/format;
+  lượt bổ sung chỉ đổi dữ liệu/tài liệu, kiểm DB/API. POWER-05 vẫn mở cho
+  full audit nguồn chính thức/hai collector; bằng chứng ở `POWER_ACCEPTANCE.md`.
 
 POWER-02: `uv sync --locked`, Ruff lint/format, Pyright đạt; 136 pytest pass
 trên PostgreSQL riêng `lotto_power_20261014_test` (10 deprecation warnings).
