@@ -188,3 +188,23 @@ thay dữ liệu nguồn bằng dữ liệu giả để đánh dấu milestone h
   không chạy lại frontend tests. Compose backend build/up/readiness đạt;
   CLI trong container có `--workers`, API history total 215, kỳ `00147`
   trả đủ năm hạng giải. Docker/Windows scheduler tiếp tục tắt.
+
+### Chỉ nhập kết quả quay — 24/10/2026, 07:24–07:25
+
+- Theo yêu cầu, thêm CLI `--results-only`: không parse/lưu giải, số lượng
+  trúng hoặc tiền thưởng; vẫn validate game/ID/ngày/sáu main/special và giữ
+  snapshot cũ. Nguồn vẫn là cùng trang HTML, số request không giảm.
+- Backup `lotto-before-power-results-only-20261024.dump`. Host dùng một worker,
+  interval 2 giây, `include_prizes=false` ở cả hai run: `473` kiểm latest
+  `01414` ngày 22/10 đã có; `474` nhập thêm **16 kỳ `00148..00163`**.
+- Tổng **233/1.414 kỳ**, còn **1.181 ID thiếu draw**. Cả 16 row mới có
+  `prizes`/`prizes_retrieved_at` SQL NULL, không có enrichment/correction.
+  Checksum 217 row Power cũ và toàn bộ Lotto/Mega không đổi. Nguồn trả
+  429 + challenge tại `00164`; batch dừng, không còn run running, POWER-05 mở.
+- Regression parser bỏ qua prizes nhưng vẫn bắt special sai; integration
+  chứng minh lưu NULL và giữ snapshot cũ khi recheck. Ruff/Pyright/format và
+  **197 backend tests pass** (10 warnings hiện có); review độc lập không có
+  vấn đề trọng yếu. Không đổi UI/schema hoặc chạy lại frontend tests. Compose
+  backend build/up/readiness đạt, CLI có cờ mới. API history total 233, latest
+  `01414`, kỳ `00163` trả đúng sáu main và special; không gọi endpoint giải
+  thưởng khi kiểm chứng để tránh kích hoạt lazy enrichment.

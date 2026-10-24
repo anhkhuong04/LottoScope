@@ -21,6 +21,9 @@ def main() -> int:
     parser.add_argument("--to-date", type=date.fromisoformat)
     parser.add_argument("--recheck", action="store_true")
     parser.add_argument(
+        "--results-only", action="store_true", help="Skip parsing and storing prize snapshots"
+    )
+    parser.add_argument(
         "--workers",
         type=int,
         choices=(1, 2, 3),
@@ -33,6 +36,7 @@ def main() -> int:
             get_engine(),
             configured_fetcher(client),
             import_workers=args.workers,
+            include_prizes=not args.results_only,
             progress=lambda sequence, counts: print(
                 json.dumps({"draw_seq": sequence, "counters": counts}), flush=True
             ),

@@ -82,6 +82,7 @@ class IngestionService:
         now: Callable[[], datetime] = lambda: datetime.now(UTC),
         progress: Callable[[int, dict[str, int]], None] | None = None,
         import_workers: int = 3,
+        include_prizes: bool = True,
     ) -> None:
         if not 1 <= import_workers <= 3:
             raise ValueError("import_workers must be between 1 and 3")
@@ -90,12 +91,18 @@ class IngestionService:
         self.now = now
         self.progress = progress
         self.import_workers = import_workers
+        self.include_prizes = include_prizes
 
     def _latest_source(self, game: str) -> Draw:
         url = result_url(game)
         html, retrieved_at = self.fetcher.fetch(url)
         return parse_result(
-            html, game=game, expected_id=None, source_url=url, retrieved_at=retrieved_at
+            html,
+            game=game,
+            expected_id=None,
+            source_url=url,
+            retrieved_at=retrieved_at,
+            include_prizes=self.include_prizes,
         )
 
     def _record_item(
@@ -166,7 +173,12 @@ class IngestionService:
             else:
                 html, retrieved_at = self.fetcher.fetch(url)
                 draw = parse_result(
-                    html, game=game, expected_id=draw_id, source_url=url, retrieved_at=retrieved_at
+                    html,
+                    game=game,
+                    expected_id=draw_id,
+                    source_url=url,
+                    retrieved_at=retrieved_at,
+                    include_prizes=self.include_prizes,
                 )
         except SourceFetchError as exc:
             if isinstance(exc, SourceDeferredError) and on_deferred is not None:
@@ -315,6 +327,7 @@ class IngestionService:
             "from_date": from_date.isoformat() if from_date else None,
             "to_date": to_date.isoformat() if to_date else None,
             "recheck": recheck,
+            "include_prizes": self.include_prizes,
         }
         counts = {
             key: 0

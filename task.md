@@ -381,6 +381,10 @@ commit từng mốc sau kiểm chứng; nghiệm thu riêng với PostgreSQL và
   1.485 pairs, checker/generator/main-only; hai Jackpot, game switch, E2E responsive.
 - [ ] **POWER-05 — Vận hành/nghiệm thu.** Backup/restore, migration/build,
   full import/audit/repeat collectors, gates và source/DB/API/UI đối chiếu.
+- [x] **POWER-06 — Import chỉ kết quả (24/10/2026).** CLI `--results-only`
+  bỏ qua giải thưởng, giữ validation/snapshot cũ; 197 backend tests và gates
+  đạt. Đã nhập thêm 16 kỳ chỉ kết quả, tổng 233/1.414. Nguồn lại challenge
+  tại 00164; POWER-05 tiếp tục mở. Bằng chứng trong `POWER_ACCEPTANCE.md`.
 
 POWER-02: `uv sync --locked`, Ruff lint/format, Pyright đạt; 136 pytest pass
 trên PostgreSQL riêng `lotto_power_20261014_test` (10 deprecation warnings).

@@ -58,6 +58,11 @@ Import là resumable; một transaction cho **một draw và cập nhật checkp
 Draw lỗi không làm rollback toàn lịch sử, nhưng job tổng thể là `partial`/
 `failed`, không báo `success`. Chạy lại không tạo bản sao.
 CLI `import_history --workers 1|2|3` chọn mức concurrency, mặc định 3.
+Tùy chọn `--results-only` bỏ qua parse/lưu bảng giải, đặt `prizes` và timestamp
+giải là `null` cho draw mới. Game/ID/ngày/main/special vẫn được xác thực đầy đủ.
+Run scope ghi `include_prizes=false`; không xóa hoặc ghi đè snapshot cũ khi
+recheck. Mặc định vẫn lấy bảng giải như trước. Cả hai chế độ dùng cùng trang
+HTML nguồn, không có endpoint nhẹ riêng hoặc cam kết giảm request.
 `--workers 1` chỉ xử lý một kỳ tại một thời điểm và không submit kỳ kế tiếp
 sau challenge; throttle theo `LOTTO_SOURCE_REQUEST_INTERVAL` vẫn áp dụng
 cho mọi request, kể cả latest/retry. Giảm concurrency không bảo đảm nguồn

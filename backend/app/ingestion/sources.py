@@ -98,6 +98,7 @@ def parse_result(
     expected_id: str | None,
     source_url: str,
     retrieved_at: datetime,
+    include_prizes: bool = True,
 ) -> Draw:
     """Extract a single result and reject misleading HTTP 200 pages."""
     definition = get_game(game)
@@ -153,7 +154,7 @@ def parse_result(
             special_number=specials[0] if specials else None,
             source_url=source_url,
             source_retrieved_at=retrieved_at,
-            prizes=parse_prizes(html, game),
+            prizes=parse_prizes(html, game) if include_prizes else None,
         )
     except (ValueError, DomainValidationError) as exc:
         raise SourceParseError(f"{game}/{draw_id}: invalid source result: {exc}") from exc

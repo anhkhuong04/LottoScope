@@ -34,6 +34,50 @@ def parse_power(html: str, draw_id: str = "00001"):
     )
 
 
+def test_power_results_only_skips_prize_parser_but_validates_numbers(monkeypatch):
+    def reject_prize_parse(*args):
+        raise AssertionError("results-only must not parse prizes")
+
+    monkeypatch.setattr("app.ingestion.sources.parse_prizes", reject_prize_parse)
+    kwargs = dict(
+        game="power_655",
+        expected_id="00001",
+        source_url=result_url("power_655", "00001"),
+        retrieved_at=RETRIEVED_AT,
+        include_prizes=False,
+    )
+    draw = parse_result(power_html(), **kwargs)
+    assert draw.main_numbers == (5, 10, 14, 23, 24, 38)
+    assert draw.special_number == 35
+    assert draw.prizes is None
+    assert draw.prizes_retrieved_at is None
+    with pytest.raises(SourceParseError):
+        parse_result(power_html().replace('active">35', 'active">99'), **kwargs)
+
+
+@pytest.mark.integration
+def test_power_results_only_import_stores_no_prizes_and_preserves_existing_snapshot(engine):
+    fetcher = FixtureFetcher(latest="00001", pages={"00001": power_html()})
+    service = IngestionService(engine, fetcher, include_prizes=False)
+    first = service.import_history("power_655")
+    assert first.status == "success"
+    with Session(engine) as session:
+        draw = DrawRepository(session).get_by_id("power_655", "00001")
+        assert draw.prizes is None and draw.prizes_retrieved_at is None
+    enriched = IngestionService(engine, fetcher).import_history("power_655", recheck=True)
+    assert enriched.counters["enriched"] == 1
+    with Session(engine) as session:
+        saved = DrawRepository(session).get_by_id("power_655", "00001")
+        original_snapshot = (saved.prizes, saved.prizes_retrieved_at)
+    repeated = service.import_history("power_655", recheck=True)
+    assert repeated.status == "success"
+    assert repeated.counters["unchanged"] == 1
+    with Session(engine) as session:
+        draw = DrawRepository(session).get_by_id("power_655", "00001")
+        assert len(draw.prizes) == 5
+        assert (draw.prizes, draw.prizes_retrieved_at) == original_snapshot
+
+
 @pytest.mark.parametrize(
     ("draw_id", "day", "main", "special", "values"),
     [

@@ -75,6 +75,10 @@ Chạy một lượt ngay: `powershell.exe -NoProfile -ExecutionPolicy Bypass -F
 -Confirm:$false`, đặt `LOTTO_SCHEDULER_ENABLED=true`, recreate backend.
 
 Import lịch sử có `--workers 1` để xử lý tuần tự (mặc định 3, tối đa 3).
+Thêm `--results-only` nếu chỉ nhập ngày/kỳ quay, main numbers và special;
+bỏ qua parser giải thưởng, không lưu snapshot/giá trị thưởng mới. Giải thưởng
+đã lưu được giữ nguyên. Nguồn trả chung một trang HTML nên cờ này không giảm
+số request hoặc bảo đảm tránh Cloudflare.
 Kết hợp `LOTTO_SOURCE_REQUEST_INTERVAL=2.0` để giãn thời điểm bắt đầu request
 ít nhất 2 giây; thời gian chờ nguồn có thể khiến mỗi kỳ lâu hơn. Đây là giới
 hạn lưu lượng, không bảo đảm tránh Cloudflare. Challenge vẫn dừng batch và
