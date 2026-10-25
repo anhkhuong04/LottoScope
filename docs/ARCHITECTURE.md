@@ -49,6 +49,12 @@ cùng kết quả đã tính, không tính lại trên dataset khác. `data_vers
 
 ## Chạy và vận hành
 
+Wi-Fi opt-in sau MVP: `compose.lan.yaml` thêm binding frontend lên IP Wi-Fi
+cụ thể qua `FRONTEND_LAN_IP`, giữ mapping localhost; backend/PostgreSQL vẫn
+loopback. Không dùng `0.0.0.0`, không thêm public ingress hoặc auth. Cách bật,
+tắt và giới hạn vận hành ở [README](../README.md#chia-sẻ-cho-thiết-bị-cùng-wi-fi)
+và [ADR 0010](DECISIONS/0010-local-wifi-access.md).
+
 Docker Compose chạy `frontend` + `backend` + `postgres`, persistent volume và health
 checks. MVP chạy một API worker nếu APScheduler nằm cùng backend process;
 PostgreSQL advisory lock bảo vệ job overlap. Dùng env typed cho URL/secret,

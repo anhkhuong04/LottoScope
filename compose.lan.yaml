@@ -1,0 +1,5 @@
+# Opt-in LAN access. Keep compose.yaml's loopback mapping and add one Wi-Fi IP.
+services:
+  frontend:
+    ports:
+      - "${FRONTEND_LAN_IP:?Set FRONTEND_LAN_IP to the host Wi-Fi IPv4 address}:${FRONTEND_PORT:-8088}:80"

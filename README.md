@@ -31,6 +31,52 @@ docker compose build frontend
 docker compose up -d --no-deps --wait frontend
 ```
 
+## Chia sẻ cho thiết bị cùng Wi-Fi
+
+Chỉ bật frontend trên IP Wi-Fi cụ thể; backend `8000` và PostgreSQL `5432`
+tiếp tục bind loopback. Nginx chuyển tiếp `/api` nên thiết bị khác chỉ cần
+cổng frontend. Máy chạy dự án phải bật và Docker phải đang chạy.
+
+Từ root, xem IPv4 của Wi-Fi bằng
+`Get-NetIPAddress -InterfaceAlias 'Wi-Fi' -AddressFamily IPv4`. Trong `.env`
+đặt IP thực của máy (ví dụ sau chỉ là mẫu), cùng lựa chọn Compose cho Windows:
+
+```dotenv
+FRONTEND_LAN_IP=192.168.1.10
+COMPOSE_FILE=compose.yaml;compose.lan.yaml
+```
+
+```powershell
+docker compose config --quiet
+docker compose up -d --no-deps --wait frontend
+```
+
+`compose.lan.yaml` thêm IP Wi-Fi vào mapping localhost hiện có; các lệnh
+`docker compose` sau đó tiếp tục dùng hai file nhờ `COMPOSE_FILE` trong `.env`.
+Trên hệ điều hành khác, có thể dùng trực tiếp
+`docker compose -f compose.yaml -f compose.lan.yaml up -d --no-deps --wait frontend`.
+Thiết bị cùng Wi-Fi mở **`http://<IP-Wi-Fi>:8088`**, không dùng `https://`
+vì bản local chưa có TLS (hoặc dùng `FRONTEND_PORT` đã chọn);
+`http://localhost:8088` vẫn dùng được trên máy chủ. IP có thể đổi khi router
+cấp DHCP lại: cập nhật `.env` và recreate frontend. Có thể đặt DHCP reservation
+cho máy chủ trên router để giữ URL ổn định.
+
+Windows Firewall phải cho phép Docker Desktop Backend nhận TCP trên cổng
+frontend ở profile mạng hiện hành. Nếu chưa có rule phù hợp, Administrator
+có thể tạo rule riêng giới hạn IP máy chủ, cổng frontend, interface Wi-Fi và
+subnet Wi-Fi; không tắt firewall hoặc đổi toàn bộ mạng sang Private chỉ để
+chia sẻ website. Router không cần port forwarding. Guest Wi-Fi/AP isolation
+có thể ngăn thiết bị cùng Wi-Fi kết nối với nhau.
+
+Ứng dụng chưa có tài khoản/phân quyền: người truy cập được có thể dùng các
+chức năng UI, gồm đồng bộ thủ công. Cấu hình này dành cho Wi-Fi tin cậy,
+không phải triển khai công khai trên Internet.
+Trên LAN HTTP, trình duyệt có thể chặn clipboard tự động; dùng thông báo sao
+chép thủ công của UI nếu gặp trường hợp này.
+
+Tắt chia sẻ: xóa `COMPOSE_FILE` và `FRONTEND_LAN_IP` khỏi `.env`, rồi chạy
+`docker compose -f compose.yaml up -d --no-deps --wait frontend`.
+
 ## Nhập dữ liệu và vận hành collector
 
 Chi tiết `/history/:drawId` có bảng giải thưởng theo kỳ cho cả ba game.

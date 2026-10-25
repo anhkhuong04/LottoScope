@@ -24,6 +24,10 @@ contract POST/cooldown ở API, vận hành mặc định không scheduler ở R
 
 ## Phạm vi
 
+- Chia sẻ Wi-Fi local (25/10/2026): [ADR 0010](../docs/DECISIONS/0010-local-wifi-access.md)
+  chốt overlay frontend bind IP Wi-Fi cụ thể, giữ loopback/API/DB; không mở
+  public Internet hoặc thêm phân quyền. Bật bằng `.env` local, hướng dẫn ở README.
+
 - Sau MVP, người dùng chốt lồng cầu vật lý thay UI generator Mega/Power
   (24/10/2026) và Lotto (25/10/2026);
   [DRAW_SIMULATION.md](../docs/DRAW_SIMULATION.md) giữ contract, không mở rộng

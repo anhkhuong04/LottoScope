@@ -553,6 +553,24 @@ Compose **86 pass/4 skip theo thiết bị**, gồm Lotto 5+1 vật lý, pause/r
 Đã xem ảnh desktop/mobile; mobile là Chromium emulation, chưa đo máy thật.
 README bổ sung cách cập nhật image frontend; tab cũ cần tải lại bundle.
 
+## Chia sẻ Wi-Fi — 25/10/2026
+
+- [x] **LAN-01 — Frontend qua Wi-Fi:** overlay opt-in, giữ localhost, backend/
+  PostgreSQL loopback; kiểm effective firewall, áp dụng runtime, kiểm HTTP/API
+  và browser qua IP LAN, ghi rõ giới hạn kiểm tra từ thiết bị thứ hai.
+
+Kiểm chứng LAN-01: base Compose chỉ loopback; overlay yêu cầu IP, merge thành
+`127.0.0.1:8088` + `192.168.1.2:8088`, backend `8000`/PostgreSQL `5432` chỉ
+loopback. Chỉ recreate frontend; ba service healthy. HTTP localhost và LAN
+200, API qua Nginx đủ ba game. E2E flow A/B desktop/mobile **4 pass**, Lotto
+vật lý mobile qua LAN **1 pass** (5+1, pause/resume/checker, Axe/overflow).
+Review độc lập không có finding quan trọng. Người dùng ban đầu không mở được,
+sau đó xác nhận **đã truy cập được từ thiết bị khác bằng `http://`**; host có
+kết nối từ client LAN `192.168.1.19`. Rule Docker Public hiện có phù hợp nên
+không sửa firewall/profile; không mở router/Internet. Không thay source app,
+backend, DB hoặc chạy lại unit/build không liên quan. `.env` local giữ IP và
+`COMPOSE_FILE`; hướng dẫn bật/tắt/DHCP/HTTP ở README, quyết định ở ADR 0010.
+
 ## Trạng thái nghiệm thu MVP ban đầu
 
 - [x] **Backend MVP hoàn thành:** P0–P6 và P8-01, P8-03–P8-07, P8-09 đạt;
