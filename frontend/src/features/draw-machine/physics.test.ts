@@ -27,10 +27,10 @@ function random(seed: number) {
     return seed / 4294967296
   }
 }
-function setup(max = 55, seed = 17) {
+function setup(max = 55, seed = 17, count = 6) {
   const world = new RAPIER.World({ x: 0, y: -9.81, z: 0 })
   worlds.push(world)
-  return createMachine(world, RAPIER, max, random(seed))
+  return createMachine(world, RAPIER, max, random(seed), count)
 }
 function tick(machine: Machine, seconds: number) {
   for (let i = 0; i < seconds / STEP; i++) {
@@ -43,6 +43,30 @@ function tick(machine: Machine, seconds: number) {
 }
 
 describe('real Rapier draw machine', () => {
+  it('requires an explicit result count instead of inferring it from the ball pool', () => {
+    const world = new RAPIER.World({ x: 0, y: -9.81, z: 0 })
+    worlds.push(world)
+    expect(() => Reflect.apply(createMachine, undefined, [world, RAPIER, 35, random(17)])).toThrow()
+    expect(world.bodies.len()).toBe(0)
+    expect(world.colliders.len()).toBe(0)
+  })
+
+  it.each([
+    [35, 0],
+    [35, -1],
+    [35, 1.5],
+    [35, 36],
+    [35, Number.NaN],
+    [35.5, 5],
+    [Number.NaN, 5],
+  ])('rejects invalid pool/count %s/%s before allocating physics resources', (max, count) => {
+    const world = new RAPIER.World({ x: 0, y: -9.81, z: 0 })
+    worlds.push(world)
+    expect(() => createMachine(world, RAPIER, max, random(17), count)).toThrow()
+    expect(world.bodies.len()).toBe(0)
+    expect(world.colliders.len()).toBe(0)
+  })
+
   it('keeps balls behind the closed gate and resolves ball/ball collisions', () => {
     const m = setup()
     const a = m.balls[0].body
@@ -59,18 +83,22 @@ describe('real Rapier draw machine', () => {
     expect(m.drawn).toEqual([])
   })
 
-  it.each([45, 55])(
-    'physically draws exactly six distinct main balls from %i',
-    (max) => {
+  it.each([
+    { max: 35, count: 5 },
+    { max: 45, count: 6 },
+    { max: 55, count: 6 },
+  ])(
+    'physically draws exactly $count distinct main balls from $max',
+    ({ max, count }) => {
       for (const seed of [17, 209, 4231]) {
-        const m = setup(max, seed)
+        const m = setup(max, seed, count)
         startMachine(m)
         tick(m, 120)
         expect(m.status, `seed ${seed}: ${m.error}`).toBe('complete')
-        expect(m.drawn).toHaveLength(6)
-        expect(new Set(m.drawn).size).toBe(6)
+        expect(m.drawn).toHaveLength(count)
+        expect(new Set(m.drawn).size).toBe(count)
         expect(m.drawn.every((n) => n >= 1 && n <= max)).toBe(true)
-        expect(m.balls.filter((b) => b.captured)).toHaveLength(6)
+        expect(m.balls.filter((b) => b.captured)).toHaveLength(count)
         const saved = [...m.drawn]
         afterStep(m)
         startMachine(m)

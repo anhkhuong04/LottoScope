@@ -519,6 +519,24 @@ mobile, vật lý thật, cả hai game, reset/context loss, checker/copy, Axe).
 Frontend image đã build/up; ba service healthy. Không đổi backend/schema/
 ingestion; số draw Lotto/Mega/Power giữ **964/1.577/1.414**.
 
+## Lotto DrawMachine — 25/10/2026
+
+- [x] **SIM-04 — Thay RuleGenerator Lotto:** dùng chung DrawMachine, truyền
+  `main_max`/`main_count` từ API xuống cảnh/vật lý; 35 bóng, đúng 5 main,
+  kết quả/copy/checker và bố cục theo game. Đồng bộ docs/agent, kiểm chứng
+  desktop/tablet/mobile và quality gates, rồi commit.
+
+Kiểm chứng SIM-04: lint/format/typecheck/build đạt; **42 unit tests pass**.
+Full E2E **86 pass/4 skip theo thiết bị**; sau bổ sung đổi game giữa phiên
+Lotto đã có bóng ra, chạy lại ca này trên desktop/tablet/mobile **3 pass**.
+Quay Rapier thật đủ 5 main Lotto và 6 main Mega/Power; kiểm copy/checker,
+game/window, không gọi generator API, Axe và ảnh Lotto desktop/mobile.
+Regression cột thứ sáu thừa và constructor tự suy luận count đã RED → GREEN.
+Lượt unit chạy đồng thời browser từng timeout; chạy riêng full suite đạt với
+timeout giữ nguyên. Review độc lập không có finding quan trọng. Cảnh 3D vẫn
+có cảnh báo bundle lớn/deprecation đã có; chưa kiểm FPS trên điện thoại thật.
+Không deploy hoặc thay backend, schema, ingestion; generator API giữ contract.
+
 ## Trạng thái nghiệm thu MVP ban đầu
 
 - [x] **Backend MVP hoàn thành:** P0–P6 và P8-01, P8-03–P8-07, P8-09 đạt;

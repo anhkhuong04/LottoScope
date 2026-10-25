@@ -842,9 +842,12 @@ Không bắt đầu bằng một score tổng hợp.
 
 # 14. Generator
 
-Cập nhật sau MVP (24/10/2026): Mega 6/45 và Power 6/55 tại `/generator` dùng
-[lồng cầu mô phỏng](DRAW_SIMULATION.md). Mục 14 bên dưới giữ áp dụng cho
-Lotto 5/35; phạm vi phân tích không quyết định kết quả lồng cầu.
+Cập nhật sau MVP: Mega 6/45 và Power 6/55 (24/10/2026), rồi Lotto 5/35
+(25/10/2026) tại `/generator` dùng [lồng cầu mô phỏng](DRAW_SIMULATION.md).
+Lotto có 35 bóng/5 kết quả chính; Mega/Power có 45 hoặc 55 bóng/6 kết quả
+chính, không có special. Phạm vi phân tích chỉ được chuyển sang checker,
+không quyết định kết quả lồng cầu. Các mục rule/explanation bên dưới ghi lại
+UX MVP ban đầu đã được thay thế cho cả ba game.
 
 ## 14.1 Goal
 
@@ -1498,11 +1501,13 @@ Open Checker
 ```text
 Open Generator
 → Select Game
-→ Configure Rules
-→ Generate
-→ Review Results
-→ Open Explanation
+→ Start Physical Draw
+→ Review Main Numbers In Exit Order
+→ Copy Sorted Combination Or Open Checker
 ```
+
+Luồng sau MVP áp dụng cho cả ba game theo [DRAW_SIMULATION.md](DRAW_SIMULATION.md).
+Rule/explanation vẫn thuộc generator API backend.
 
 ---
 
@@ -1572,8 +1577,10 @@ Frontend MVP hoàn thành khi:
 8. Pair detail hiển thị các draw chứa pair.
 9. Checker validate đúng input theo game.
 10. Checker hiển thị exact match và overlap.
-11. Generator cho phép cấu hình rule cơ bản.
-12. Generated result có explanation.
+11. Generator dùng lồng cầu mô phỏng theo game; hành vi/kiểm chứng hiện hành
+    theo [DRAW_SIMULATION.md](DRAW_SIMULATION.md) thay UX rule MVP ban đầu.
+12. Kết quả mô phỏng có thứ tự bóng ra, bộ tăng dần và copy/checker; giao diện
+    giải thích cơ chế mô phỏng. Explanation theo rule tiếp tục thuộc generator API.
 13. Loading, empty và error states được xử lý rõ ràng.
 14. Giao diện sử dụng tốt trên desktop và mobile.
 15. Không có wording gây hiểu hệ thống đang dự đoán chắc chắn kết quả.

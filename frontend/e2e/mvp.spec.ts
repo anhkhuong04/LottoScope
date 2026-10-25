@@ -19,7 +19,7 @@ test('flow A: dashboard to number detail, game and window switch', async ({ page
   await expect(page.locator('.number-tile')).toHaveCount(45)
 })
 
-test('flow B: checker and flow C: generator with explanation', async ({ page }) => {
+test('flow B: checker and flow C: generator with draw machine', async ({ page }) => {
   await page.goto('/checker?game=lotto_535')
   for (const number of ['01', '02', '03', '04', '05'])
     await page.getByRole('button', { name: `Số ${number}` }).click()
@@ -27,13 +27,9 @@ test('flow B: checker and flow C: generator with explanation', async ({ page }) 
   await expect(page.getByRole('heading', { name: /Trùng chính xác/ })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Mức trùng số' })).toBeVisible()
   await page.goto('/generator?game=lotto_535')
-  await page.getByRole('checkbox', { name: 'Giới hạn trùng kỳ trước' }).check()
-  await page.getByRole('button', { name: 'Tạo bộ số' }).click()
-  await expect(page.getByText(/bộ ·/)).toBeVisible()
-  await page.getByRole('button', { name: 'Xem giải thích' }).first().click()
-  await expect(page.getByRole('dialog')).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Giải thích bộ số' })).toBeVisible()
-  await page.getByRole('button', { name: 'Đóng' }).click()
+  await expect(page.getByRole('heading', { name: 'Lồng cầu mô phỏng' })).toBeVisible()
+  await expect(page.locator('.draw-stage-badge')).toHaveText('35 BÓNG')
+  await expect(page.locator('.draw-result-slots li')).toHaveCount(5)
 })
 
 test('flow D: pair detail and responsive overflow', async ({ page }) => {

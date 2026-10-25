@@ -25,8 +25,12 @@ const labels: Record<Status, string> = {
   drawing: 'Đang lấy bóng',
   paused: 'Đã tạm dừng',
   stalled: 'Chưa có bóng đi qua cửa',
-  complete: 'Hoàn tất · 6 số chính',
+  complete: 'Hoàn tất',
   error: 'Phiên quay đã dừng',
+}
+function statusLabel(status: Status, count: number): string {
+  if (status === 'complete') return `Hoàn tất · ${count} số chính`
+  return labels[status]
 }
 function supportsWebGL() {
   try {
@@ -113,13 +117,15 @@ export default function DrawMachine({
     setMessage('')
   }
   const canonical = [...snapshot.drawn].sort((a, b) => a - b)
+  const countWord = game.main_count === 5 ? 'năm' : 'sáu'
+  const countWordCap = countWord.charAt(0).toUpperCase() + countWord.slice(1)
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(
         canonical.map((n) => String(n).padStart(2, '0')).join(' '),
       )
       if (currentSession.current !== session) return
-      setMessage('Đã sao chép sáu số chính.')
+      setMessage(`Đã sao chép ${countWord} số chính.`)
     } catch {
       if (currentSession.current !== session) return
       setMessage('Không sao chép tự động được. Bạn có thể chọn bộ số bên dưới để sao chép.')
@@ -136,7 +142,7 @@ export default function DrawMachine({
       <PageHead
         kicker="Tạo bộ số"
         title="Lồng cầu mô phỏng"
-        description={`${game.label} · Bóng qua cửa quyết định kết quả. Sáu số chính, không áp dụng bộ lọc lịch sử.`}
+        description={`${game.label} · Bóng qua cửa quyết định kết quả. ${countWordCap} số chính, không áp dụng bộ lọc lịch sử.`}
       />
       <div className="draw-machine-layout">
         <section className="draw-stage" aria-label={`Lồng cầu ${game.label}`}>
@@ -190,6 +196,7 @@ export default function DrawMachine({
                   <Suspense fallback={<p className="draw-loading">Đang tải lồng cầu và vật lý…</p>}>
                     <DrawScene
                       max={game.main_max}
+                      count={game.main_count}
                       action={action}
                       running={running}
                       onSnapshot={receive}
@@ -230,21 +237,27 @@ export default function DrawMachine({
               ? 'Cảnh quay chưa sẵn sàng'
               : !ready
                 ? 'Đang khởi tạo'
-                : labels[snapshot.status]}
-            <span className="draw-stage-count">{snapshot.drawn.length} / 6</span>
+                : statusLabel(snapshot.status, game.main_count)}
+            <span className="draw-stage-count">
+              {snapshot.drawn.length} / {game.main_count}
+            </span>
           </div>
         </section>
         <section className="card draw-console" aria-label="Điều khiển và kết quả quay">
           <p className="draw-eyebrow">PHIÊN QUAY CỤC BỘ</p>
-          <h2>Sáu bóng. Một bộ số.</h2>
+          <h2>{countWordCap} bóng. Một bộ số.</h2>
           <p className="muted">
             Mỗi bóng có cùng kích thước và khối lượng. Số chỉ được ghi nhận sau khi bóng đi qua cửa
             lồng.
           </p>
           <div className="draw-status" role="status" aria-live="polite">
-            {labels[snapshot.status]}
+            {statusLabel(snapshot.status, game.main_count)}
           </div>
-          <ol className="draw-result-slots" aria-label="Thứ tự bóng ra">
+          <ol
+            className="draw-result-slots"
+            aria-label="Thứ tự bóng ra"
+            style={{ gridTemplateColumns: `repeat(${game.main_count}, minmax(0, 1fr))` }}
+          >
             {Array.from({ length: game.main_count }, (_, i) => (
               <li key={i}>
                 <span className={`draw-slot${snapshot.drawn[i] !== undefined ? ' filled' : ''}`}>

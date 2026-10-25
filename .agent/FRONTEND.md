@@ -18,7 +18,7 @@
   game selector, analysis window, number ball, metric card, table và states.
 - Frontend làm presentation và validation input; không tính core frequency,
   gap, pair, checker, generator hoặc backtest thay backend.
-  Ngoại lệ được người dùng chốt: lồng cầu Mega/Power chạy vật lý cục bộ theo
+  Ngoại lệ được người dùng chốt: lồng cầu Lotto/Mega/Power chạy vật lý cục bộ theo
   [DRAW_SIMULATION.md](../docs/DRAW_SIMULATION.md); không dùng generator backend
   để quyết định bóng ra và không ghi kết quả mô phỏng vào lịch sử thật.
 
@@ -47,10 +47,10 @@
   main-only. Không thêm full-ticket mode hoặc chèn special vào main tokens.
 - Kết quả checker theo thứ tự: exact match → overlap summary → similar draws
   → per-number analytics → pairs; không bắt đầu bằng score tổng hợp.
-- Rule generator có toggle/value/help text; hỗ trợ chỉ bật rule người dùng chọn,
-  validate constraints và hiển thị partial/no-result theo status từ backend.
-- Mỗi generated result có explanation; desktop dùng drawer, mobile dùng
-  full-screen sheet/page phù hợp. Không viết logic rule lần hai trong UI.
+- `/generator` dùng chung DrawMachine cho cả ba game; lấy số bóng và số kết quả
+  từ game definition API (Lotto 5 main; Mega/Power 6 main), không sinh special.
+  Chuyển game phải hủy phiên cũ; copy/checker dùng main tăng dần và đúng context.
+  Giao diện rule/explanation MVP đã được thay thế; generator API vẫn giữ contract.
 - Display số 2 chữ số; màu/ball chỉ phục vụ nhận diện dữ liệu, không tạo hàm ý
   số tốt/xấu hoặc sắp thắng.
 

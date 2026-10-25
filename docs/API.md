@@ -135,6 +135,9 @@ Ví dụ fixture Lotto trong analytics: checker `01 02 03 04 05` có
 
 ## Generator
 
+Contract backend này được giữ nguyên cho cả ba game. Frontend `/generator`
+dùng [lồng cầu cục bộ](DRAW_SIMULATION.md), không gọi endpoint này để chọn số.
+
 `POST /games/{game}/combinations/generate` body:
 
 ```json

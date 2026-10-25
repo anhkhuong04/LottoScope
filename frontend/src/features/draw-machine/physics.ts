@@ -27,6 +27,7 @@ export type Machine = {
   sinceCapture: number
   error: string | null
   random: () => number
+  count: number
 }
 
 export function createMachine(
@@ -34,8 +35,12 @@ export function createMachine(
   rapier: typeof RAPIER,
   max: number,
   random: () => number = Math.random,
+  count: number,
 ): Machine {
-  if (max !== 45 && max !== 55) throw new Error('Lồng cầu chỉ hỗ trợ Mega 6/45 và Power 6/55.')
+  // Game definitions come from the API; physics must not infer their main count.
+  if (!Number.isInteger(max) || !Number.isInteger(count) || count < 1 || count > max) {
+    throw new Error('Số lượng kết quả phải là số nguyên dương trong phạm vi số bóng.')
+  }
   const geometry = new SphereGeometry(RADIUS, 48, 32, 0, Math.PI * 2, 0, Math.PI - OPENING_ANGLE)
   const shell = world.createCollider(
     rapier.ColliderDesc.trimesh(
@@ -101,6 +106,7 @@ export function createMachine(
     sinceCapture: 0,
     error: null,
     random,
+    count,
   }
 }
 
@@ -198,14 +204,14 @@ export function afterStep(m: Machine) {
   // If two crossings share a physics step, their interpolated crossing time wins.
   crossings.sort((a, b) => a.fraction - b.fraction)
   for (const { ball } of crossings) {
-    if (m.drawn.length === 6) break
+    if (m.drawn.length === m.count) break
     ball.captured = true
     ball.body.setEnabled(false)
     m.drawn.push(ball.number)
     m.sinceCapture = 0
     m.phaseTime = 0
     m.gate.setEnabled(true)
-    m.status = m.drawn.length === 6 ? 'complete' : 'mixing'
+    m.status = m.drawn.length === m.count ? 'complete' : 'mixing'
   }
   if (m.status === 'complete') setBodiesEnabled(m, false)
   else if (m.sinceCapture >= 30) {

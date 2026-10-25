@@ -115,7 +115,6 @@
   padding: 0;
   margin: 18px 0 26px;
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 7px;
 }
 .draw-result-slots li {

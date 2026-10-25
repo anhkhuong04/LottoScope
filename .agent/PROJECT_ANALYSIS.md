@@ -24,9 +24,10 @@ contract POST/cooldown ở API, vận hành mặc định không scheduler ở R
 
 ## Phạm vi
 
-- Sau MVP, người dùng chốt lồng cầu vật lý thay UI generator Mega/Power;
+- Sau MVP, người dùng chốt lồng cầu vật lý thay UI generator Mega/Power
+  (24/10/2026) và Lotto (25/10/2026);
   [DRAW_SIMULATION.md](../docs/DRAW_SIMULATION.md) giữ contract, không mở rộng
-  thành prediction/saved picks hoặc thay generator API dùng bởi Lotto.
+  thành prediction/saved picks hoặc thay generator API backend.
   Lý do kiến trúc ở [ADR 0009](../docs/DECISIONS/0009-physical-draw-simulation.md).
 
 - [MVP.md](../docs/MVP.md) chốt backend MVP trước, frontend MVP sau; ứng

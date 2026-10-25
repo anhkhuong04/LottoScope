@@ -89,8 +89,9 @@ nguyên, luôn loại special và tách biệt game kể cả cùng draw ID.
 
 ## Generator MVP
 
-Contract dưới đây tiếp tục áp dụng cho generator API và UI Lotto 5/35.
-UI Mega/Power được thay bằng [lồng cầu vật lý](DRAW_SIMULATION.md) sau MVP;
+Contract dưới đây tiếp tục áp dụng cho generator API backend.
+UI cả ba game được thay bằng [lồng cầu vật lý](DRAW_SIMULATION.md) sau MVP
+(Mega/Power ngày 24/10/2026, Lotto ngày 25/10/2026);
 mô phỏng không sử dụng các rule lịch sử dưới đây để chọn kết quả.
 
 Tạo main combinations theo game, không sinh special. Rule **chỉ áp dụng khi

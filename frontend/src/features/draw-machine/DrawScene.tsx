@@ -29,6 +29,7 @@ import type { Action, Snapshot } from './DrawMachine'
 
 type Props = {
   max: number
+  count: number
   action: Action | null
   running: boolean
   onSnapshot: (s: Snapshot) => void
@@ -124,7 +125,12 @@ function Cage() {
   )
 }
 
-function Mechanism({ max, action, onSnapshot }: Pick<Props, 'max' | 'action' | 'onSnapshot'>) {
+function Mechanism({
+  max,
+  count,
+  action,
+  onSnapshot,
+}: Pick<Props, 'max' | 'count' | 'action' | 'onSnapshot'>) {
   const { world, rapier } = useRapier()
   const invalidate = useThree((state) => state.invalidate)
   const machine = useRef<Machine | null>(null)
@@ -147,13 +153,13 @@ function Mechanism({ max, action, onSnapshot }: Pick<Props, 'max' | 'action' | '
     }
   }, [onSnapshot])
   useLayoutEffect(() => {
-    machine.current = createMachine(world, rapier, max)
+    machine.current = createMachine(world, rapier, max, Math.random, count)
     publish()
     return () => {
       if (machine.current) destroyMachine(machine.current)
       machine.current = null
     }
-  }, [world, rapier, max, publish])
+  }, [world, rapier, max, count, publish])
   useEffect(
     () => () => {
       geometry.dispose()
@@ -193,7 +199,7 @@ function Mechanism({ max, action, onSnapshot }: Pick<Props, 'max' | 'action' | '
       if (!mesh) continue
       if (ball.captured) {
         const index = m.drawn.indexOf(ball.number)
-        const destination = new Vector3((index - 2.5) * 0.52, -3.64, 0.15)
+        const destination = new Vector3((index - (count - 1) / 2) * 0.52, -3.64, 0.15)
         mesh.position.lerp(destination, Math.min(1, delta * 8))
         if (mesh.position.distanceToSquared(destination) > 0.0001) invalidate()
       } else {

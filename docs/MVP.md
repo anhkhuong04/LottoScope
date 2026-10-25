@@ -39,6 +39,11 @@ wireframe mục 33, bao gồm chuyển game/window, loading/empty/error, desktop
 mobile, input validation và explanation. Mốc F chỉ hoàn tất khi backend phục vụ
 được các flow A–D ở wireframe mục 31.
 
+Thay đổi sau nghiệm thu MVP: `/generator` chuyển từ rule/explanation sang
+[lồng cầu mô phỏng](DRAW_SIMULATION.md) cho Mega/Power (24/10/2026) và Lotto
+(25/10/2026). Generator API backend theo rule vẫn giữ nguyên; bằng chứng MVP
+ban đầu không thay đổi. UX hiện hành theo wireframe và spec mô phỏng.
+
 ## Mốc A — Ứng dụng MVP
 
 Mốc B và F đều hoàn tất; người dùng có thể xem kết quả thực, phân tích, kiểm

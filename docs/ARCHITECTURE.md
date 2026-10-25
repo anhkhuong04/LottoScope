@@ -20,7 +20,8 @@ UI chỉ gọi API, không giữ domain
 analytics riêng.
 
 Ngoại lệ cục bộ sau MVP: [lồng cầu](DRAW_SIMULATION.md) dùng Three.js/Fiber/Rapier
-để mô phỏng chuyển động và lấy sáu main; không thay analytics backend hay schema.
+để mô phỏng chuyển động và lấy main theo game definition (Lotto năm số;
+Mega/Power sáu số); không thay analytics backend hay schema.
 
 ## Luồng và boundaries
 

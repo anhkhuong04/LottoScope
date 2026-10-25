@@ -10,9 +10,11 @@ vi.mock('./DrawScene', async () => {
     default: function MockScene({
       onSnapshot,
       action,
+      count,
     }: {
       onSnapshot: (s: object) => void
       action: { type: string } | null
+      count: number
     }) {
       useEffect(() => {
         onSnapshot({ status: 'ready', drawn: [], error: null })
@@ -23,7 +25,11 @@ vi.mock('./DrawScene', async () => {
       return (
         <button
           onClick={() =>
-            onSnapshot({ status: 'complete', drawn: [6, 1, 9, 20, 30, 45], error: null })
+            onSnapshot({
+              status: 'complete',
+              drawn: count === 5 ? [35, 1, 9, 20, 30] : [6, 1, 9, 20, 30, 45],
+              error: null,
+            })
           }
         >
           Physical exit fixture
@@ -89,5 +95,52 @@ describe('draw controls', () => {
     vi.spyOn(document, 'hidden', 'get').mockReturnValue(true)
     act(() => document.dispatchEvent(new Event('visibilitychange')))
     expect(await screen.findByText(/Tab đang ẩn/)).toBeVisible()
+  })
+  it('supports Lotto 5/35 with 5 balls and correct labels', async () => {
+    const lotto: Game = {
+      id: 'lotto_535',
+      label: 'Lotto 5/35',
+      main_count: 5,
+      main_min: 1,
+      main_max: 35,
+      special_min: 1,
+      special_max: 12,
+    }
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({
+      getExtension: () => null,
+    } as unknown as WebGL2RenderingContext)
+    render(
+      <MemoryRouter>
+        <DrawMachine
+          game={lotto}
+          analysisWindow={{ kind: 'date_range', from_date: '2026-10-01', to_date: '2026-10-25' }}
+        />
+      </MemoryRouter>,
+    )
+    expect(screen.getByText('35 BÓNG')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Năm bóng. Một bộ số.' })).toBeInTheDocument()
+    expect(screen.getByText('0 / 5')).toBeInTheDocument()
+    expect(screen.getAllByText(/Bóng \d/)).toHaveLength(5)
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Bắt đầu quay' })).toBeEnabled())
+    expect(screen.queryByRole('link', { name: 'Kiểm tra lịch sử' })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Bắt đầu quay' }))
+    fireEvent.click(screen.getByText('Physical exit fixture'))
+    expect(screen.getByRole('status')).toHaveTextContent('Hoàn tất · 5 số chính')
+    expect(screen.getByRole('link', { name: 'Kiểm tra lịch sử' })).toHaveAttribute(
+      'href',
+      '/checker?game=lotto_535&window=date_range&from_date=2026-10-01&to_date=2026-10-25&numbers=1%2C9%2C20%2C30%2C35',
+    )
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    vi.stubGlobal('navigator', { clipboard: { writeText } })
+    try {
+      fireEvent.click(screen.getByRole('button', { name: 'Sao chép' }))
+      expect(await screen.findByText('Đã sao chép năm số chính.')).toBeVisible()
+      expect(writeText).toHaveBeenCalledWith('01 09 20 30 35')
+    } finally {
+      vi.unstubAllGlobals()
+    }
+    fireEvent.click(screen.getByRole('button', { name: 'Phiên mới' }))
+    expect(screen.queryByRole('link', { name: 'Kiểm tra lịch sử' })).not.toBeInTheDocument()
+    expect(screen.getByText('0 / 5')).toBeInTheDocument()
   })
 })
