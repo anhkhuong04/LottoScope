@@ -12,14 +12,20 @@ import { Link } from 'react-router'
 import { Copy, Pause, Play, RotateCcw, CircleHelp } from 'lucide-react'
 import { globalSearch, type AnalysisWindow, type Game } from '../../api'
 import { Balls, PageHead } from '../../ui'
-import type { Status } from './physics'
+import type { Snapshot } from './session'
+export type { Snapshot } from './session'
 import './draw-machine.css'
 
 const DrawScene = lazy(() => import('./DrawScene'))
-export type Snapshot = { status: Status; drawn: number[]; error: string | null }
 export type Action = { type: 'start' | 'pause' | 'resume'; id: number }
-const initial: Snapshot = { status: 'ready', drawn: [], error: null }
-const labels: Record<Status, string> = {
+const initial: Snapshot = {
+  status: 'ready',
+  drawn: [],
+  specialNumber: null,
+  phase: 'main',
+  error: null,
+}
+const labels: Record<Snapshot['status'], string> = {
   ready: 'Sẵn sàng',
   mixing: 'Đang trộn bóng',
   drawing: 'Đang lấy bóng',
@@ -28,9 +34,12 @@ const labels: Record<Status, string> = {
   complete: 'Hoàn tất',
   error: 'Phiên quay đã dừng',
 }
-function statusLabel(status: Status, count: number): string {
-  if (status === 'complete') return `Hoàn tất · ${count} số chính`
-  return labels[status]
+function statusLabel(snapshot: Snapshot, count: number, hasSpecial: boolean): string {
+  if (snapshot.status === 'complete')
+    return `Hoàn tất · ${count} số chính${hasSpecial ? ' + 1 số đặc biệt' : ''}`
+  if (snapshot.phase === 'special' && snapshot.status === 'mixing') return 'Đang trộn bóng đặc biệt'
+  if (snapshot.phase === 'special' && snapshot.status === 'drawing') return 'Đang lấy số đặc biệt'
+  return labels[snapshot.status]
 }
 function supportsWebGL() {
   try {
@@ -77,8 +86,11 @@ export default function DrawMachine({
     () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false,
   )
   const [message, setMessage] = useState('')
+  const specialMax = game.id === 'lotto_535' ? game.special_max : null
+  const hasSpecial = specialMax !== null
   const running = snapshot.status === 'mixing' || snapshot.status === 'drawing'
-  const finished = snapshot.status === 'complete'
+  const finished =
+    snapshot.status === 'complete' && (!hasSpecial || snapshot.specialNumber !== null)
   const send = useCallback(
     (type: Action['type']) => setAction((previous) => ({ type, id: (previous?.id ?? 0) + 1 })),
     [],
@@ -104,6 +116,7 @@ export default function DrawMachine({
       }
     }
     document.addEventListener('visibilitychange', onVisibility)
+    onVisibility()
     return () => document.removeEventListener('visibilitychange', onVisibility)
   }, [running, send])
   const reset = () => {
@@ -122,10 +135,11 @@ export default function DrawMachine({
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(
-        canonical.map((n) => String(n).padStart(2, '0')).join(' '),
+        canonical.map((n) => String(n).padStart(2, '0')).join(' ') +
+          (hasSpecial ? ` | ĐB: ${String(snapshot.specialNumber).padStart(2, '0')}` : ''),
       )
       if (currentSession.current !== session) return
-      setMessage(`Đã sao chép ${countWord} số chính.`)
+      setMessage(`Đã sao chép ${countWord} số chính${hasSpecial ? ' và số đặc biệt' : ''}.`)
     } catch {
       if (currentSession.current !== session) return
       setMessage('Không sao chép tự động được. Bạn có thể chọn bộ số bên dưới để sao chép.')
@@ -142,7 +156,7 @@ export default function DrawMachine({
       <PageHead
         kicker="Tạo bộ số"
         title="Lồng cầu mô phỏng"
-        description={`${game.label} · Bóng qua cửa quyết định kết quả. ${countWordCap} số chính, không áp dụng bộ lọc lịch sử.`}
+        description={`${game.label} · Bóng qua cửa quyết định kết quả. ${countWordCap} số chính${hasSpecial ? ` và 1 số đặc biệt (${game.special_min}–${specialMax})` : ''}, không áp dụng bộ lọc lịch sử.`}
       />
       <div className="draw-machine-layout">
         <section className="draw-stage" aria-label={`Lồng cầu ${game.label}`}>
@@ -150,7 +164,9 @@ export default function DrawMachine({
             <span className="draw-stage-brand">
               LOTTOSCOPE <span>DRAW LAB</span>
             </span>
-            <span className="draw-stage-badge">{game.main_max} BÓNG</span>
+            <span className="draw-stage-badge">
+              {snapshot.phase === 'special' ? specialMax : game.main_max} BÓNG
+            </span>
           </div>
           <div className="draw-controls">
             {snapshot.status === 'ready' && (
@@ -197,6 +213,7 @@ export default function DrawMachine({
                     <DrawScene
                       max={game.main_max}
                       count={game.main_count}
+                      specialMax={specialMax}
                       action={action}
                       running={running}
                       onSnapshot={receive}
@@ -237,21 +254,26 @@ export default function DrawMachine({
               ? 'Cảnh quay chưa sẵn sàng'
               : !ready
                 ? 'Đang khởi tạo'
-                : statusLabel(snapshot.status, game.main_count)}
+                : statusLabel(snapshot, game.main_count, hasSpecial)}
             <span className="draw-stage-count">
               {snapshot.drawn.length} / {game.main_count}
+              {hasSpecial && ` · ĐB ${snapshot.specialNumber === null ? 0 : 1} / 1`}
             </span>
           </div>
         </section>
         <section className="card draw-console" aria-label="Điều khiển và kết quả quay">
           <p className="draw-eyebrow">PHIÊN QUAY CỤC BỘ</p>
-          <h2>{countWordCap} bóng. Một bộ số.</h2>
+          <h2>
+            {hasSpecial
+              ? `${countWordCap} số chính + một số đặc biệt.`
+              : `${countWordCap} bóng. Một bộ số.`}
+          </h2>
           <p className="muted">
             Mỗi bóng có cùng kích thước và khối lượng. Số chỉ được ghi nhận sau khi bóng đi qua cửa
             lồng.
           </p>
           <div className="draw-status" role="status" aria-live="polite">
-            {statusLabel(snapshot.status, game.main_count)}
+            {statusLabel(snapshot, game.main_count, hasSpecial)}
           </div>
           <ol
             className="draw-result-slots"
@@ -269,6 +291,23 @@ export default function DrawMachine({
               </li>
             ))}
           </ol>
+          {hasSpecial && (
+            <div className="draw-special-result" aria-label="Số đặc biệt">
+              <span
+                className={`draw-slot special${snapshot.specialNumber !== null ? ' filled' : ''}`}
+              >
+                {snapshot.specialNumber === null
+                  ? '—'
+                  : String(snapshot.specialNumber).padStart(2, '0')}
+              </span>
+              <div>
+                <strong>Số đặc biệt</strong>
+                <small>
+                  Lồng riêng · {game.special_min}–{specialMax}
+                </small>
+              </div>
+            </div>
+          )}
           <label className="draw-motion-option">
             <input
               type="checkbox"
@@ -286,7 +325,8 @@ export default function DrawMachine({
           {finished && !failure && (
             <div className="draw-finished">
               <h3>Bộ số tăng dần</h3>
-              <Balls values={canonical} />
+              <Balls values={canonical} special={snapshot.specialNumber} />
+              {hasSpecial && <p className="muted">Kiểm tra lịch sử chỉ đối chiếu 5 số chính.</p>}
               <div className="draw-result-actions">
                 <button className="btn" onClick={copy}>
                   <Copy size={16} />

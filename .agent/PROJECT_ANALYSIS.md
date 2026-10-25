@@ -28,6 +28,8 @@ contract POST/cooldown ở API, vận hành mặc định không scheduler ở R
   (24/10/2026) và Lotto (25/10/2026);
   [DRAW_SIMULATION.md](../docs/DRAW_SIMULATION.md) giữ contract, không mở rộng
   thành prediction/saved picks hoặc thay generator API backend.
+  Yêu cầu bổ sung 25/10/2026: Lotto quay thêm 1 special từ lồng riêng 1–12 sau
+  5 main; checker vẫn chỉ nhận main, Mega/Power chưa mở rộng special.
   Lý do kiến trúc ở [ADR 0009](../docs/DECISIONS/0009-physical-draw-simulation.md).
 
 - [MVP.md](../docs/MVP.md) chốt backend MVP trước, frontend MVP sau; ứng

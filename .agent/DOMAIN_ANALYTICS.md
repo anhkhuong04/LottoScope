@@ -15,6 +15,8 @@ quy tắc; mỗi lần sửa behavior phải cập nhật nguồn chuẩn và te
   Không hard-code UI default 30 draws trong core.
   Mô phỏng vật lý cục bộ là use case riêng, không phải analytics/generator
   deterministic; contract ở [DRAW_SIMULATION.md](../docs/DRAW_SIMULATION.md).
+  Lotto mô phỏng thêm một special từ lồng 1–12 sau main theo yêu cầu người dùng;
+  giữ riêng khỏi main, không thay checker/generator API main-only.
 - Null có nghĩa là chưa xác định/không quan sát được trong window; không thay
   bằng 0. Frequency, gap và pair phải dùng đúng denominator/interval của spec.
 - Generator chỉ áp dụng rule bật, validate cấu hình, giới hạn attempts,

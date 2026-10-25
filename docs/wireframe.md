@@ -845,7 +845,9 @@ Không bắt đầu bằng một score tổng hợp.
 Cập nhật sau MVP: Mega 6/45 và Power 6/55 (24/10/2026), rồi Lotto 5/35
 (25/10/2026) tại `/generator` dùng [lồng cầu mô phỏng](DRAW_SIMULATION.md).
 Lotto có 35 bóng/5 kết quả chính; Mega/Power có 45 hoặc 55 bóng/6 kết quả
-chính, không có special. Phạm vi phân tích chỉ được chuyển sang checker,
+chính. Lotto tiếp tục quay 1 số đặc biệt từ lồng riêng 1–12 theo yêu cầu bổ
+sung 25/10/2026, hiển thị riêng và có thể trùng giá trị main. Mega/Power giữ
+main-only. Phạm vi phân tích chỉ được chuyển sang checker,
 không quyết định kết quả lồng cầu. Các mục rule/explanation bên dưới ghi lại
 UX MVP ban đầu đã được thay thế cho cả ba game.
 
@@ -1503,6 +1505,7 @@ Open Generator
 → Select Game
 → Start Physical Draw
 → Review Main Numbers In Exit Order
+→ Lotto: Draw One Special Number From Separate 1–12 Pool
 → Copy Sorted Combination Or Open Checker
 ```
 

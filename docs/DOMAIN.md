@@ -57,9 +57,11 @@ thêm bảng giải nếu biết, không bao gồm thời điểm fetch. Quyết
 - Checker/generator dùng **main-only** cho cả ba game. Lotto/Power `special_number` chỉ hiển thị
   trong draw; mode full ticket chưa thuộc MVP. Exact match của checker vì thế
   so main và game, không so special.
-- Lồng cầu Lotto/Mega/Power là mô phỏng cục bộ, kết thúc theo `main_count`
-  (Lotto năm main; Mega/Power sáu main), không sinh special hoặc tạo draw
-  chính thức; quy tắc riêng ở [DRAW_SIMULATION.md](DRAW_SIMULATION.md).
+- Lồng cầu là mô phỏng cục bộ, không tạo draw chính thức. Theo yêu cầu bổ sung
+  ngày 25/10/2026, Lotto quay năm main từ 1–35 rồi một special từ lồng riêng
+  1–12; special được phép trùng giá trị main, luôn giữ field/hiển thị riêng.
+  Mega/Power vẫn chỉ quay sáu main. Checker và generator API vẫn main-only;
+  quy tắc mô phỏng ở [DRAW_SIMULATION.md](DRAW_SIMULATION.md).
 
 ## Thời gian và thứ tự
 

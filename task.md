@@ -537,6 +537,22 @@ timeout giữ nguyên. Review độc lập không có finding quan trọng. Cả
 có cảnh báo bundle lớn/deprecation đã có; chưa kiểm FPS trên điện thoại thật.
 Không deploy hoặc thay backend, schema, ingestion; generator API giữ contract.
 
+## Lotto số đặc biệt và frontend đang chạy — 25/10/2026
+
+- [x] **SIM-05 — Lotto special:** 5 main rồi 1 special vật lý từ lồng 1–12,
+  tách state/hiển thị/copy, checker main-only; pause/reset/lỗi/context an toàn.
+  Kiểm chứng, rebuild/recreate frontend cổng 8088 và xác nhận browser trên
+  container thực; không thay backend/PostgreSQL.
+
+Kiểm chứng SIM-05: **51 unit pass**, lint/format/typecheck/build đạt; review
+độc lập không có finding quan trọng. Rebuild/recreate riêng frontend healthy,
+bundle `index-BvfNwtcn.js` thay `index-BYogNF0A.js` cũ ở cổng 8088; backend và
+PostgreSQL không bị recreate, không đổi dữ liệu/schema. Full E2E trên bản
+Compose **86 pass/4 skip theo thiết bị**, gồm Lotto 5+1 vật lý, pause/resume
+ở special, copy, checker main-only, game/window, reduced motion, WebGL, Axe.
+Đã xem ảnh desktop/mobile; mobile là Chromium emulation, chưa đo máy thật.
+README bổ sung cách cập nhật image frontend; tab cũ cần tải lại bundle.
+
 ## Trạng thái nghiệm thu MVP ban đầu
 
 - [x] **Backend MVP hoàn thành:** P0–P6 và P8-01, P8-03–P8-07, P8-09 đạt;

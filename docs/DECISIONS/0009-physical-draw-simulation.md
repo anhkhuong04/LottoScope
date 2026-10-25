@@ -2,14 +2,15 @@
 
 - Status: accepted
 - Date: 2026-10-24
-- Updated: 2026-10-25 — mở rộng Lotto theo yêu cầu trực tiếp của người dùng.
+- Updated: 2026-10-25 — mở rộng Lotto và bổ sung lượt special 1–12 theo yêu cầu người dùng.
 - Scope: frontend generator (Lotto 5/35, Mega 6/45, Power 6/55)
 - Sources: quyết định trực tiếp của người dùng; [spec](../DRAW_SIMULATION.md).
 
 ## Context
 
 Người dùng thay tạo bộ số theo rule bằng lồng cầu có va chạm, chọn kết quả
-bằng bóng thực sự qua cửa (Lotto 5/35 kết thúc sau 5 số chính từ 35 bóng;
+bằng bóng thực sự qua cửa (Lotto 5/35 quay 5 số chính từ 35 bóng rồi 1 số
+đặc biệt từ lồng riêng 12 bóng;
 Mega/Power kết thúc sau 6 số chính). React 19/Vite đã có sẵn.
 
 ## Decision
@@ -20,6 +21,10 @@ kết quả bằng generator API; thay thế hoàn toàn luồng RuleGenerator t
 cho toàn bộ các game. Backend generator API giữ nguyên không thay đổi.
 Matter.js 2D và Babylon/Havok đã được cân nhắc trong spec trước khi người dùng
 chọn stack.
+
+Lotto dùng session controller chuyển tuần tự hai pool vật lý trong cùng scene,
+giữ main/special riêng; special có thể trùng giá trị main. Copy có nhãn ĐB,
+checker vẫn main-only. Phạm vi special chỉ mở rộng Lotto theo yêu cầu hiện hành.
 
 ## Consequences
 

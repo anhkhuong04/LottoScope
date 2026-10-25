@@ -31,15 +31,43 @@ for (const [game, max, count] of [
       )
       .toBe(count)
     await page.getByRole('button', { name: 'Bắt đầu quay' }).click()
-    await expect(page.locator('.draw-status')).toHaveText(`Hoàn tất · ${count} số chính`, {
-      timeout: 110_000,
-    })
-    const drawn = (await page.locator('.draw-slot.filled').allTextContents()).map(Number)
+    if (game === 'lotto_535') {
+      await expect(page.locator('.draw-stage-badge')).toHaveText('12 BÓNG', { timeout: 90_000 })
+      await expect(page.locator('.draw-result-slots .draw-slot.filled')).toHaveCount(5)
+      const mainBeforePause = await page.locator('.draw-result-slots .draw-slot').allTextContents()
+      await page.getByRole('button', { name: 'Tạm dừng', exact: true }).click()
+      await expect(page.locator('.draw-status')).toHaveText('Đã tạm dừng')
+      expect(await page.locator('.draw-result-slots .draw-slot').allTextContents()).toEqual(
+        mainBeforePause,
+      )
+      await expect(page.getByRole('link', { name: 'Kiểm tra lịch sử' })).toHaveCount(0)
+      await page.getByRole('button', { name: 'Tiếp tục' }).click()
+    }
+    await expect(page.locator('.draw-status')).toHaveText(
+      `Hoàn tất · ${count} số chính${game === 'lotto_535' ? ' + 1 số đặc biệt' : ''}`,
+      {
+        timeout: 110_000,
+      },
+    )
+    const drawn = (
+      await page.locator('.draw-result-slots .draw-slot.filled').allTextContents()
+    ).map(Number)
     expect(drawn).toHaveLength(count)
     expect(new Set(drawn).size).toBe(count)
     expect(drawn.every((n) => n >= 1 && n <= max)).toBe(true)
     expect(generated).toEqual([])
-    await expect(page.locator('.draw-finished .ball.special')).toHaveCount(0)
+    const special =
+      game === 'lotto_535'
+        ? Number(await page.locator('.draw-special-result .filled').textContent())
+        : null
+    if (special !== null) {
+      expect(special).toBeGreaterThanOrEqual(1)
+      expect(special).toBeLessThanOrEqual(12)
+      await expect(page.locator('.draw-stage-badge')).toHaveText('12 BÓNG')
+    }
+    await expect(page.locator('.draw-finished .ball.special')).toHaveCount(
+      game === 'lotto_535' ? 1 : 0,
+    )
     await expect
       .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth))
       .toBe(true)
@@ -58,7 +86,7 @@ for (const [game, max, count] of [
         [...drawn]
           .sort((a, b) => a - b)
           .map((n) => String(n).padStart(2, '0'))
-          .join(' '),
+          .join(' ') + (special !== null ? ` | ĐB: ${String(special).padStart(2, '0')}` : ''),
       )
     }
     await page.getByRole('link', { name: 'Kiểm tra lịch sử' }).click()

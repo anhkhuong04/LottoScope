@@ -22,6 +22,15 @@ Mở `http://127.0.0.1:8088` (frontend), `http://127.0.0.1:8000/docs` (API). Ngi
 
 Sau khi cập nhật image, backup trước khi chạy migration mới, rồi chạy lại `alembic upgrade head` và `docker compose up -d backend frontend --wait`. Kiểm tra `docker compose ps`, `docker compose logs backend frontend postgres` và readiness. Mặc định đồng bộ thủ công; nếu chủ động bật APScheduler, chỉ dùng một API worker và xem lịch/config tại [Data Pipeline](docs/DATA_PIPELINE.md#collector-kỳ-mới).
 
+Frontend tại cổng `8088` phục vụ bản build trong Docker image; sửa source hoặc
+chạy `npm run build` trên host không tự cập nhật container. Với thay đổi chỉ
+ở frontend, chạy từ root rồi tải lại trình duyệt (Ctrl+F5 nếu vẫn thấy bản cũ):
+
+```powershell
+docker compose build frontend
+docker compose up -d --no-deps --wait frontend
+```
+
 ## Nhập dữ liệu và vận hành collector
 
 Chi tiết `/history/:drawId` có bảng giải thưởng theo kỳ cho cả ba game.

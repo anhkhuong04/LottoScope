@@ -12,9 +12,7 @@ import {
   Vector3,
 } from 'three'
 import {
-  afterStep,
   beforeStep,
-  createMachine,
   destroyMachine,
   pauseMachine,
   resumeMachine,
@@ -23,13 +21,14 @@ import {
   OPENING_ANGLE,
   RADIUS,
   STEP,
-  type Machine,
 } from './physics'
+import { afterSessionStep, createSession, sessionSnapshot } from './session'
 import type { Action, Snapshot } from './DrawMachine'
 
 type Props = {
   max: number
   count: number
+  specialMax: number | null
   action: Action | null
   running: boolean
   onSnapshot: (s: Snapshot) => void
@@ -128,12 +127,13 @@ function Cage() {
 function Mechanism({
   max,
   count,
+  specialMax,
   action,
   onSnapshot,
-}: Pick<Props, 'max' | 'count' | 'action' | 'onSnapshot'>) {
+}: Pick<Props, 'max' | 'count' | 'specialMax' | 'action' | 'onSnapshot'>) {
   const { world, rapier } = useRapier()
   const invalidate = useThree((state) => state.invalidate)
-  const machine = useRef<Machine | null>(null)
+  const session = useRef<ReturnType<typeof createSession> | null>(null)
   const meshes = useRef<(Mesh | null)[]>([])
   const gateMesh = useRef<Mesh>(null)
   const lastSnapshot = useRef('')
@@ -144,22 +144,23 @@ function Mechanism({
     [max],
   )
   const publish = useCallback(() => {
-    const m = machine.current
-    if (!m) return
-    const key = `${m.status}:${m.drawn.join(',')}:${m.error}`
+    const s = session.current
+    if (!s) return
+    const snapshot = sessionSnapshot(s)
+    const key = `${snapshot.phase}:${snapshot.status}:${snapshot.drawn.join(',')}:${snapshot.specialNumber}:${snapshot.error}`
     if (key !== lastSnapshot.current) {
       lastSnapshot.current = key
-      onSnapshot({ status: m.status, drawn: [...m.drawn], error: m.error })
+      onSnapshot(snapshot)
     }
   }, [onSnapshot])
   useLayoutEffect(() => {
-    machine.current = createMachine(world, rapier, max, Math.random, count)
+    session.current = createSession(world, rapier, max, count, specialMax, Math.random)
     publish()
     return () => {
-      if (machine.current) destroyMachine(machine.current)
-      machine.current = null
+      if (session.current) destroyMachine(session.current.machine)
+      session.current = null
     }
-  }, [world, rapier, max, count, publish])
+  }, [world, rapier, max, count, specialMax, publish])
   useEffect(
     () => () => {
       geometry.dispose()
@@ -171,7 +172,7 @@ function Mechanism({
     [geometry, materials],
   )
   useEffect(() => {
-    const m = machine.current
+    const m = session.current?.machine
     if (!m || !action) return
     if (action.type === 'start') startMachine(m)
     if (action.type === 'pause') pauseMachine(m)
@@ -179,27 +180,31 @@ function Mechanism({
     publish()
   }, [action, publish])
   useBeforePhysicsStep(() => {
-    if (machine.current) {
-      beforeStep(machine.current)
+    if (session.current) {
+      beforeStep(session.current.machine)
       publish()
     }
   })
   useAfterPhysicsStep(() => {
-    if (machine.current) {
-      afterStep(machine.current)
+    if (session.current) {
+      afterSessionStep(session.current)
       publish()
     }
   })
   useFrame((_, delta) => {
-    const m = machine.current
+    const m = session.current?.machine
     if (!m) return
+    // The special pool reuses the numbered meshes; hide the old main-only ones.
+    meshes.current.forEach((mesh, index) => {
+      if (mesh) mesh.visible = index < m.balls.length
+    })
     for (let i = 0; i < m.balls.length; i++) {
       const ball = m.balls[i]
       const mesh = meshes.current[i]
       if (!mesh) continue
       if (ball.captured) {
         const index = m.drawn.indexOf(ball.number)
-        const destination = new Vector3((index - (count - 1) / 2) * 0.52, -3.64, 0.15)
+        const destination = new Vector3((index - (m.count - 1) / 2) * 0.52, -3.64, 0.15)
         mesh.position.lerp(destination, Math.min(1, delta * 8))
         if (mesh.position.distanceToSquared(destination) > 0.0001) invalidate()
       } else {

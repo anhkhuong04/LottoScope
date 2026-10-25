@@ -428,7 +428,9 @@ Hệ thống chỉ mô tả similarity, không tự đánh giá combination là 
 Sau MVP, giao diện Mega/Power chuyển sang [lồng cầu vật lý](DRAW_SIMULATION.md)
 ngày 24/10/2026; Lotto cũng thay thế hoàn toàn UI rule ngày 25/10/2026 theo yêu
 cầu người dùng. Chỉ generator API backend tiếp tục contract rule/explanation
-dưới đây; kết quả mô phỏng dùng `main_count` của game, không sinh special.
+dưới đây; mô phỏng dùng `main_count` của game. Theo yêu cầu bổ sung ngày
+25/10/2026, Lotto quay thêm 1 special từ lồng riêng 1–12 sau 5 main; checker
+vẫn chỉ nhận main, Mega/Power vẫn chỉ mô phỏng main.
 
 Generator tạo combination dựa trên configurable rules.
 

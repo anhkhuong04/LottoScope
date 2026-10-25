@@ -48,8 +48,10 @@
 - Kết quả checker theo thứ tự: exact match → overlap summary → similar draws
   → per-number analytics → pairs; không bắt đầu bằng score tổng hợp.
 - `/generator` dùng chung DrawMachine cho cả ba game; lấy số bóng và số kết quả
-  từ game definition API (Lotto 5 main; Mega/Power 6 main), không sinh special.
-  Chuyển game phải hủy phiên cũ; copy/checker dùng main tăng dần và đúng context.
+  từ game definition API. Lotto quay 5 main rồi 1 special từ lồng riêng 1–12;
+  Mega/Power giữ 6 main. Special không nhập vào main, được phép trùng giá trị
+  main Lotto. Chuyển game phải hủy phiên cũ; copy Lotto ghi riêng `ĐB: NN`,
+  checker chỉ nhận main tăng dần và đúng context.
   Giao diện rule/explanation MVP đã được thay thế; generator API vẫn giữ contract.
 - Display số 2 chữ số; màu/ball chỉ phục vụ nhận diện dữ liệu, không tạo hàm ý
   số tốt/xấu hoặc sắp thắng.

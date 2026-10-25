@@ -21,7 +21,9 @@ analytics riêng.
 
 Ngoại lệ cục bộ sau MVP: [lồng cầu](DRAW_SIMULATION.md) dùng Three.js/Fiber/Rapier
 để mô phỏng chuyển động và lấy main theo game definition (Lotto năm số;
-Mega/Power sáu số); không thay analytics backend hay schema.
+Mega/Power sáu số); Lotto tiếp tục quay một special từ lồng riêng 1–12.
+Session controller giữ main/special riêng và thay pool vật lý giữa hai lượt;
+không thay analytics backend hay schema.
 
 ## Luồng và boundaries
 

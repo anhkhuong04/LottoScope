@@ -1,7 +1,7 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import DrawMachine from './DrawMachine'
+import DrawMachine, { type Snapshot } from './DrawMachine'
 import type { Game } from '../../api'
 
 vi.mock('./DrawScene', async () => {
@@ -12,28 +12,52 @@ vi.mock('./DrawScene', async () => {
       action,
       count,
     }: {
-      onSnapshot: (s: object) => void
+      onSnapshot: (s: Snapshot) => void
       action: { type: string } | null
       count: number
     }) {
       useEffect(() => {
-        onSnapshot({ status: 'ready', drawn: [], error: null })
+        onSnapshot({ status: 'ready', drawn: [], error: null, phase: 'main', specialNumber: null })
       }, [onSnapshot])
       useEffect(() => {
-        if (action?.type === 'start') onSnapshot({ status: 'drawing', drawn: [], error: null })
+        if (action?.type === 'start')
+          onSnapshot({
+            status: 'drawing',
+            drawn: [],
+            error: null,
+            phase: 'main',
+            specialNumber: null,
+          })
       }, [action, onSnapshot])
       return (
-        <button
-          onClick={() =>
-            onSnapshot({
-              status: 'complete',
-              drawn: count === 5 ? [35, 1, 9, 20, 30] : [6, 1, 9, 20, 30, 45],
-              error: null,
-            })
-          }
-        >
-          Physical exit fixture
-        </button>
+        <>
+          <button
+            onClick={() =>
+              onSnapshot({
+                status: count === 5 ? 'mixing' : 'complete',
+                drawn: count === 5 ? [35, 1, 9, 20, 30] : [6, 1, 9, 20, 30, 45],
+                error: null,
+                phase: count === 5 ? 'special' : 'main',
+                specialNumber: null,
+              })
+            }
+          >
+            Physical exit fixture
+          </button>
+          <button
+            onClick={() =>
+              onSnapshot({
+                status: 'complete',
+                drawn: [35, 1, 9, 20, 30],
+                phase: 'special',
+                specialNumber: 9,
+                error: null,
+              })
+            }
+          >
+            Special exit fixture
+          </button>
+        </>
       )
     },
   }
@@ -118,14 +142,21 @@ describe('draw controls', () => {
       </MemoryRouter>,
     )
     expect(screen.getByText('35 BÓNG')).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Năm bóng. Một bộ số.' })).toBeInTheDocument()
-    expect(screen.getByText('0 / 5')).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: 'Năm số chính + một số đặc biệt.' }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('0 / 5 · ĐB 0 / 1')).toBeInTheDocument()
     expect(screen.getAllByText(/Bóng \d/)).toHaveLength(5)
     await waitFor(() => expect(screen.getByRole('button', { name: 'Bắt đầu quay' })).toBeEnabled())
     expect(screen.queryByRole('link', { name: 'Kiểm tra lịch sử' })).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Bắt đầu quay' }))
     fireEvent.click(screen.getByText('Physical exit fixture'))
-    expect(screen.getByRole('status')).toHaveTextContent('Hoàn tất · 5 số chính')
+    expect(screen.getByRole('status')).toHaveTextContent('Đang trộn bóng đặc biệt')
+    expect(screen.getByText('12 BÓNG')).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Kiểm tra lịch sử' })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByText('Special exit fixture'))
+    expect(screen.getByRole('status')).toHaveTextContent('Hoàn tất · 5 số chính + 1 số đặc biệt')
+    expect(screen.getByLabelText('Số đặc biệt')).toHaveTextContent('09')
     expect(screen.getByRole('link', { name: 'Kiểm tra lịch sử' })).toHaveAttribute(
       'href',
       '/checker?game=lotto_535&window=date_range&from_date=2026-10-01&to_date=2026-10-25&numbers=1%2C9%2C20%2C30%2C35',
@@ -134,13 +165,13 @@ describe('draw controls', () => {
     vi.stubGlobal('navigator', { clipboard: { writeText } })
     try {
       fireEvent.click(screen.getByRole('button', { name: 'Sao chép' }))
-      expect(await screen.findByText('Đã sao chép năm số chính.')).toBeVisible()
-      expect(writeText).toHaveBeenCalledWith('01 09 20 30 35')
+      expect(await screen.findByText('Đã sao chép năm số chính và số đặc biệt.')).toBeVisible()
+      expect(writeText).toHaveBeenCalledWith('01 09 20 30 35 | ĐB: 09')
     } finally {
       vi.unstubAllGlobals()
     }
     fireEvent.click(screen.getByRole('button', { name: 'Phiên mới' }))
     expect(screen.queryByRole('link', { name: 'Kiểm tra lịch sử' })).not.toBeInTheDocument()
-    expect(screen.getByText('0 / 5')).toBeInTheDocument()
+    expect(screen.getByText('0 / 5 · ĐB 0 / 1')).toBeInTheDocument()
   })
 })

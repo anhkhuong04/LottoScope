@@ -148,6 +148,27 @@
   background: radial-gradient(circle at 35% 25%, #ffffff, #d4e9ec);
   box-shadow: 0 3px 5px #213d4312;
 }
+.draw-special-result {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0 0 22px;
+}
+.draw-special-result .draw-slot {
+  width: 48px;
+  flex: 0 0 48px;
+  border-color: #ad7b26;
+  background: #fff4d8;
+  color: #6d4200;
+}
+.draw-special-result strong,
+.draw-special-result small {
+  display: block;
+}
+.draw-special-result small {
+  margin-top: 4px;
+  color: #5c6d7c;
+}
 .draw-controls,
 .draw-result-actions {
   display: flex;

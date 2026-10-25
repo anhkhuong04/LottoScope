@@ -7,6 +7,10 @@ kết quả, kết thúc sau sáu số chính.
 Quyết định người dùng ngày 25/10/2026: mở rộng lồng cầu mô phỏng cho cả Lotto 5/35
 (35 bóng, 5 số chính), thay thế hoàn toàn luồng RuleGenerator trên frontend Tạo bộ số.
 
+Yêu cầu bổ sung cùng ngày: Lotto phải quay tiếp 1 số đặc biệt từ lồng riêng
+1–12 sau khi đủ 5 main. Phiên chỉ hoàn tất khi đủ cả hai lượt. Yêu cầu này
+thay phạm vi main-only Lotto của SIM-04; Mega/Power tiếp tục main-only.
+
 ## Hành vi
 
 - Mỗi phiên có đủ bóng theo game definition từ API, cùng đặc tính vật lý.
@@ -14,7 +18,10 @@ Quyết định người dùng ngày 25/10/2026: mở rộng lồng cầu mô ph
   không phụ thuộc số, lịch sử, tần suất hoặc kết quả mong muốn.
 - Trộn trước khi mở cửa. Chỉ ghi nhận khi tâm bóng vượt mặt phẳng kiểm nhận
   bên ngoài cửa theo chiều đi ra; callback trùng không tạo thêm kết quả.
-- Giữ thứ tự bóng ra; bộ tăng dần phục vụ sao chép/kiểm tra. Không số đặc biệt.
+- Giữ thứ tự main ra; Lotto sau 5 main chuyển sang pool 12 bóng và tự quay
+  tiếp 1 special bằng cùng cơ chế vật lý. Special được phép trùng giá trị main,
+  giữ field và ô riêng, không làm số chính thứ sáu. Mega/Power không quay special.
+- Copy Lotto: main tăng dần rồi ` | ĐB: NN`; checker chỉ nhận main và window.
 - Bắt đầu, tạm dừng/tiếp tục và phiên mới; không nút bốc thay thế khi kẹt.
   Quá thời gian không lấy được bóng phải báo kẹt, cho trộn lại mà giữ số đã ra.
 - Tab bị ẩn tự tạm dừng; quay lại cần tiếp tục chủ động. Chuyển game/rời trang
@@ -37,8 +44,13 @@ Quyết định người dùng ngày 25/10/2026: mở rộng lồng cầu mô ph
   không dựa trên timer; lỗi bóng thoát thành phải dừng, không bốc bổ sung.
 - Thời gian hoạt động của phiên không bao gồm lúc tạm dừng. Giới hạn mỗi lượt
   30 giây chưa ra bóng; người dùng được tiếp tục trộn, không chọn số hộ.
-- Kết quả chỉ dùng game main definition; thứ tự hiển thị và canonical main
-  là hai representation riêng. Không thay generator API hoặc schema database.
+- Pool main dùng `main_max`/`main_count` từ API. Riêng Lotto dùng `special_max`
+  cho lượt tiếp theo (miền bắt đầu 1). Session controller giữ kết quả main,
+  hủy body/collider pool cũ rồi tạo pool special trong cùng world; pause,
+  timeout, cleanup và visibility tác động lên pool đang chạy. Renderer tái
+  sử dụng mesh đánh số, ẩn mesh ngoài pool special.
+- Thứ tự main và canonical main là hai representation riêng; special có
+  field riêng. Không thay generator/checker API hoặc schema database.
 
 ## Phương án đã cân nhắc
 
@@ -51,6 +63,8 @@ nhưng thêm một hệ tích hợp khác. Người dùng chọn React Three Fib
 - Test Rapier thật: va chạm thành/bóng, cửa đóng không cho bóng ra, cửa mở
   mới ghi nhận; đủ năm số hợp lệ/khác nhau cho 35 bóng, sáu số cho 45 và 55 bóng;
   không ghi thêm kết quả sau `main_count`.
+- Lotto cần thêm đúng 1 special trong 1–12 từ pool riêng; cho phép trùng main,
+  không hoàn tất sớm sau 5 main; pause/timeout/reset/cleanup ở cả hai lượt.
 - Test pause/reset/timeout, số trùng/out-of-range, callback và context cũ.
 - Browser desktop/mobile: quay thật đến `main_count`, copy/checker, chuyển game,
   pause/ẩn tab, lỗi renderer, reduced motion, keyboard, không overflow.
@@ -95,3 +109,26 @@ nhưng thêm một hệ tích hợp khác. Người dùng chọn React Three Fib
   Mobile là Chromium device emulation, chưa kiểm FPS trên điện thoại thật.
   Build vẫn cảnh báo chunk lớn (scene khoảng 1,095 MB gzip) và thư viện có
   deprecation warnings; không hạ gate. Không deploy hoặc đổi backend/DB/API.
+
+## Lotto special và cập nhật bản chạy — SIM-05, 25/10/2026
+
+- Sửa yêu cầu theo người dùng: quay đủ 5 main rồi tiếp 1 special từ lồng
+  12 bóng; snapshot có `drawn`, `specialNumber`, `phase` riêng. Không báo hoàn
+  tất hoặc mở copy/checker trước khi đủ special. Copy có nhãn `ĐB: NN`;
+  checker tiếp tục chỉ nhận main. Mega/Power vẫn main-only.
+- Test RED → GREEN cho chuyển pool, giữ main, special được trùng main,
+  pause/stall/cleanup và config special sai. Rapier thật quay đủ hai lượt.
+  `npm test`: **51 pass/7 files**; lint/format/typecheck/build đạt.
+- Nguyên nhân giao diện cũ: Compose frontend còn dùng image 27 giờ trước,
+  HTML trỏ `index-BYogNF0A.js`; build trên host không cập nhật container.
+  Đã `docker compose build frontend` và
+  `docker compose up -d --no-deps --wait frontend`. Container mới healthy,
+  phục vụ `index-BvfNwtcn.js` tại `http://127.0.0.1:8088` khớp build hiện hành.
+  Backend/PostgreSQL không bị recreate, vẫn healthy; không migration/ingestion.
+- `PLAYWRIGHT_BASE_URL=http://127.0.0.1:8088 npm run test:e2e -- --workers=2`:
+  **86 pass/4 skip theo thiết bị** trên bản Docker thực. Desktop/tablet/mobile
+  quay thật Lotto đủ 5+1, pause/resume ở lượt special vẫn giữ main, copy đủ
+  main+special, checker main-only, không gọi generator API, Axe/overflow đạt.
+- Đã xem ảnh Lotto desktop/mobile trên bản phục vụ, review độc lập không có
+  finding quan trọng. Mobile vẫn là Chromium device emulation; cảnh báo
+  chunk lớn/deprecation giữ nguyên. Phiên ở tab cũ cần reload để nạp bundle mới.
