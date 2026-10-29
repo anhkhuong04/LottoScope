@@ -40,8 +40,10 @@ phiên có tích hợp với repository và runbook này. Không cần mua domai
 | `LOTTO_SCHEDULER_ENABLED` | `false` |
 
 Không dùng hostname `-pooler.` vì ingestion giữ advisory lock theo session.
-Một Uvicorn worker, concurrency 16. Liveness `/health/live` không đọc DB;
-không dùng uptime ping/keep-alive để giữ Free services thức. Readiness
+Một Uvicorn worker, concurrency 16. Liveness `/health/live` không đọc DB.
+Entrypoint `python -m app.commands.serve` đọc biến `PORT` trực tiếp, không dùng
+shell command lồng dấu nháy của Render.
+Không dùng uptime ping/keep-alive để giữ Free services thức. Readiness
 `/health/ready` cần token, kiểm DB/migration. Cloud tắt Swagger/OpenAPI/Redoc.
 
 ### Vercel environment — Production, server only

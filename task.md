@@ -610,6 +610,26 @@ không suy cài plugin là account OAuth đã kết nối. Không thêm logo unt
 
 ## Trạng thái nghiệm thu MVP ban đầu
 
+### CLOUD-03/CLOUD-04 — Provision đang thực hiện
+
+CLI chính thức đã xác thực cả ba tài khoản (plugin đã cài nhưng phiên không
+nhận service tools). Vercel team khuong8: Hobby; Neon org: Free. Đã tạo Neon
+project `falling-pine-80552402`, PostgreSQL 16, Singapore, 0.25 CU cố định,
+scale-to-zero mặc định; restore **976 Lotto / 1.577 Mega / 1.415 Power** từ
+snapshot READ ONLY. Cả 7 bảng/counts/content hashes/sequences khớp, migration
+head/check đạt. Local source không bị sửa. Secrets giữ ở .env.cloud ignored.
+
+Đã tạo Render `srv-dbhmfidg1s2s73aevs40`, Singapore, plan free, auto-deploy off;
+Vercel `prj_w0vXLhOQwZmoa3cpnrK2xSyc5fqf`, root frontend, Node 22/Fluid,
+sin1, production server secrets, public access; Git auto-deployment disabled.
+Vercel đang build release fac86e9. Chưa nghiệm thu cloud HTTP/browser/source.
+
+Render build đạt nhưng startup đầu thất bại vì nested shell quoting; thay
+dockerCommand bằng `python -m app.commands.serve`, đọc PORT trực tiếp.
+Ruff lint/format, Pyright và **9 ingress/smoke tests pass**; entrypoint thật
+đã kiểm custom PORT/liveness/guard ở process riêng. Không đổi domain/schema
+hoặc chạy lại full suite không liên quan. Tiếp tục deploy/acceptance sau commit.
+
 - [x] **Backend MVP hoàn thành:** P0–P6 và P8-01, P8-03–P8-07, P8-09 đạt;
   nghiệm thu theo overview mục 15. P7/P8-02/P8-08 có thể còn mở nếu
   `docs/MVP.md` chốt bàn giao backend trước.
