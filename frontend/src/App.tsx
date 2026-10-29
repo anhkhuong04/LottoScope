@@ -9,7 +9,15 @@ import {
   SearchCheck,
   Shuffle,
 } from 'lucide-react'
-import { Link, NavLink, Navigate, Route, Routes, useLocation } from 'react-router'
+import {
+  Link,
+  NavLink,
+  Navigate,
+  Route,
+  Routes,
+  useLocation,
+  useNavigationType,
+} from 'react-router'
 import { useEffect, useRef, useState } from 'react'
 import { AppProvider, useApp } from './state'
 import { Dashboard } from './pages/Dashboard'
@@ -37,6 +45,7 @@ function Shell() {
   const { games, game, gameId, gameError, retryGames, setGame, window } = useApp()
   const [more, setMore] = useState(false)
   const location = useLocation()
+  const navigationType = useNavigationType()
   const moreButton = useRef<HTMLButtonElement>(null)
   const moreMenu = useRef<HTMLDivElement>(null)
   const main = useRef<HTMLElement>(null)
@@ -70,8 +79,9 @@ function Shell() {
       previousPath.current = location.pathname
       setMore(false)
       main.current?.focus({ preventScroll: true })
+      if (navigationType !== 'POP') globalThis.scrollTo({ top: 0, behavior: 'instant' })
     }
-  }, [location.pathname])
+  }, [location.pathname, navigationType])
   const search = globalSearch(gameId, window)
   return (
     <div className="app-shell">

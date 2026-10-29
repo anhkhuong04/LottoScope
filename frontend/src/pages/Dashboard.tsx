@@ -52,6 +52,7 @@ export function Dashboard() {
     !!status.data?.last_failed_ingestion_at &&
     (!status.data.last_successful_ingestion_at ||
       status.data.last_failed_ingestion_at > status.data.last_successful_ingestion_at)
+  const refreshing = [latest, status, numbers, pairs, recent].some((result) => result.loading)
   const gaps = [...(numbers.data?.items ?? [])]
     .filter((item) => item.current_gap !== null)
     .sort((a, b) => (b.current_gap ?? -1) - (a.current_gap ?? -1) || a.number - b.number)
@@ -66,7 +67,9 @@ export function Dashboard() {
         <div className="dashboard-actions">
           <WindowSelector />
           <button
-            className="btn ghost icon-button"
+            className={`btn ghost icon-button${refreshing ? ' is-loading' : ''}`}
+            disabled={refreshing}
+            aria-busy={refreshing}
             aria-label="Làm mới hiển thị"
             title="Chỉ đọc lại dữ liệu đã lưu"
             onClick={refreshData}
@@ -112,7 +115,7 @@ export function Dashboard() {
           <div className="data-freshness">
             <DataState {...status} showRefresh={false} hasData={!!status.data}>
               {status.data && (
-                <details className="data-details">
+                <details className={`data-details${syncFailed ? ' source-warning' : ''}`}>
                   <summary>
                     <Clock3 size={15} aria-hidden="true" />
                     <span>

@@ -3,6 +3,9 @@
   --surface-subtle: #f7fbfa;
   --border-accent: #c6e5df;
   --teal-strong: #005b56;
+  --motion-fast: 140ms;
+  --motion-normal: 220ms;
+  --motion-ease: cubic-bezier(0.2, 0.7, 0.3, 1);
   line-height: 1.5;
 }
 h1 {
@@ -159,6 +162,87 @@ h1 {
 }
 .result-focus:focus {
   outline: none;
+}
+.source-warning summary {
+  color: #85550a;
+}
+.btn,
+.nav-link,
+.bottom-nav a,
+.bottom-nav button,
+.number-tile,
+.picker button {
+  transition:
+    background-color var(--motion-fast) ease,
+    color var(--motion-fast) ease,
+    border-color var(--motion-fast) ease,
+    box-shadow var(--motion-normal) ease,
+    transform var(--motion-fast) var(--motion-ease);
+}
+.btn.primary:hover:not(:disabled) {
+  background: var(--teal-strong);
+  border-color: var(--teal-strong);
+}
+.btn:active:not(:disabled),
+.picker button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+@media (hover: hover) {
+  .number-tile:hover {
+    transform: translateY(-2px);
+    border-color: #77aaa2;
+    box-shadow: 0 5px 12px #102b3610;
+  }
+}
+.data-table td {
+  transition: background-color var(--motion-fast) ease;
+}
+.page-head,
+.latest-card .data-content {
+  animation: content-arrive var(--motion-normal) var(--motion-ease) both;
+}
+.bar-fill,
+.frequency-meter > span {
+  transform-origin: left;
+  animation: bar-arrive var(--motion-normal) var(--motion-ease) both;
+}
+.skeleton-content {
+  animation: skeleton-breathe 1.8s ease-in-out infinite;
+}
+.is-loading svg {
+  animation: busy-turn 1s linear infinite;
+}
+@keyframes content-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes bar-arrive {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+@keyframes skeleton-breathe {
+  0%,
+  100% {
+    opacity: 0.65;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+@keyframes busy-turn {
+  to {
+    transform: rotate(360deg);
+  }
 }
 .sr-only {
   position: absolute;
@@ -490,5 +574,24 @@ h1 {
   }
   .game-select svg {
     right: 8px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 0ms;
+    --motion-normal: 0ms;
+  }
+  .page-head,
+  .latest-card .data-content,
+  .bar-fill,
+  .frequency-meter > span,
+  .skeleton-content,
+  .is-loading svg {
+    animation: none;
+  }
+  .number-tile:hover,
+  .btn:active:not(:disabled),
+  .picker button:active:not(:disabled) {
+    transform: none;
   }
 }

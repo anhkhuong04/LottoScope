@@ -198,7 +198,7 @@ export function DataState({
           Đang cập nhật dữ liệu…
         </div>
       )}
-      {children}
+      <div className="data-content">{children}</div>
       {showRefresh && (
         <div className="refresh-row">
           <button className="btn ghost" disabled={loading} onClick={retry}>

@@ -699,8 +699,12 @@ resources/versions/rollback/giới hạn ở [biên bản](docs/DEPLOYMENT_ACCEP
   không coi là pass). 39 E2E desktop/mobile đạt, 3 skip đúng điều kiện device;
   gồm axe, breakpoint 320–1365, source error/stale/game switching và Power.
   Đã xem screenshot dashboard/numbers/checker trên desktop/mobile.
-- [ ] **UI-04 — Micro-interactions:** motion tokens, hover/press/data enter,
-  reduced motion và phản hồi thao tác.
+- [x] **UI-04 — Micro-interactions:** motion tokens 140/220 ms, hover/press,
+  chart reveal, latest-result enter, skeleton/busy feedback; reduced motion
+  tắt animation nhưng giữ số liệu và trạng thái. Điều hướng mới cuộn về đầu,
+  không ép scroll khi POP. Lint/format/typecheck/build đạt; 10 E2E mới trên
+  desktop/tablet/mobile đạt, 2 menu cases skip đúng device. Bundle DrawScene
+  vẫn có cảnh báo lớn đã tồn tại; không đổi physics hoặc thêm dependency.
 - [ ] **UI-05 — Acceptance/deploy:** frontend gates, responsive/keyboard/axe/
   API states và luồng ba game; triển khai Vercel và kiểm chứng cloud.
 

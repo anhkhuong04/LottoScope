@@ -54,7 +54,7 @@ export function SyncControls() {
   return (
     <div className="sync-controls">
       <button
-        className="btn sync-trigger"
+        className={`btn sync-trigger${pending ? ' is-loading' : ''}`}
         title={`Lấy kỳ mới từ Vietlott cho ${game?.label ?? 'game đang chọn'}`}
         aria-label={pending ? 'Đang đồng bộ…' : 'Tải dữ liệu'}
         disabled={!game || pending}

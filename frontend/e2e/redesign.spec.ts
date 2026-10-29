@@ -1,5 +1,25 @@
 import { expect, test } from '@playwright/test'
 
+test('reduced motion keeps frequency values readable and disables decorative motion', async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto('/numbers?game=lotto_535')
+  await expect(page.locator('.frequency-tile')).toHaveCount(35)
+  const value = await page.locator('.frequency-value').first().textContent()
+  expect(value).toMatch(/\d+\s* kỳ/)
+  const motion = await page
+    .locator('.frequency-meter > span')
+    .first()
+    .evaluate((node) => ({
+      animation: getComputedStyle(node).animationName,
+      transform: getComputedStyle(node).transform,
+    }))
+  expect(motion).toEqual({ animation: 'none', transform: 'none' })
+  await page.emulateMedia({ reducedMotion: 'no-preference' })
+  await expect(page.locator('.frequency-value').first()).toHaveText(value!)
+})
+
 test('dashboard shows latest results before compact metrics and links to complete analysis', async ({
   page,
 }) => {
