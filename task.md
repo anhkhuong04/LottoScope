@@ -608,8 +608,6 @@ Chưa kiểm browser/cold-start/collector từ cloud, chưa tạo resource/billi
 chưa chuyển dữ liệu cloud. Ba plugin đã cài nhưng phiên chưa có service tools;
 không suy cài plugin là account OAuth đã kết nối. Không thêm logo untracked.
 
-## Trạng thái nghiệm thu MVP ban đầu
-
 ### CLOUD-03/CLOUD-04 — Provision đang thực hiện
 
 CLI chính thức đã xác thực cả ba tài khoản (plugin đã cài nhưng phiên không
@@ -629,6 +627,22 @@ dockerCommand bằng `python -m app.commands.serve`, đọc PORT trực tiếp.
 Ruff lint/format, Pyright và **9 ingress/smoke tests pass**; entrypoint thật
 đã kiểm custom PORT/liveness/guard ở process riêng. Không đổi domain/schema
 hoặc chạy lại full suite không liên quan. Tiếp tục deploy/acceptance sau commit.
+
+Render commit 24720a5 đã live sau khi chủ tài khoản lưu Docker Command qua
+dashboard (API update bị automatic approval chặn, CLI không hỗ trợ trường
+Docker Command). Public liveness 200, protected readiness 200, direct API 401
+khi thiếu token và 200 khi có token. Backup off-machine đã upload cùng manifest
+lên **draft release trong repository GitHub private**; không publish hoặc bật
+lịch tự động. Không lưu credentials trong dump/manifest.
+
+Vercel runtime phát hiện ESM import `.ts` còn giữ sau compile thành `.js`, gây
+FUNCTION_INVOCATION_FAILED. Đổi import sang `.js`, import node:process rõ ràng
+và thêm types node ở root tsconfig do Vercel compiler không dùng project
+references. Lint/format/typecheck và **57 tests pass** trong Vercel build thật;
+build cuối không còn TypeScript diagnostics, artifact có dependency gateway.js.
+Tiếp tục deploy bản đã sửa và kiểm chứng HTTP/browser/source qua cloud.
+
+## Trạng thái nghiệm thu MVP ban đầu
 
 - [x] **Backend MVP hoàn thành:** P0–P6 và P8-01, P8-03–P8-07, P8-09 đạt;
   nghiệm thu theo overview mục 15. P7/P8-02/P8-08 có thể còn mở nếu

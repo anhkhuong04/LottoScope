@@ -1,4 +1,5 @@
-import { createGateway } from '../server/gateway.ts'
+import process from 'node:process'
+import { createGateway } from '../server/gateway.js'
 
 export default {
   fetch(request: Request): Promise<Response> {
