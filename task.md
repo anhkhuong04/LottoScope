@@ -666,8 +666,11 @@ resources/versions/rollback/giới hạn ở [biên bản](docs/DEPLOYMENT_ACCEP
   Khai báo trong HTML dùng absolute paths để hoạt động trên deep links.
   Build/typecheck, format, SVG XML và kích thước assets đạt; đã xem bản render
   16/32/180 px. Không thay logo.png untracked của người dùng.
-- [ ] **ICON-02 — Cloud:** deploy Vercel SHA chứa favicon và xác nhận HTML,
-  MIME/asset bytes cùng deep links trên URL production.
+- [x] **ICON-02 — Cloud:** Vercel release `14f8a8a`, deployment
+  `dpl_AsW2g6MCYuUKy5ehYVmycSYG68fy` ready tại URL production hiện có;
+  build gates và 57 tests pass. SVG/ICO/PNG trả 200, đúng MIME và bytes khớp;
+  browser desktop 1440 px/mobile 390 px kiểm deep link, title, link icons và
+  decode ảnh đạt. Cloud HTTP smoke ba game/gateway/deep links vẫn đạt.
 
 ## Trạng thái nghiệm thu MVP ban đầu
 

@@ -16,9 +16,14 @@ Runbook: [DEPLOYMENT_FREE.md](DEPLOYMENT_FREE.md), quyết định:
 - Backend release: `24720a53a9b9f20e54a3b179fdb5005046226331`, deploy
   `dep-dbhmjruc6qcc73fqkv2g` live.
 - Frontend/gateway release: `9cc72267690b515a2f0f89c6782e3c08aa654d5c`, deploy
-  `dpl_D622h1iTstjWnnnbZEqLh2QHX9gf` ready.
+  `dpl_D622h1iTstjWnnnbZEqLh2QHX9gf` ready ở lần go-live đầu.
+- Cập nhật favicon: frontend release `14f8a8a`, deployment
+  `dpl_AsW2g6MCYuUKy5ehYVmycSYG68fy` ready, giữ URL production. Vercel build
+  gates và 57 tests đạt; SVG/ICO/Apple touch PNG trên production trả 200, đúng
+  MIME và bytes. Browser desktop/mobile kiểm link/decode icon ở deep link đạt;
+  cloud HTTP smoke ba game/gateway/deep links sau cập nhật vẫn đạt.
 - Branch `deploy/free-cloud`; tự động deploy Git đã tắt ở cả Vercel và Render.
-  Commit tài liệu sau hai release này không tự thay production.
+  Commit tài liệu sau các release này không tự thay production.
 - Không tạo paid database/disk/worker/cron; scheduler tắt. Production secrets
   chỉ nằm ở server; Preview không được cấp secrets. Không dùng keep-alive ping.
 
