@@ -672,6 +672,15 @@ resources/versions/rollback/giới hạn ở [biên bản](docs/DEPLOYMENT_ACCEP
   browser desktop 1440 px/mobile 390 px kiểm deep link, title, link icons và
   decode ảnh đạt. Cloud HTTP smoke ba game/gateway/deep links vẫn đạt.
 
+## UI/UX audit — 29/10/2026
+
+- [x] **UX-AUDIT-01 — Đánh giá theo ui-ux-pro-max:** review sáu màn hình
+  cloud ở desktop/mobile (12 trạng thái), axe không ghi nhận violation tự
+  động và không tràn ngang; kiểm thêm lưới Power 320/768/1024 px, menu
+  Escape/outside/focus, loading giả lập và reduced motion. Có bằng chứng
+  layout và đề xuất ưu tiên ở [UI_UX_AUDIT.md](docs/UI_UX_AUDIT.md).
+  Chỉ phân tích/đề xuất; chưa đổi UI, chưa triển khai redesign.
+
 ## Trạng thái nghiệm thu MVP ban đầu
 
 - [x] **Backend MVP hoàn thành:** P0–P6 và P8-01, P8-03–P8-07, P8-09 đạt;
