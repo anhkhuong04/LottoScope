@@ -705,8 +705,14 @@ resources/versions/rollback/giới hạn ở [biên bản](docs/DEPLOYMENT_ACCEP
   không ép scroll khi POP. Lint/format/typecheck/build đạt; 10 E2E mới trên
   desktop/tablet/mobile đạt, 2 menu cases skip đúng device. Bundle DrawScene
   vẫn có cảnh báo lớn đã tồn tại; không đổi physics hoặc thêm dependency.
-- [ ] **UI-05 — Acceptance/deploy:** frontend gates, responsive/keyboard/axe/
-  API states và luồng ba game; triển khai Vercel và kiểm chứng cloud.
+- [x] **UI-05 — Acceptance/deploy:** lint/format/typecheck/build, 59 unit tests
+  cuối; 78 E2E desktop/tablet/mobile pass (6 skip theo device), 2 lượt quay
+  Lotto đầy đủ desktop/mobile pass. Deploy frontend `a56c58f` Vercel Hobby
+  ready, cloud HTTP smoke và 19 browser tests pass (2 skip theo device), đã
+  xem ảnh production và kiểm Power 320/390/1440 px. Không đổi backend/DB.
+  Chi tiết/giới hạn ở [biên bản UI](docs/UI_REFRESH_ACCEPTANCE.md) và
+  [design system](docs/DESIGN_SYSTEM.md). Source challenge/cold-start/FPS thật
+  vẫn theo giới hạn được ghi; không suy kiểm UI là đồng bộ nguồn đã thành công.
 
 ## Trạng thái nghiệm thu MVP ban đầu
 

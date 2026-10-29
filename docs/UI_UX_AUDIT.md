@@ -1,6 +1,7 @@
 # Đánh giá UI/UX LottoScope — 29/10/2026
 
-Trạng thái: **phân tích và đề xuất**, chưa thay đổi UI hoặc deploy redesign.
+Đây là bản **đánh giá trước visual refresh**. Các đề xuất sau đó được người
+dùng yêu cầu triển khai; kết quả thực hiện ở [biên bản UI](UI_REFRESH_ACCEPTANCE.md).
 Mục tiêu người dùng: giao diện sinh động, hiện đại, clean. Đánh giá bằng skill
 `ui-ux-pro-max`, ảnh chụp website thật, kiểm tương tác trình duyệt và đối chiếu
 [wireframe](wireframe.md), [quy tắc frontend](../.agent/FRONTEND.md).

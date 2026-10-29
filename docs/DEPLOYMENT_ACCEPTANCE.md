@@ -23,6 +23,10 @@ Runbook: [DEPLOYMENT_FREE.md](DEPLOYMENT_FREE.md), quyết định:
   MIME và bytes. Browser desktop/mobile kiểm link/decode icon ở deep link đạt;
   cloud HTTP smoke ba game/gateway/deep links sau cập nhật vẫn đạt.
 - Branch `deploy/free-cloud`; tự động deploy Git đã tắt ở cả Vercel và Render.
+  Visual refresh hiện tại: frontend `a56c58f`, deployment
+  `dpl_92mLf2RoMGNpR4gMrUTqQFKcDXG3` ready, cùng URL. Vercel build/59 tests,
+  cloud HTTP smoke và 19 browser tests đạt; chi tiết ở
+  [biên bản UI](UI_REFRESH_ACCEPTANCE.md).
   Commit tài liệu sau các release này không tự thay production.
 - Không tạo paid database/disk/worker/cron; scheduler tắt. Production secrets
   chỉ nằm ở server; Preview không được cấp secrets. Không dùng keep-alive ping.

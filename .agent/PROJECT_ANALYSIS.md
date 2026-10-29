@@ -24,6 +24,12 @@ contract POST/cooldown ở API, vận hành mặc định không scheduler ở R
 
 ## Phạm vi
 
+- Visual refresh (29/10/2026): người dùng duyệt hướng modern/clean từ
+  [UI/UX audit](../docs/UI_UX_AUDIT.md), theo thứ tự dashboard/mobile →
+  loading/menu → biểu đồ/typography → micro-interactions. Quy ước presentation
+  ở [Design system](../docs/DESIGN_SYSTEM.md), tiến độ UI-01..05 trong task.md;
+  giữ domain, game/window, dữ liệu thật và physics riêng.
+
 - Cloud công khai (29/10/2026): [ADR 0011](../docs/DECISIONS/0011-free-cloud-deployment.md)
   chọn Vercel + Render Free + Neon Free cho khoảng 10 người, ưu tiên $0 và
   không phụ thuộc máy cá nhân. Gateway giữ origin token, PostgreSQL direct,

@@ -10,6 +10,9 @@ và [hướng dẫn vận hành](docs/DEPLOYMENT_FREE.md). Dữ liệu lịch s�
 tải dữ liệu mới từ Render hiện bị Cloudflare của Vietlott chặn.
 Cấu hình cloud là opt-in; Compose/Wi-Fi dưới đây vẫn dành cho local.
 
+Giao diện modern/clean: [design system](docs/DESIGN_SYSTEM.md),
+[biên bản kiểm chứng UI](docs/UI_REFRESH_ACCEPTANCE.md).
+
 Cần Docker Desktop/Compose. Chạy PowerShell tại root repository:
 
 ```powershell
