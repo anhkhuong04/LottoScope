@@ -23,7 +23,7 @@ test('manual sync posts once and reloads stored dashboard data after completion'
     })
   })
   await page.goto('/dashboard?game=lotto_535')
-  await expect(page.locator('.number-tile')).toHaveCount(35)
+  await expect(page.locator('.number-tile')).toHaveCount(6)
   expect(requests).toBe(0)
   await page.getByRole('button', { name: 'Tải dữ liệu', exact: true }).click()
   await expect(page.getByRole('button', { name: 'Đang đồng bộ…' })).toBeDisabled()
@@ -56,7 +56,7 @@ test('a late sync keeps the selected game and reports source errors without losi
   await page.goto('/dashboard?game=lotto_535')
   await page.getByRole('button', { name: 'Tải dữ liệu', exact: true }).click()
   await page.getByLabel('Chọn game').selectOption('mega_645')
-  await expect(page.locator('.number-tile')).toHaveCount(45)
+  await expect(page.locator('.number-tile')).toHaveCount(6)
   release()
   await expect(
     page.getByRole('status').filter({ hasText: 'Lotto 5/35: đã kiểm tra nguồn' }),

@@ -681,6 +681,21 @@ resources/versions/rollback/giới hạn ở [biên bản](docs/DEPLOYMENT_ACCEP
   layout và đề xuất ưu tiên ở [UI_UX_AUDIT.md](docs/UI_UX_AUDIT.md).
   Chỉ phân tích/đề xuất; chưa đổi UI, chưa triển khai redesign.
 
+## Modern clean UI — 29/10/2026
+
+- [x] **UI-01 — Dashboard/mobile:** kết quả gần nhất đứng trước KPI, KPI 2 cột
+  mobile, card tự cao, tần suất tóm tắt 6 số và 3 kỳ gần đây; một refresh chỉ
+  đọc cho dashboard. Lint/typecheck, 13 UI tests và 2 E2E desktop/mobile flow A
+  đạt; đã xem ảnh thực local. Nghiệp vụ và màn hình phân tích đầy đủ giữ nguyên.
+- [ ] **UI-02 — Loading/menu:** skeleton, header đồng bộ gọn, Escape/outside
+  click/focus và brand mark thống nhất.
+- [ ] **UI-03 — Biểu đồ/typography:** tần suất trực quan có số/legend, toolbar
+  và hierarchy chữ; checker empty state.
+- [ ] **UI-04 — Micro-interactions:** motion tokens, hover/press/data enter,
+  reduced motion và phản hồi thao tác.
+- [ ] **UI-05 — Acceptance/deploy:** frontend gates, responsive/keyboard/axe/
+  API states và luồng ba game; triển khai Vercel và kiểm chứng cloud.
+
 ## Trạng thái nghiệm thu MVP ban đầu
 
 - [x] **Backend MVP hoàn thành:** P0–P6 và P8-01, P8-03–P8-07, P8-09 đạt;

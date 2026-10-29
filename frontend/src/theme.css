@@ -1,0 +1,155 @@
+/* Workspace presentation; game rules and data stay in their existing layers. */
+.dashboard-actions {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+.dashboard-actions .toolbar {
+  margin: 0;
+}
+.icon-button {
+  width: 44px;
+  flex: none;
+  padding: 0;
+}
+.dashboard-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+  margin-bottom: 24px;
+}
+.latest-card {
+  background: linear-gradient(125deg, #edf9f6, #fff 80%);
+  border-color: #c6e5df;
+  padding: 28px;
+}
+.latest-card .card-head {
+  margin-bottom: 24px;
+}
+.latest-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin-bottom: 18px;
+}
+.latest-meta span:first-child {
+  color: var(--ink);
+  font-weight: 700;
+}
+.latest-card .ball.large {
+  min-width: 48px;
+  height: 48px;
+  font-size: 1.15rem;
+  background: #fff;
+  border: 1px solid #c6e5df;
+}
+.latest-card .ball.special {
+  background: #fff0df;
+  border-color: #f0d5b1;
+}
+.dashboard-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.dashboard-metrics .metric {
+  padding: 18px;
+  min-height: 124px;
+}
+.dashboard-metrics .metric-label {
+  margin-bottom: 10px;
+}
+.data-freshness {
+  border-top: 1px solid #c6e5df;
+  padding-top: 12px;
+  margin-top: 22px;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.data-details summary {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+}
+.data-details summary::after {
+  content: '+';
+  margin-left: auto;
+  font-size: 1.1rem;
+}
+.data-details[open] summary::after {
+  content: '−';
+}
+.data-details .stack {
+  padding-top: 12px;
+  line-height: 1.6;
+}
+.data-details p {
+  margin-bottom: 0;
+}
+.dashboard-sections {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  align-items: start;
+  margin-bottom: 24px;
+}
+.dashboard-sections .number-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.dashboard-sections .bar-row > a {
+  display: grid;
+  place-items: center;
+  min-height: 44px;
+}
+.dashboard-sections .pair-link {
+  min-height: 44px;
+}
+@media (max-width: 1100px) {
+  .dashboard-hero {
+    grid-template-columns: 1fr;
+  }
+  .dashboard-metrics {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+@media (max-width: 767px) {
+  .dashboard-hero,
+  .dashboard-sections {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  .dashboard-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .dashboard-metrics .metric {
+    min-height: 118px;
+    padding: 16px;
+  }
+  .latest-card {
+    padding: 20px;
+  }
+  .latest-card .ball.large {
+    min-width: clamp(34px, 9vw, 48px);
+    height: clamp(34px, 9vw, 48px);
+    font-size: 1rem;
+  }
+  .latest-card .balls {
+    gap: 6px;
+  }
+  .latest-card .draw-special {
+    flex-basis: 100%;
+    margin-top: 8px;
+  }
+  .dashboard-actions {
+    width: 100%;
+  }
+  .dashboard-actions .toolbar {
+    flex: 1;
+  }
+}

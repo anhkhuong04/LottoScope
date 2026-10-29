@@ -21,6 +21,7 @@ import { Checker } from './pages/Checker'
 import { Generator } from './pages/Generator'
 import { globalSearch } from './api'
 import './index.css'
+import './theme.css'
 import { SyncControls } from './SyncControls'
 
 const links = [

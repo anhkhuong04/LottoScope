@@ -1129,6 +1129,15 @@ Không đưa ROI hoặc profit tracking vào MVP/Phase 2 nếu chưa có specifi
 
 # 19. Loading States
 
+Visual refresh được người dùng yêu cầu ngày 29/10/2026 theo
+[UI/UX audit](UI_UX_AUDIT.md): ưu tiên dashboard/mobile → loading/menu →
+biểu đồ/typography → micro-interactions. Dashboard đưa kết quả gần nhất lên
+trước KPI, KPI mobile 2 cột khi đủ chỗ; card theo chiều cao nội dung, tóm tắt
+6 số có tần suất cao và 3 kỳ gần đây, dẫn tới các màn hình đầy đủ. Chọn số
+đồng hạng theo thứ tự số tăng dần để trình bày; không đổi metric/backend.
+Thông tin đồng bộ có chi tiết mở rộng, không dùng trạng thái “Live” giả.
+Các URL/game/window, quy tắc dữ liệu và main/special giữ nguyên.
+
 Mỗi data section phải có loading state riêng.
 
 Không block toàn màn hình nếu chỉ một widget đang reload.

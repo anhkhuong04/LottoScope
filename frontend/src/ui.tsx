@@ -135,6 +135,7 @@ export function DataState({
   hasData,
   empty = 'Chưa có dữ liệu trong phạm vi này.',
   retry,
+  showRefresh = true,
   children,
 }: {
   loading: boolean
@@ -142,6 +143,7 @@ export function DataState({
   hasData: boolean
   empty?: string
   retry: () => void
+  showRefresh?: boolean
   children: ReactNode
 }) {
   if (!hasData && loading)
@@ -182,11 +184,13 @@ export function DataState({
         </div>
       )}
       {children}
-      <div className="refresh-row">
-        <button className="btn ghost" disabled={loading} onClick={retry}>
-          <RefreshCw size={15} /> Làm mới hiển thị
-        </button>
-      </div>
+      {showRefresh && (
+        <div className="refresh-row">
+          <button className="btn ghost" disabled={loading} onClick={retry}>
+            <RefreshCw size={15} /> Làm mới hiển thị
+          </button>
+        </div>
+      )}
     </>
   )
 }
@@ -422,7 +426,10 @@ export function BackLink({ to, label }: { to: string; label: string }) {
 export function PairLink({ pair }: { pair: PairMetric }) {
   const { gameId, window } = useApp()
   return (
-    <Link to={`/pairs/${pair.numbers.join('-')}${globalSearch(gameId, window)}`}>
+    <Link
+      className="pair-link"
+      to={`/pairs/${pair.numbers.join('-')}${globalSearch(gameId, window)}`}
+    >
       <Balls values={pair.numbers} />
     </Link>
   )
