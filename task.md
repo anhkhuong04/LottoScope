@@ -659,6 +659,16 @@ không lặp tiếp hoặc bypass. Dữ liệu lịch sử giữ nguyên; source
 **chưa đo**. Backup ngoài máy một lần đã có, **chưa có lịch tự động**. Chi tiết
 resources/versions/rollback/giới hạn ở [biên bản](docs/DEPLOYMENT_ACCEPTANCE.md).
 
+## Favicon — 29/10/2026
+
+- [x] **ICON-01 — Nhận diện trên tab:** SVG kính lúp/biểu đồ với palette
+  navy/teal/mint hiện có; fallback ICO 16/32/48 px và Apple touch PNG 180 px.
+  Khai báo trong HTML dùng absolute paths để hoạt động trên deep links.
+  Build/typecheck, format, SVG XML và kích thước assets đạt; đã xem bản render
+  16/32/180 px. Không thay logo.png untracked của người dùng.
+- [ ] **ICON-02 — Cloud:** deploy Vercel SHA chứa favicon và xác nhận HTML,
+  MIME/asset bytes cùng deep links trên URL production.
+
 ## Trạng thái nghiệm thu MVP ban đầu
 
 - [x] **Backend MVP hoàn thành:** P0–P6 và P8-01, P8-03–P8-07, P8-09 đạt;
