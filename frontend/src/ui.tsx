@@ -70,7 +70,12 @@ export function DataTable({
   mobileHidden?: boolean
 }) {
   return (
-    <div className={`${mobileHidden ? 'desktop-only ' : ''}table-wrap`}>
+    <div
+      role="region"
+      aria-label="Bảng dữ liệu"
+      tabIndex={0}
+      className={`${mobileHidden ? 'desktop-only ' : ''}table-wrap`}
+    >
       <table className="data-table">{children}</table>
     </div>
   )
@@ -90,6 +95,30 @@ export function Ball({
     </span>
   )
 }
+export function FrequencyTile({
+  number,
+  frequency,
+  maximum,
+  to,
+}: {
+  number: number
+  frequency: number
+  maximum: number
+  to: string
+}) {
+  return (
+    <Link className="number-tile frequency-tile" to={to}>
+      <Ball value={number} />
+      <span className="frequency-value">
+        {frequency} <small>kỳ</small>
+      </span>
+      <span className="frequency-meter" aria-hidden="true">
+        <span style={{ width: `${(100 * frequency) / Math.max(1, maximum)}%` }} />
+      </span>
+    </Link>
+  )
+}
+
 export function Balls({
   values,
   special,
@@ -226,24 +255,30 @@ export function LoadingSkeleton({ page = false }: { page?: boolean }) {
     </div>
   )
 }
-export function WindowSelector() {
+export function WindowSelector({ children }: { children?: ReactNode }) {
   const { window, setWindow } = useApp()
-  return <WindowSelectorForm key={JSON.stringify(window)} window={window} setWindow={setWindow} />
+  return (
+    <WindowSelectorForm key={JSON.stringify(window)} window={window} setWindow={setWindow}>
+      {children}
+    </WindowSelectorForm>
+  )
 }
 
 function WindowSelectorForm({
   window,
   setWindow,
+  children,
 }: {
   window: AnalysisWindow
   setWindow: (value: AnalysisWindow) => void
+  children?: ReactNode
 }) {
   const [from, setFrom] = useState(window.kind === 'date_range' ? window.from_date : '')
   const [to, setTo] = useState(window.kind === 'date_range' ? window.to_date : '')
   const [draftMode, setDraftMode] = useState<string | null>(null)
   const value = draftMode ?? (window.kind === 'last_draws' ? String(window.count) : window.kind)
   return (
-    <div className="toolbar">
+    <div className="toolbar window-toolbar">
       <label className="field">
         Phạm vi phân tích
         <select
@@ -294,6 +329,7 @@ function WindowSelectorForm({
           </button>
         </>
       )}
+      {children}
     </div>
   )
 }

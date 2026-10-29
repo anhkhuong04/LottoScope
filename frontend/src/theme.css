@@ -1,4 +1,165 @@
 /* Workspace presentation; game rules and data stay in their existing layers. */
+:root {
+  --surface-subtle: #f7fbfa;
+  --border-accent: #c6e5df;
+  --teal-strong: #005b56;
+  line-height: 1.5;
+}
+h1 {
+  font-size: clamp(1.65rem, 2.5vw, 2.2rem);
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+.page-head {
+  align-items: center;
+  margin-bottom: 24px;
+}
+.eyebrow {
+  letter-spacing: 0.12em;
+}
+.page-intro,
+.card-subtitle {
+  line-height: 1.55;
+}
+.card {
+  min-width: 0;
+  box-shadow: 0 3px 16px #102b3605;
+}
+.card-subtitle,
+.metric-foot {
+  font-size: 0.78rem;
+}
+.metric-value,
+.ball,
+.data-table,
+.bar-row strong,
+.draw-id {
+  font-variant-numeric: tabular-nums;
+}
+.link-arrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+}
+.pair-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+.window-toolbar {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  gap: 16px;
+}
+.dashboard-actions .window-toolbar {
+  padding: 0;
+  border: 0;
+  background: none;
+}
+.frequency-tile {
+  gap: 10px;
+  padding: 14px 10px 12px;
+  background: var(--surface-subtle);
+  border-color: #d3e6e1;
+}
+.frequency-value {
+  color: var(--ink);
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+.frequency-value small {
+  font-weight: 500;
+  font-size: 0.78rem;
+}
+.frequency-meter {
+  height: 4px;
+  border-radius: 8px;
+  background: #dbece8;
+  width: 100%;
+  overflow: hidden;
+}
+.frequency-meter > span {
+  display: block;
+  height: 100%;
+  background: var(--teal);
+  border-radius: inherit;
+}
+.chart-caption {
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.6;
+  margin: 16px 0 0;
+}
+.bar-fill {
+  background: var(--teal);
+}
+.bar-row > a {
+  display: grid;
+  align-items: center;
+  min-height: 44px;
+  font-weight: 700;
+}
+.bar-list {
+  gap: 2px;
+}
+.bar-track {
+  height: 10px;
+}
+.table-wrap {
+  max-height: 70vh;
+  overflow: auto;
+}
+.data-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.data-table td {
+  padding: 9px 12px;
+}
+.data-table td a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+.checker-empty {
+  text-align: center;
+  padding: 32px 4px;
+}
+.checker-empty h3 {
+  margin: 24px 0 12px;
+}
+.checker-empty p {
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+.checker-slots {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.checker-slots span {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px dashed #a5c2bf;
+  border-radius: 50%;
+  color: var(--muted);
+}
+.checker-slots .filled {
+  background: var(--pale);
+  border-style: solid;
+  color: var(--teal-strong);
+  font-weight: 700;
+}
+.result-focus:focus {
+  outline: none;
+}
 .sr-only {
   position: absolute;
   width: 1px;
@@ -224,6 +385,12 @@
 .dashboard-sections .pair-link {
   min-height: 44px;
 }
+.pairs-summary .stack {
+  gap: 0;
+}
+.pairs-summary .draw-row {
+  padding: 8px 0;
+}
 @media (max-width: 1100px) {
   .dashboard-hero {
     grid-template-columns: 1fr;
@@ -233,6 +400,19 @@
   }
 }
 @media (max-width: 767px) {
+  .page-head {
+    align-items: flex-start;
+  }
+  .table-wrap {
+    max-height: none;
+  }
+  .window-toolbar {
+    padding: 14px;
+    gap: 12px;
+  }
+  .checker-empty {
+    padding: 20px 0;
+  }
   .topbar-actions {
     gap: 8px;
   }

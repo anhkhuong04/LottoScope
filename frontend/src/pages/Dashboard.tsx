@@ -18,6 +18,7 @@ import {
   ContextNote,
   DataState,
   DrawRows,
+  FrequencyTile,
   Metric,
   PageHead,
   PairLink,
@@ -43,7 +44,7 @@ export function Dashboard() {
   const recent = useQuery(`${base}/draws?page_size=3`, (signal) =>
     api<Page<Draw>>(`${base}/draws?page_size=3`, signal),
   )
-  const max = Math.max(1, ...(numbers.data?.items.map((item) => item.frequency) ?? []))
+  const max = Math.max(0, ...(numbers.data?.items.map((item) => item.frequency) ?? []))
   const frequent = [...(numbers.data?.items ?? [])]
     .sort((a, b) => b.frequency - a.frequency || a.number - b.number)
     .slice(0, 6)
@@ -199,18 +200,17 @@ export function Dashboard() {
               <>
                 <div className="number-grid">
                   {frequent.map((item) => (
-                    <Link
-                      className="number-tile"
+                    <FrequencyTile
                       key={item.number}
                       to={`/numbers/${item.number}${search}`}
-                    >
-                      <span>{String(item.number).padStart(2, '0')}</span>
-                      <small>{item.frequency} kỳ</small>
-                    </Link>
+                      number={item.number}
+                      frequency={item.frequency}
+                      maximum={max}
+                    />
                   ))}
                 </div>
-                <p className="muted" style={{ fontSize: '.75rem', marginTop: 15 }}>
-                  Cao nhất {max} kỳ; ô hiển thị số lần xuất hiện.
+                <p className="chart-caption">
+                  Thanh dài hơn: xuất hiện nhiều hơn trong phạm vi. Cao nhất {max} kỳ.
                 </p>
               </>
             )}
@@ -218,6 +218,7 @@ export function Dashboard() {
         </Card>
         <Card
           title="Các cặp xuất hiện nhiều"
+          className="pairs-summary"
           action={
             <Link className="link-arrow" to={`/pairs${search}`}>
               Xem cặp số <ArrowRight size={14} />

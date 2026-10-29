@@ -30,8 +30,7 @@ export function Pairs() {
         title="Cặp số trong lịch sử"
         description="Tần suất đồng xuất hiện của hai số chính qua các kỳ."
       />
-      <WindowSelector />
-      <div className="toolbar">
+      <WindowSelector>
         <label className="field">
           Tần suất tối thiểu
           <input
@@ -49,7 +48,7 @@ export function Pairs() {
             <option value="pair">Theo cặp số</option>
           </select>
         </label>
-      </div>
+      </WindowSelector>
       <Card>
         <DataState {...result} hasData={!!result.data} empty="Không có cặp nào khớp bộ lọc.">
           {result.data && (

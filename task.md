@@ -692,8 +692,13 @@ resources/versions/rollback/giới hạn ở [biên bản](docs/DEPLOYMENT_ACCEP
   thống nhất. Lint/typecheck, 17 unit tests liên quan và 9 E2E đạt (1 case
   menu mobile skip đúng trên desktop); tests sync dùng intercepted POST,
   không gọi nguồn thật. Power giữ 6 main và special riêng trong kết quả.
-- [ ] **UI-03 — Biểu đồ/typography:** tần suất trực quan có số/legend, toolbar
-  và hierarchy chữ; checker empty state.
+- [x] **UI-03 — Biểu đồ/typography:** tile tần suất có thanh tỷ lệ và số/legend,
+  toolbar gom phạm vi/sort/view, tabular numbers, bảng desktop có scroll/header,
+  checker empty state và focus kết quả. Lint/typecheck đạt; 59 unit tests đạt
+  với maxWorkers=2 (lượt mặc định chạy đồng thời E2E bị worker startup timeout,
+  không coi là pass). 39 E2E desktop/mobile đạt, 3 skip đúng điều kiện device;
+  gồm axe, breakpoint 320–1365, source error/stale/game switching và Power.
+  Đã xem screenshot dashboard/numbers/checker trên desktop/mobile.
 - [ ] **UI-04 — Micro-interactions:** motion tokens, hover/press/data enter,
   reduced motion và phản hồi thao tác.
 - [ ] **UI-05 — Acceptance/deploy:** frontend gates, responsive/keyboard/axe/
