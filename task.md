@@ -580,11 +580,19 @@ backend, DB hoặc chạy lại unit/build không liên quan. `.env` local giữ
 - [x] **CLOUD-02 — Kiểm chứng local:** full backend/frontend gates, gateway
   regression, Docker cloud command, PostgreSQL migration/backup-restore riêng,
   schema config và HTTP qua gateway tới container thật.
-- [ ] **CLOUD-03 — Kết nối/provision:** xác nhận account access, Free quotas,
+- [x] **CLOUD-03 — Kết nối/provision:** xác nhận account access, Free quotas,
   repository/branch consent; tạo Neon/Render/Vercel, secrets và backup ngoài máy.
 - [ ] **CLOUD-04 — Chuyển dữ liệu/go-live:** restore Neon trống/đối chiếu,
   readiness, deploy theo SHA, HTTP/browser/edge routing/cold start/source sync,
-  quota và rollback. Chưa có cloud URL hoặc nghiệm thu deployment thật.
+  quota và rollback. Website đã live; source sync bị challenge, cold start
+  sau idle chưa đo nên chưa đánh dấu toàn bộ acceptance hoàn thành.
+- [x] **CLOUD-04A — Go-live đã kiểm chứng:** restore/đối chiếu, deploy SHA,
+  HTTP/gateway, browser desktop/mobile, 10 concurrent reads, restart giữ dữ liệu,
+  backup ngoài máy; [biên bản](docs/DEPLOYMENT_ACCEPTANCE.md).
+- [ ] **CLOUD-04B — Nghiệm thu vận hành còn lại:** nguồn Vietlott từ Render
+  trả Cloudflare challenge cho cả ba game; cần sync thành công và kiểm live
+  idempotence khi nguồn truy cập được. Chưa đo cold start sau idle tự nhiên
+  hoặc RAM/tải kéo dài trên Render thật; không thay bằng số đo local/restart.
 
 Kiểm chứng CLOUD-01..02: backend uv sync locked, Ruff lint/format, Pyright,
 Alembic upgrade/check trên `lotto_cloud_20261029_test`, **216 tests pass**
@@ -603,12 +611,10 @@ gateway GET/query/POST checker, JSON 404 và 10 concurrent reads đạt. Không 
 điều này để cam kết latency/SLA Render thật. Compose config đạt; không recreate
 ứng dụng đang chạy. Backup/fingerprint nằm trong backups ignored, không commit.
 
-Cloud smoke script mới chỉ kiểm syntax; chưa chạy với Vercel/Render/Neon thật.
-Chưa kiểm browser/cold-start/collector từ cloud, chưa tạo resource/billing,
-chưa chuyển dữ liệu cloud. Ba plugin đã cài nhưng phiên chưa có service tools;
-không suy cài plugin là account OAuth đã kết nối. Không thêm logo untracked.
+Tại mốc CLOUD-01..02 mới kiểm local. Resource, chuyển dữ liệu và bằng chứng
+cloud bổ sung ở CLOUD-03..04 bên dưới. Không thêm logo untracked.
 
-### CLOUD-03/CLOUD-04 — Provision đang thực hiện
+### CLOUD-03/CLOUD-04 — Go-live và giới hạn nghiệm thu
 
 CLI chính thức đã xác thực cả ba tài khoản (plugin đã cài nhưng phiên không
 nhận service tools). Vercel team khuong8: Hobby; Neon org: Free. Đã tạo Neon
@@ -620,13 +626,13 @@ head/check đạt. Local source không bị sửa. Secrets giữ ở .env.cloud 
 Đã tạo Render `srv-dbhmfidg1s2s73aevs40`, Singapore, plan free, auto-deploy off;
 Vercel `prj_w0vXLhOQwZmoa3cpnrK2xSyc5fqf`, root frontend, Node 22/Fluid,
 sin1, production server secrets, public access; Git auto-deployment disabled.
-Vercel đang build release fac86e9. Chưa nghiệm thu cloud HTTP/browser/source.
+Vercel cuối cùng deploy release 9cc7226; backend Render release 24720a5.
 
 Render build đạt nhưng startup đầu thất bại vì nested shell quoting; thay
 dockerCommand bằng `python -m app.commands.serve`, đọc PORT trực tiếp.
 Ruff lint/format, Pyright và **9 ingress/smoke tests pass**; entrypoint thật
 đã kiểm custom PORT/liveness/guard ở process riêng. Không đổi domain/schema
-hoặc chạy lại full suite không liên quan. Tiếp tục deploy/acceptance sau commit.
+hoặc chạy lại full suite không liên quan.
 
 Render commit 24720a5 đã live sau khi chủ tài khoản lưu Docker Command qua
 dashboard (API update bị automatic approval chặn, CLI không hỗ trợ trường
@@ -640,7 +646,18 @@ FUNCTION_INVOCATION_FAILED. Đổi import sang `.js`, import node:process rõ r�
 và thêm types node ở root tsconfig do Vercel compiler không dùng project
 references. Lint/format/typecheck và **57 tests pass** trong Vercel build thật;
 build cuối không còn TypeScript diagnostics, artifact có dependency gateway.js.
-Tiếp tục deploy bản đã sửa và kiểm chứng HTTP/browser/source qua cloud.
+Đã deploy bản sửa: **https://lottoscope-sable.vercel.app**. HTTP smoke thật
+qua Vercel/Render/Neon đạt cho ba game, gateway/query/404/no-store/deep links;
+**6 Playwright desktop/mobile tests pass** với cloud API không mock. Burst
+10 concurrent reads đạt 932 ms; sau restart Render đạt 984 ms, readiness 200,
+3.968 draws/latest và migration head giữ nguyên. Không coi burst này là SLA.
+
+Sync thực cả ba game từ Render trả 503 `sync_source_unavailable`; audit trên
+Neon ghi `Cloudflare challenge; deferred`. Lotto gọi lại trả 429 cooldown,
+không lặp tiếp hoặc bypass. Dữ liệu lịch sử giữ nguyên; source sync live
+**chưa đạt**. Cold start sau idle tự nhiên và RAM/tải dài trên Render thật
+**chưa đo**. Backup ngoài máy một lần đã có, **chưa có lịch tự động**. Chi tiết
+resources/versions/rollback/giới hạn ở [biên bản](docs/DEPLOYMENT_ACCEPTANCE.md).
 
 ## Trạng thái nghiệm thu MVP ban đầu
 

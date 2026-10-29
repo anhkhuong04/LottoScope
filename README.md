@@ -4,7 +4,10 @@
 
 ## Chạy ứng dụng bằng Docker Compose
 
-Triển khai Internet khi máy cá nhân tắt: xem [Vercel + Render Free + Neon Free](docs/DEPLOYMENT_FREE.md).
+Website công khai: **https://lottoscope-sable.vercel.app**, dùng được khi máy cá nhân tắt.
+Đã triển khai Vercel Hobby + Render Free + Neon Free; xem [kết quả kiểm chứng và giới hạn](docs/DEPLOYMENT_ACCEPTANCE.md)
+và [hướng dẫn vận hành](docs/DEPLOYMENT_FREE.md). Dữ liệu lịch sử đã chuyển đủ;
+tải dữ liệu mới từ Render hiện bị Cloudflare của Vietlott chặn.
 Cấu hình cloud là opt-in; Compose/Wi-Fi dưới đây vẫn dành cho local.
 
 Cần Docker Desktop/Compose. Chạy PowerShell tại root repository:

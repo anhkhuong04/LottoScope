@@ -4,6 +4,11 @@ Quyết định ngày 29/10/2026 ở [ADR 0011](DECISIONS/0011-free-cloud-deploy
 Khoảng 10 người, dùng khi máy cá nhân tắt, ưu tiên $0. Website công khai,
 không có user login. Origin token chỉ bảo vệ Vercel → Render.
 
+Đã deploy: **https://lottoscope-sable.vercel.app**. Resources, release SHA,
+kiểm chứng thực tế và hạn chế nguồn dữ liệu ở
+[biên bản cloud](DEPLOYMENT_ACCEPTANCE.md). Các bước kết nối ban đầu dưới đây
+đã hoàn thành cho deployment này.
+
 ## Người dùng cần làm
 
 1. Đăng nhập ba dịch vụ bằng GitHub hiện có; chọn Free/Hobby cá nhân phi
