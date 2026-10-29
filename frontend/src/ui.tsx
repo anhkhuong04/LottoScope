@@ -1,14 +1,6 @@
-import {
-  AlertCircle,
-  ArrowLeft,
-  ArrowRight,
-  Clock3,
-  DatabaseZap,
-  LoaderCircle,
-  RefreshCw,
-} from 'lucide-react'
+import { AlertCircle, ArrowLeft, ArrowRight, Clock3, DatabaseZap, RefreshCw } from 'lucide-react'
 import { Link, useLocation } from 'react-router'
-import { useId, useState, type ReactNode } from 'react'
+import { useEffect, useId, useState, type ReactNode } from 'react'
 import {
   ApiError,
   globalSearch,
@@ -146,13 +138,7 @@ export function DataState({
   showRefresh?: boolean
   children: ReactNode
 }) {
-  if (!hasData && loading)
-    return (
-      <div className="state" role="status">
-        <LoaderCircle size={26} />
-        <h3>Đang tải dữ liệu…</h3>
-      </div>
-    )
+  if (!hasData && loading) return <LoadingSkeleton />
   if (!hasData && error && !(error instanceof ApiError && error.kind === 'missing'))
     return (
       <div className="state" role="alert">
@@ -192,6 +178,52 @@ export function DataState({
         </div>
       )}
     </>
+  )
+}
+
+export function LoadingSkeleton({ page = false }: { page?: boolean }) {
+  const [waiting, setWaiting] = useState(false)
+  useEffect(() => {
+    const timer = setTimeout(() => setWaiting(true), 8000)
+    return () => clearTimeout(timer)
+  }, [])
+  return (
+    <div
+      className={`loading-skeleton${page ? ' page-skeleton' : ''}`}
+      role="status"
+      aria-busy="true"
+    >
+      <span className="sr-only">
+        {page ? 'Đang tải danh sách game và dữ liệu…' : 'Đang tải dữ liệu…'}
+      </span>
+      <div className="skeleton-content" aria-hidden="true">
+        <div className="skeleton-line short" />
+        <div className="skeleton-line title" />
+        <div className="skeleton-balls">
+          {[0, 1, 2, 3, 4].map((item) => (
+            <span key={item} />
+          ))}
+        </div>
+        <div className="skeleton-line" />
+        <div className="skeleton-line short" />
+      </div>
+      {page && (
+        <div className="skeleton-panels" aria-hidden="true">
+          {[0, 1, 2, 3].map((item) => (
+            <div className="skeleton-content" key={item}>
+              <div className="skeleton-line short" />
+              <div className="skeleton-line title" />
+            </div>
+          ))}
+        </div>
+      )}
+      {waiting && (
+        <p className="loading-hint">
+          Dịch vụ đang kết nối. Lần mở đầu có thể cần thêm thời gian; bạn có thể giữ trang này để
+          chờ.
+        </p>
+      )}
+    </div>
   )
 }
 export function WindowSelector() {

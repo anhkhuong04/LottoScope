@@ -53,25 +53,37 @@ export function SyncControls() {
 
   return (
     <div className="sync-controls">
-      <div className="sync-toolbar">
-        <span className="muted">Lấy kỳ mới từ Vietlott cho {game?.label ?? 'game đang chọn'}.</span>
-        <button className="btn" disabled={!game || pending} onClick={sync}>
-          {pending ? (
-            <LoaderCircle size={16} aria-hidden="true" />
-          ) : (
-            <Download size={16} aria-hidden="true" />
+      <button
+        className="btn sync-trigger"
+        title={`Lấy kỳ mới từ Vietlott cho ${game?.label ?? 'game đang chọn'}`}
+        aria-label={pending ? 'Đang đồng bộ…' : 'Tải dữ liệu'}
+        disabled={!game || pending}
+        onClick={sync}
+      >
+        {pending ? (
+          <LoaderCircle size={16} aria-hidden="true" />
+        ) : (
+          <Download size={16} aria-hidden="true" />
+        )}
+        <span>{pending ? 'Đang đồng bộ…' : 'Tải dữ liệu'}</span>
+      </button>
+      {(pending || notice) && (
+        <div className="sync-feedback">
+          {pending && <p role="status">Đang lấy dữ liệu, vui lòng đợi…</p>}
+          {notice && (
+            <p
+              className={`notice${notice.error ? ' error' : ''}`}
+              role={notice.error ? 'alert' : 'status'}
+            >
+              {notice.text}
+            </p>
           )}
-          {pending ? 'Đang đồng bộ…' : 'Tải dữ liệu'}
-        </button>
-      </div>
-      {pending && <p role="status">Đang lấy dữ liệu, vui lòng đợi…</p>}
-      {notice && (
-        <p
-          className={`notice${notice.error ? ' error' : ''}`}
-          role={notice.error ? 'alert' : 'status'}
-        >
-          {notice.text}
-        </p>
+          {notice && (
+            <button className="btn ghost" onClick={() => setNotice(null)}>
+              Đóng thông báo đồng bộ
+            </button>
+          )}
+        </div>
       )}
     </div>
   )

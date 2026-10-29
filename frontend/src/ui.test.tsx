@@ -1,9 +1,34 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { Pager } from './ui'
+import { DataState, Pager } from './ui'
 
 afterEach(cleanup)
+
+describe('data loading presentation', () => {
+  it('shows an accessible skeleton without inventing values before data arrives', () => {
+    render(
+      <DataState loading error={null} hasData={false} retry={vi.fn()}>
+        <p>Saved result</p>
+      </DataState>,
+    )
+    expect(screen.getByRole('status')).toHaveAttribute('aria-busy', 'true')
+    expect(screen.getByRole('status')).toHaveTextContent('Đang tải dữ liệu')
+    expect(screen.queryByText('Saved result')).not.toBeInTheDocument()
+  })
+
+  it('preserves valid saved content and retry when refreshing the same context fails', () => {
+    render(
+      <DataState loading={false} error={new Error('Network unavailable')} hasData retry={vi.fn()}>
+        <p>Saved result</p>
+      </DataState>,
+    )
+    expect(screen.getByText('Saved result')).toBeVisible()
+    expect(screen.getByRole('alert')).toHaveTextContent('Dữ liệu cũ trong cùng phạm vi')
+    expect(screen.getByRole('button', { name: 'Thử lại' })).toBeEnabled()
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+  })
+})
 
 describe('Pager', () => {
   it('jumps directly on Enter or the Go button without navigating while typing', async () => {

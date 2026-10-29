@@ -687,8 +687,11 @@ resources/versions/rollback/giới hạn ở [biên bản](docs/DEPLOYMENT_ACCEP
   mobile, card tự cao, tần suất tóm tắt 6 số và 3 kỳ gần đây; một refresh chỉ
   đọc cho dashboard. Lint/typecheck, 13 UI tests và 2 E2E desktop/mobile flow A
   đạt; đã xem ảnh thực local. Nghiệp vụ và màn hình phân tích đầy đủ giữ nguyên.
-- [ ] **UI-02 — Loading/menu:** skeleton, header đồng bộ gọn, Escape/outside
-  click/focus và brand mark thống nhất.
+- [x] **UI-02 — Loading/menu:** skeleton có status và thông báo chờ lâu,
+  header đồng bộ gọn, Escape/outside click/focus, skip link và brand mark
+  thống nhất. Lint/typecheck, 17 unit tests liên quan và 9 E2E đạt (1 case
+  menu mobile skip đúng trên desktop); tests sync dùng intercepted POST,
+  không gọi nguồn thật. Power giữ 6 main và special riêng trong kết quả.
 - [ ] **UI-03 — Biểu đồ/typography:** tần suất trực quan có số/legend, toolbar
   và hierarchy chữ; checker empty state.
 - [ ] **UI-04 — Micro-interactions:** motion tokens, hover/press/data enter,

@@ -62,6 +62,7 @@ test('a late sync keeps the selected game and reports source errors without losi
     page.getByRole('status').filter({ hasText: 'Lotto 5/35: đã kiểm tra nguồn' }),
   ).toBeVisible()
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Tổng quan Mega 6/45')
+  await expect(page.locator('.metric-value').first()).toHaveText(/^\d{5}$/)
   const saved = await page.locator('.metric-value').first().textContent()
   await page.getByRole('button', { name: 'Tải dữ liệu', exact: true }).click()
   await expect(page.getByRole('alert')).toContainText('Mega 6/45: Chưa thể hoàn tất')
