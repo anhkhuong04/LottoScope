@@ -1,5 +1,11 @@
 # Cloudflare deployment — analysis và kế hoạch đề xuất
 
+> Cập nhật 29/10/2026: người dùng chọn **Vercel + Render Free + Neon Free**,
+> website công khai, chạy khi máy cá nhân tắt. Xem
+> [ADR 0011](docs/DECISIONS/0011-free-cloud-deployment.md) và
+> [runbook hiện hành](docs/DEPLOYMENT_FREE.md). Nội dung bên dưới giữ làm
+> phân tích Cloudflare lịch sử, không phải plan triển khai hiện hành.
+
 - Ngày phân tích: **14/10/2026**. Baseline code: commit `2dd7fa8`.
 - Trạng thái: **analysis hoàn tất; plan đề xuất, chưa được duyệt triển khai**.
 - Yêu cầu hiện hành chỉ cho phép đọc/đánh giá và tạo file này. Không deploy,

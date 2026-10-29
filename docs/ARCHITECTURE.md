@@ -49,6 +49,13 @@ cùng kết quả đã tính, không tính lại trên dataset khác. `data_vers
 
 ## Chạy và vận hành
 
+Cloud opt-in (29/10/2026): [ADR 0011](DECISIONS/0011-free-cloud-deployment.md)
+chọn Vercel SPA + Node gateway, Render Web Free CPython và Neon PostgreSQL
+direct TLS. Website công khai, token chỉ bảo vệ origin; scheduler tắt,
+migration explicit và local Compose giữ mặc định. Thiết lập tài khoản,
+chuyển dữ liệu và nghiệm thu ở [DEPLOYMENT_FREE.md](DEPLOYMENT_FREE.md).
+Quyết định kiến trúc không đồng nghĩa cloud đã được provision/go-live.
+
 Wi-Fi opt-in sau MVP: `compose.lan.yaml` thêm binding frontend lên IP Wi-Fi
 cụ thể qua `FRONTEND_LAN_IP`, giữ mapping localhost; backend/PostgreSQL vẫn
 loopback. Không dùng `0.0.0.0`, không thêm public ingress hoặc auth. Cách bật,

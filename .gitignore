@@ -3,6 +3,9 @@
 .env.*
 !.env.example
 backend/.env
+.vercel/
+.render/
+backups/
 
 # Python and uv
 __pycache__/

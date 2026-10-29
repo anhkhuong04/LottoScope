@@ -24,6 +24,13 @@ contract POST/cooldown ở API, vận hành mặc định không scheduler ở R
 
 ## Phạm vi
 
+- Cloud công khai (29/10/2026): [ADR 0011](../docs/DECISIONS/0011-free-cloud-deployment.md)
+  chọn Vercel + Render Free + Neon Free cho khoảng 10 người, ưu tiên $0 và
+  không phụ thuộc máy cá nhân. Gateway giữ origin token, PostgreSQL direct,
+  scheduler tắt; [runbook](../docs/DEPLOYMENT_FREE.md). Không đồng nghĩa đã
+  có resource/go-live; task.md ghi kiểm chứng thực. Thay proposal Cloudflare
+  trong task-deloy.md cho hướng deployment được chọn, không port Workers/D1.
+
 - Chia sẻ Wi-Fi local (25/10/2026): [ADR 0010](../docs/DECISIONS/0010-local-wifi-access.md)
   chốt overlay frontend bind IP Wi-Fi cụ thể, giữ loopback/API/DB; không mở
   public Internet hoặc thêm phân quyền. Bật bằng `.env` local, hướng dẫn ở README.

@@ -6,6 +6,14 @@ lại analytics. Tất cả number trong JSON là integer; UI tự hiển thị 
 
 ## Quy ước chung
 
+- Cloud opt-in theo [ADR 0011](DECISIONS/0011-free-cloud-deployment.md): browser
+  vẫn dùng `/api/v1` cùng origin Vercel. Render yêu cầu server token ở header
+  `X-Lotto-Origin-Token` cho mọi path trừ GET `/health/live`; không token/sai
+  → 401 `unauthorized`. Token không cấp cho browser. Local giữ access hiện có.
+  Gateway giới hạn JSON POST 64 KiB, GET/POST, no-store, không retry writes;
+  deadline 270 giây trả 504 `gateway_timeout`, outcome sync có thể chưa biết.
+  Cloud tắt docs/OpenAPI. Website Vercel công khai theo yêu cầu người dùng.
+
 - Path `game` là `lotto_535`, `mega_645` hoặc `power_655`. Game lạ → 404 `unknown_game`.
   Dates dùng `YYYY-MM-DD` theo Việt Nam; timestamps dùng RFC 3339 có `Z`.
   `draw_time` nếu có dùng `HH:MM:SS`, hiểu theo Việt Nam. `null` là thiếu
@@ -56,8 +64,8 @@ thể là đã có kỳ mới nhất, không phải lỗi.
   hoặc validation. Phần đã commit vẫn giữ; client đọc lại DB nhưng báo lỗi.
 - 409 `sync_review_pending`: nguồn khác dữ liệu đã lưu, cần correction review.
 
-Endpoint dùng trong ứng dụng local/nhóm kín hiện tại, cùng origin với UI,
-không thêm quyền quản trị hoặc public deployment. Giao diện chặn click trùng,
+Endpoint dùng cùng origin với UI; cloud công khai opt-in theo ADR 0011 có
+gateway bảo vệ origin, không thêm quyền quản trị theo user. Giao diện chặn click trùng,
 giữ context và tải lại các query sau lượt sync kể cả khi lỗi. Collector vẫn
 ghi run/counters và giữ idempotence/lock/correction policy hiện có.
 

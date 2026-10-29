@@ -4,6 +4,9 @@
 
 ## Chạy ứng dụng bằng Docker Compose
 
+Triển khai Internet khi máy cá nhân tắt: xem [Vercel + Render Free + Neon Free](docs/DEPLOYMENT_FREE.md).
+Cấu hình cloud là opt-in; Compose/Wi-Fi dưới đây vẫn dành cho local.
+
 Cần Docker Desktop/Compose. Chạy PowerShell tại root repository:
 
 ```powershell

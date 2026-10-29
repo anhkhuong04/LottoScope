@@ -571,6 +571,43 @@ không sửa firewall/profile; không mở router/Internet. Không thay source a
 backend, DB hoặc chạy lại unit/build không liên quan. `.env` local giữ IP và
 `COMPOSE_FILE`; hướng dẫn bật/tắt/DHCP/HTTP ở README, quyết định ở ADR 0010.
 
+## Cloud Free — 29/10/2026
+
+- [x] **CLOUD-01 — Cấu hình opt-in:** Vercel SPA + Node gateway cùng origin,
+  Render Blueprint Free, Neon direct URL/psycopg, cloud origin token bắt buộc,
+  không publish docs, scheduler tắt; local giữ nguyên. ADR 0011 và runbook
+  DEPLOYMENT_FREE.md thay proposal Cloudflare cũ cho hướng đã chọn.
+- [x] **CLOUD-02 — Kiểm chứng local:** full backend/frontend gates, gateway
+  regression, Docker cloud command, PostgreSQL migration/backup-restore riêng,
+  schema config và HTTP qua gateway tới container thật.
+- [ ] **CLOUD-03 — Kết nối/provision:** xác nhận account access, Free quotas,
+  repository/branch consent; tạo Neon/Render/Vercel, secrets và backup ngoài máy.
+- [ ] **CLOUD-04 — Chuyển dữ liệu/go-live:** restore Neon trống/đối chiếu,
+  readiness, deploy theo SHA, HTTP/browser/edge routing/cold start/source sync,
+  quota và rollback. Chưa có cloud URL hoặc nghiệm thu deployment thật.
+
+Kiểm chứng CLOUD-01..02: backend uv sync locked, Ruff lint/format, Pyright,
+Alembic upgrade/check trên `lotto_cloud_20261029_test`, **216 tests pass**
+(10 warnings có sẵn). Frontend lint/format/typecheck/build và **57 tests pass**,
+gồm 6 gateway tests; bundle lớn DrawScene là warning có sẵn. Render/Vercel
+configured values pass published schema validation (vendor Vercel schema
+không pass full draft metaschema của check-jsonschema; instance validation
+chạy trực tiếp bằng jsonschema, không bỏ cấu hình sai).
+
+Backup custom-format dùng exported snapshot READ ONLY từ local, restore sang
+`lotto_cloud_restore_20261029_test`: **7 bảng, counts/content SHA-256 và sequences
+khớp; 3.968 draws**. Không thay source DB. Migration trên clone đạt. Docker
+image riêng `lottoscope-cloud:local`, chạy command Render trên loopback 18081,
+giới hạn **512 MiB / 0.1 CPU**: origin guard, liveness/readiness, ba game,
+gateway GET/query/POST checker, JSON 404 và 10 concurrent reads đạt. Không dùng
+điều này để cam kết latency/SLA Render thật. Compose config đạt; không recreate
+ứng dụng đang chạy. Backup/fingerprint nằm trong backups ignored, không commit.
+
+Cloud smoke script mới chỉ kiểm syntax; chưa chạy với Vercel/Render/Neon thật.
+Chưa kiểm browser/cold-start/collector từ cloud, chưa tạo resource/billing,
+chưa chuyển dữ liệu cloud. Ba plugin đã cài nhưng phiên chưa có service tools;
+không suy cài plugin là account OAuth đã kết nối. Không thêm logo untracked.
+
 ## Trạng thái nghiệm thu MVP ban đầu
 
 - [x] **Backend MVP hoàn thành:** P0–P6 và P8-01, P8-03–P8-07, P8-09 đạt;
