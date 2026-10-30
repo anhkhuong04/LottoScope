@@ -27,6 +27,7 @@ class IngressSettings(BaseSettings):
 class Settings(IngressSettings):
     database_url: PostgresDsn
     scheduler_enabled: bool = False
+    community_fallback_enabled: bool = False
     lotto_poll_first: str = "14:00"
     lotto_poll_second: str = "22:30"
     mega_poll: str = "19:30"

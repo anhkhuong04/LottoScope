@@ -10,7 +10,16 @@ test('manual sync posts once and reloads stored dashboard data after completion'
   await page.route('**/api/v1/games/lotto_535/draws/latest', async (route) => {
     const response = await route.fetch()
     const data = await response.json()
-    await route.fulfill({ json: completed ? { ...data, draw_id: '99999' } : data })
+    await route.fulfill({
+      json: completed
+        ? {
+            ...data,
+            draw_id: '99999',
+            source_url:
+              'https://raw.githubusercontent.com/vietvudanh/vietlott-data/main/data/power535.jsonl#draw=99999',
+          }
+        : data,
+    })
   })
   await page.route('**/api/v1/games/lotto_535/sync', async (route) => {
     expect(route.request().method()).toBe('POST')
@@ -19,7 +28,13 @@ test('manual sync posts once and reloads stored dashboard data after completion'
     await wait
     completed = true
     await route.fulfill({
-      json: { game: 'lotto_535', created: 2, enriched: 0, remaining_unresolved: 0 },
+      json: {
+        game: 'lotto_535',
+        created: 2,
+        enriched: 0,
+        remaining_unresolved: 0,
+        source: 'community',
+      },
     })
   })
   await page.goto('/dashboard?game=lotto_535')
@@ -33,6 +48,12 @@ test('manual sync posts once and reloads stored dashboard data after completion'
     page.getByRole('status').filter({ hasText: 'Lotto 5/35: đã thêm 2 kỳ mới' }),
   ).toBeVisible()
   await expect(page.locator('.metric-value').first()).toHaveText('99999')
+  await expect(
+    page.getByRole('status').filter({ hasText: 'Nguồn dự phòng cộng đồng' }),
+  ).toBeVisible()
+  await expect(
+    page.getByRole('link', { name: 'Cộng đồng · vietvudanh/vietlott-data' }),
+  ).toBeVisible()
   expect(requests).toBe(1)
 })
 

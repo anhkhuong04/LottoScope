@@ -24,6 +24,10 @@ contract POST/cooldown ở API, vận hành mặc định không scheduler ở R
 
 ## Phạm vi
 
+- Nguồn dự phòng cloud (30/10/2026): người dùng duyệt community fallback có
+  provenance/validation tại [ADR 0012](../docs/DECISIONS/0012-community-source-fallback.md).
+  Chỉ append kỳ mới khi official Cloudflare challenge; không thay lịch sử hoặc domain.
+
 - Visual refresh (29/10/2026): người dùng duyệt hướng modern/clean từ
   [UI/UX audit](../docs/UI_UX_AUDIT.md), theo thứ tự dashboard/mobile →
   loading/menu → biểu đồ/typography → micro-interactions. Quy ước presentation

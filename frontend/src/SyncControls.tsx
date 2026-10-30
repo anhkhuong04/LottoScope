@@ -32,7 +32,11 @@ export function SyncControls() {
       const backlog = result.remaining_unresolved
         ? ` Còn ${result.remaining_unresolved} kỳ lịch sử chưa hoàn tất.`
         : ''
-      setNotice({ error: false, text: `${selected.label}: ${outcome}${backlog}` })
+      const source =
+        result.source === 'community'
+          ? ' Nguồn dự phòng cộng đồng: vietvudanh/vietlott-data (Vietlott đang chặn truy cập).'
+          : ''
+      setNotice({ error: false, text: `${selected.label}: ${outcome}${backlog}${source}` })
     } catch (error) {
       const message =
         error instanceof ApiError && error.code && syncErrors[error.code]
@@ -55,7 +59,7 @@ export function SyncControls() {
     <div className="sync-controls">
       <button
         className={`btn sync-trigger${pending ? ' is-loading' : ''}`}
-        title={`Lấy kỳ mới từ Vietlott cho ${game?.label ?? 'game đang chọn'}`}
+        title={`Lấy kỳ mới cho ${game?.label ?? 'game đang chọn'}`}
         aria-label={pending ? 'Đang đồng bộ…' : 'Tải dữ liệu'}
         disabled={!game || pending}
         onClick={sync}

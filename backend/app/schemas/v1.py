@@ -28,6 +28,7 @@ class SyncOut(BaseModel):
     enriched: int
     unchanged: int
     remaining_unresolved: int
+    source: Literal["official", "community"] = "official"
 
 
 class StrictBody(BaseModel):

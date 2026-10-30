@@ -8,6 +8,7 @@ from sqlalchemy import Engine
 
 from app.analytics.service import AnalysisWindow, AnalyticsService
 from app.api.errors import ApiNotFoundError
+from app.core.config import get_settings
 from app.db.session import get_engine
 from app.games.definitions import GAMES
 from app.schemas.v1 import (
@@ -45,7 +46,9 @@ def get_prize_service(engine: Database) -> DrawPrizeService:
 
 
 def get_sync_service(engine: Database) -> ManualSyncService:
-    return ManualSyncService(engine)
+    return ManualSyncService(
+        engine, community_fallback_enabled=get_settings().community_fallback_enabled
+    )
 
 
 @router.post("/games/{game}/sync", response_model=SyncOut)

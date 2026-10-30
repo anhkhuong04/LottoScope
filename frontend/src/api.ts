@@ -15,6 +15,12 @@ export type SyncResult = {
   enriched: number
   unchanged: number
   remaining_unresolved: number
+  source?: 'official' | 'community'
+}
+export function drawSourceLabel(url: string): string {
+  return url.startsWith('https://raw.githubusercontent.com/vietvudanh/vietlott-data/')
+    ? 'Cộng đồng · vietvudanh/vietlott-data'
+    : 'Vietlott'
 }
 export type Draw = {
   draw_id: string

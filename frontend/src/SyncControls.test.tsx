@@ -40,4 +40,19 @@ describe('manual collection control', () => {
     expect(screen.queryByText(/đã thêm/)).toBeNull()
     expect(screen.getByRole('button', { name: 'Tải dữ liệu' })).toBeEnabled()
   })
+
+  it('identifies a successful community fallback explicitly', async () => {
+    vi.mocked(api).mockResolvedValue({
+      created: 2,
+      enriched: 0,
+      remaining_unresolved: 0,
+      source: 'community',
+    })
+    render(<SyncControls />)
+    fireEvent.click(screen.getByRole('button', { name: 'Tải dữ liệu' }))
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('đã thêm 2 kỳ mới'))
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Nguồn dự phòng cộng đồng: vietvudanh/vietlott-data',
+    )
+  })
 })

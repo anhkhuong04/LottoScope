@@ -51,7 +51,10 @@ collector latest-only hiện có, tối đa 20 ID/lượt; không nhập toàn l
 Request chạy trong worker thread và trả sau khi xử lý xong. Body thiếu,
 form hoặc field lạ → 422; GET không kích hoạt đồng bộ.
 
-Response 200: `{game,run_id,status,created,enriched,unchanged,remaining_unresolved}`.
+Response 200: `{game,run_id,status,created,enriched,unchanged,remaining_unresolved,source}`.
+`source` là `official|community` (mặc định official), cho biết nguồn của lượt
+thành công. Fallback opt-in/challenge theo ADR 0012, UI phải nêu nguồn cộng đồng.
+Nguồn từng draw tiếp tục ở `source_url`/`source_retrieved_at`.
 `status` giữ nguyên `success|partial` của run trong DB. Partial chỉ vì backlog
 cũ, latest đã xử lý và không có lỗi hiện tại vẫn trả 200; client phải nêu
 `remaining_unresolved`, không diễn giải thành history đầy đủ. `created=0` có

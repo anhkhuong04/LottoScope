@@ -106,6 +106,11 @@ không tự bật R2/billing. Không thêm Windows task làm dependency cloud we
 
 ## Giới hạn
 
+- Cloud bật `LOTTO_COMMUNITY_FALLBACK_ENABLED=true`: manual sync ưu tiên Vietlott,
+  fallback cộng đồng khi Cloudflare chặn, theo [ADR 0012](DECISIONS/0012-community-source-fallback.md).
+  Không bổ sung giải thưởng/giờ quay từ feed. Tắt flag để quay về official-only;
+  các kỳ đã nhập vẫn giữ nguyên nguồn, không xóa dữ liệu.
+
 - Render Free ngủ sau 15 phút idle, thức khoảng một phút. Free quotas vẫn áp
   dụng, không SLA/cam kết $0 vĩnh viễn, không tự nâng gói/thêm payment method.
 - Gateway deadline 270 giây, Function maxDuration 300 giây với Fluid Compute.

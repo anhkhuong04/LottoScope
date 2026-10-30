@@ -42,6 +42,7 @@ class RunSummary:
     kind: Literal["import", "collector"]
     status: Literal["success", "partial", "failed"]
     counters: dict[str, int]
+    source: Literal["official", "community"] = "official"
 
     @property
     def latest_poll_succeeded(self) -> bool:

@@ -21,6 +21,20 @@ không là API ổn định; access, cấu trúc HTML và quyền sử dụng c�
 khi triển khai P3. Không sử dụng một nguồn bên thứ ba im lặng khi nguồn chính
 không truy cập được.
 
+### Fallback cộng đồng được duyệt — 30/10/2026
+
+Ngoại lệ official-only được người dùng cho phép tại [ADR 0012](DECISIONS/0012-community-source-fallback.md):
+manual sync opt-in `LOTTO_COMMUNITY_FALLBACK_ENABLED=true`, chỉ sau official
+Cloudflare challenge, dùng JSONL `vietvudanh/vietlott-data` trên GitHub raw.
+Nguồn được ghi rõ trong DB/audit/API/UI. Không vượt challenge.
+
+Chỉ thêm tối đa 20 kỳ mới liên tiếp sau latest đã lưu, sau khi 20 kỳ gần nhất
+khớp ngày/main/special. Validate identity, strict integer, count/range/duplicate,
+ngày không tương lai/không đảo thứ tự. Lỗi hoặc mismatch thì không thêm bất kỳ
+kỳ nào. Không ghi đè lịch sử, không suy giờ quay hoặc giải thưởng. Checkpoint
+và backlog vẫn theo coverage thực, không tự lấp history thiếu. Default local tắt;
+cloud bật; scheduler và import/audit official vẫn giữ nguồn chính thức.
+
 ## Import lịch sử
 
 ### Mở rộng Power 6/55 — 14/10/2026

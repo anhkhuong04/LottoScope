@@ -5,10 +5,13 @@ from typing import Literal
 
 import httpx
 from sqlalchemy import Engine, text
+from sqlalchemy.orm import Session
 
 from app.games.definitions import get_game
+from app.ingestion.community import CommunityFallbackService
 from app.ingestion.fetcher import configured_fetcher
 from app.ingestion.service import IngestionService, JobOverlapError, PageFetcher, RunSummary
+from app.models.ingestion import IngestionRunRow
 
 
 class SyncCooldownError(RuntimeError):
@@ -32,12 +35,20 @@ class SyncResult:
     enriched: int
     unchanged: int
     remaining_unresolved: int
+    source: Literal["official", "community"] = "official"
 
 
 class ManualSyncService:
-    def __init__(self, engine: Engine, fetcher: PageFetcher | None = None) -> None:
+    def __init__(
+        self,
+        engine: Engine,
+        fetcher: PageFetcher | None = None,
+        *,
+        community_fallback_enabled: bool = False,
+    ) -> None:
         self.engine = engine
         self.fetcher = fetcher
+        self.community_fallback_enabled = community_fallback_enabled
 
     def sync(self, game: str) -> SyncResult:
         get_game(game)
@@ -72,12 +83,23 @@ class ManualSyncService:
             enriched=summary.counters.get("enriched", 0),
             unchanged=summary.counters.get("unchanged", 0),
             remaining_unresolved=summary.counters.get("remaining_unresolved", 0),
+            source=summary.source,
         )
 
     def _collect(self, game: str) -> RunSummary:
         if self.fetcher is not None:
-            return IngestionService(self.engine, self.fetcher).collect(game, recheck_recent=False)
+            return self._collect_with(game, self.fetcher)
         with httpx.Client(follow_redirects=True) as client:
-            return IngestionService(self.engine, configured_fetcher(client)).collect(
-                game, recheck_recent=False
-            )
+            return self._collect_with(game, configured_fetcher(client))
+
+    def _collect_with(self, game: str, fetcher: PageFetcher) -> RunSummary:
+        summary = IngestionService(self.engine, fetcher).collect(game, recheck_recent=False)
+        if self.community_fallback_enabled and summary.status == "failed":
+            with Session(self.engine) as session:
+                row = session.get(IngestionRunRow, summary.run_id)
+                challenged = row is not None and "Cloudflare challenge; deferred" in (
+                    row.error_summary or ""
+                )
+            if challenged:
+                return CommunityFallbackService(self.engine, fetcher).collect(game)
+        return summary

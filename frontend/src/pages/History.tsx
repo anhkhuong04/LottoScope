@@ -1,5 +1,5 @@
 import { Link, useLocation, useParams } from 'react-router'
-import { api, globalSearch, params, type Draw, type Page } from '../api'
+import { api, drawSourceLabel, globalSearch, params, type Draw, type Page } from '../api'
 import { useApp, useQuery, useUrlField } from '../state'
 import { DrawPrizes } from './DrawPrizes'
 import {
@@ -165,7 +165,7 @@ export function DrawDetail() {
               <div>
                 <strong>Nguồn:</strong>{' '}
                 <a href={result.data.source_url} target="_blank" rel="noreferrer">
-                  Xem kết quả gốc
+                  {drawSourceLabel(result.data.source_url)}
                 </a>
               </div>
               <div>

@@ -2,6 +2,7 @@ import { ArrowRight, Clock3, RefreshCw } from 'lucide-react'
 import { Link } from 'react-router'
 import {
   api,
+  drawSourceLabel,
   globalSearch,
   params,
   windowQuery,
@@ -109,6 +110,12 @@ export function Dashboard() {
                   special={game!.special_min === null ? null : latest.data.special_number}
                   large
                 />
+                <p className="muted">
+                  Nguồn:{' '}
+                  <a href={latest.data.source_url} target="_blank" rel="noreferrer">
+                    {drawSourceLabel(latest.data.source_url)}
+                  </a>
+                </p>
               </>
             )}
           </DataState>
@@ -124,8 +131,8 @@ export function Dashboard() {
                   </summary>
                   <div className="stack">
                     <p>
-                      Dữ liệu đã lưu vẫn được giữ. Tải dữ liệu lấy kỳ mới từ Vietlott; làm mới hiển
-                      thị chỉ đọc lại dữ liệu đã lưu.
+                      Tải dữ liệu ưu tiên Vietlott; có thể dùng nguồn cộng đồng dự phòng khi bị
+                      chặn. Nguồn từng kỳ được ghi rõ. Làm mới hiển thị chỉ đọc dữ liệu đã lưu.
                     </p>
                     <div>
                       <strong>Đồng bộ thành công:</strong>{' '}
