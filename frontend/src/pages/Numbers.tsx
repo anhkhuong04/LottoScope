@@ -16,6 +16,7 @@ import {
   DataState,
   DataTable,
   DrawRows,
+  FrequencyTile,
   PageHead,
   Pager,
   PairLink,
@@ -30,7 +31,7 @@ export function Numbers() {
   const [view, setView] = useUrlField('view', 'grid')
   const path = `/games/${game!.id}/analytics/numbers?${params({ ...windowQuery(window), sort })}`
   const result = useQuery(path, (signal) => api<NumbersResponse>(path, signal))
-  const max = Math.max(1, ...(result.data?.items.map((item) => item.frequency) ?? []))
+  const max = Math.max(0, ...(result.data?.items.map((item) => item.frequency) ?? []))
   return (
     <>
       <PageHead
@@ -38,8 +39,7 @@ export function Numbers() {
         title="Tần suất & khoảng cách"
         description="Mỗi số chính được thống kê độc lập trong phạm vi đã chọn."
       />
-      <WindowSelector />
-      <div className="toolbar">
+      <WindowSelector>
         <label className="field">
           Sắp xếp
           <select value={sort} onChange={(event) => setSort(event.target.value)}>
@@ -57,7 +57,7 @@ export function Numbers() {
             <option value="chart">Biểu đồ</option>
           </select>
         </label>
-      </div>
+      </WindowSelector>
       <Card>
         <DataState {...result} hasData={!!result.data} empty="Chưa có thống kê số.">
           {result.data && (
@@ -65,14 +65,13 @@ export function Numbers() {
               {view === 'grid' && (
                 <div className="number-grid">
                   {result.data.items.map((item) => (
-                    <Link
-                      className="number-tile"
+                    <FrequencyTile
                       key={item.number}
                       to={`/numbers/${item.number}${location.search}`}
-                    >
-                      <Ball value={item.number} />
-                      <small>{item.frequency} kỳ</small>
-                    </Link>
+                      number={item.number}
+                      frequency={item.frequency}
+                      maximum={max}
+                    />
                   ))}
                 </div>
               )}
@@ -117,7 +116,7 @@ export function Numbers() {
                         <div className="bar-track">
                           <div
                             className="bar-fill"
-                            style={{ width: `${(100 * item.frequency) / max}%` }}
+                            style={{ width: `${(100 * item.frequency) / Math.max(1, max)}%` }}
                           />
                         </div>
                         <strong>{item.frequency}</strong>
@@ -128,6 +127,12 @@ export function Numbers() {
                     Tần suất cao nhất {max} kỳ; mỗi hàng ghi số kỳ tương ứng.
                   </p>
                 </>
+              )}
+              {view === 'grid' && (
+                <p className="chart-caption">
+                  Thanh dài hơn: xuất hiện nhiều hơn trong phạm vi. Cao nhất {max} kỳ. Chọn Bảng để
+                  xem đầy đủ chỉ số.
+                </p>
               )}
               <div style={{ marginTop: 16 }}>
                 <ContextNote

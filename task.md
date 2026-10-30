@@ -343,7 +343,378 @@ luồng theo acceptance với bằng chứng lưu lại.
   danh sách ADR/migration, các vấn đề còn mở, kết quả gates, hướng dẫn vận hành
   import/collector/backup/restore và phạm vi Phase 2 để triển khai tiếp.
 
-## Mốc đánh dấu hoàn thành
+## Bổ sung sau MVP — Giải thưởng kỳ quay (07/10/2026)
+
+Thiết kế: [ADR 0005](docs/DECISIONS/0005-draw-prizes.md). Thực hiện lần lượt,
+viết test thất bại trước code và tạo commit sau khi cả nhóm được kiểm chứng.
+
+- [x] **PRIZE-01 — Parser và snapshot.** Fixture `535_00922_prizes.html`,
+  `645_01570_prizes.html`; domain `PrizeTier`/`PrizeMatch`; parser trong
+  `ingestion/prizes.py`, gọi từ `parse_result`. Test đúng 7/4 hạng, số 0,
+  khuyến khích ba điều kiện, malformed/duplicate/wrong game; không ảnh hưởng
+  canonical result hash. `uv run --locked pytest tests/test_draw_prizes.py`.
+- [x] **PRIZE-02 — Persistence và API.** Migration `0004_draw_prizes`,
+  model/repository enrich lần đầu, revision correction, counter `enriched`;
+  service `DrawPrizeService.get(game, draw_id)` và endpoint `/prizes` với tiền
+  chuỗi VND. PostgreSQL tests: giữ draw/hash/version cũ sau migration, enrich
+  một lần, không xóa khi nguồn thiếu bảng, conflict/apply audit, không gọi nguồn
+  khi snapshot có; 404/409/503 và kỳ cũ bổ sung đúng ID. Cập nhật domain/schema/
+  pipeline/API docs ở nguồn tương ứng. Ruff check/format, Pyright, toàn pytest.
+- [x] **PRIZE-03 — Giao diện và vận hành.** `DrawPrizes` trong chi tiết kỳ,
+  tải độc lập, bảng 4 cột/nhấn mạnh giải cao nhất, VND chính xác, mobile cards;
+  test cả game, 0/empty/error/retry và đổi context. Chạy lint/format/typecheck/
+  build/unit/E2E frontend; backup, migration và rebuild Compose local, đối
+  chiếu nguồn/database/API, kiểm tra enrichment chạy lặp, commit nhóm PRIZE.
+
+## Bổ sung sau MVP — Power 6/55 (14/10/2026)
+
+Thiết kế: [ADR 0006](docs/DECISIONS/0006-power-655.md). Triển khai lần lượt,
+commit từng mốc sau kiểm chứng; nghiệm thu riêng với PostgreSQL và dữ liệu thật.
+
+- [x] **POWER-01 — Contract.** Domain/main-only, source/lịch, schema/API/UX,
+  ADR và consistency tài liệu đã rà; giữ nguyên bằng chứng MVP lịch sử.
+- [x] **POWER-02 — Domain và migration.** Definition, special khác main,
+  migration 0005, tests PostgreSQL/upgrade/downgrade và data preservation.
+- [x] **POWER-03 — Ingestion và jobs.** Fixture nguồn, adapter Power, năm
+  hạng giải, CLI registry, poll/reconcile/startup, idempotency/correction tests.
+- [x] **POWER-04 — API/analytics/frontend.** Fixture tính tay, 55 numbers,
+  1.485 pairs, checker/generator/main-only; hai Jackpot, game switch, E2E responsive.
+- [ ] **POWER-05 — Vận hành/nghiệm thu.** Backup/restore, migration/build,
+  full import/audit/repeat collectors, gates và source/DB/API/UI đối chiếu.
+- [x] **POWER-06 — Import chỉ kết quả (24/10/2026).** CLI `--results-only`
+  bỏ qua giải thưởng, giữ validation/snapshot cũ; 197 backend tests và gates
+  đạt. Đã nhập thêm 16 kỳ chỉ kết quả, tổng 233/1.414. Nguồn lại challenge
+  tại 00164; POWER-05 tiếp tục mở. Bằng chứng trong `POWER_ACCEPTANCE.md`.
+- [x] **POWER-07 — Import file có ngày và rà soát thiếu (24/10/2026).**
+  CLI offline validate toàn file, atomic/shared lock, idempotent, hash/nguồn
+  rõ và giữ dữ liệu cũ. File nạp thêm 1.128 kỳ; tra cứu nguồn thêm 16 kỳ.
+  Bảng bổ sung của người dùng nạp tiếp 37 kỳ `01362..01398` (run 477):
+  **đủ 1.414/1.414 kỳ `00001..01414`, không còn ID thiếu trong dải này**.
+  Đã đối chiếu cả 37 kết quả qua API và checksum dữ liệu cũ; chỉ nhập kết quả.
+  Implementation trước đó đạt 208 backend tests và Ruff/Pyright/format;
+  lượt bổ sung chỉ đổi dữ liệu/tài liệu, kiểm DB/API. POWER-05 vẫn mở cho
+  full audit nguồn chính thức/hai collector; bằng chứng ở `POWER_ACCEPTANCE.md`.
+
+POWER-02: `uv sync --locked`, Ruff lint/format, Pyright đạt; 136 pytest pass
+trên PostgreSQL riêng `lotto_power_20261014_test` (10 deprecation warnings).
+Upgrade DB trống/alembic check đạt; clone restore 2.518 draw giữ nguyên toàn
+bộ row checksum ở sáu bảng sau migration. Chi tiết
+[POWER_ACCEPTANCE.md](docs/POWER_ACCEPTANCE.md).
+
+POWER-03: Ruff/Pyright/format và 151 backend tests pass trên PostgreSQL riêng;
+Compose config đạt. Live httpx fetch/parse `00001`, `01385`, latest `01410`
+khớp nguồn đủ năm hạng. Tests import/resume/collector lặp và prize correction
+Power đạt; scheduler kiểm đủ ba game/startup cùng lịch thứ Ba/Năm/Bảy.
+
+POWER-04: 156 backend tests và Ruff/Pyright/format pass; frontend lint/format/
+typecheck/build và 4 unit tests pass. 15 ca Power E2E desktop/tablet/mobile đã
+pass trên API clone (12 pass lượt đầu, ba ca checker pass sau sửa đồng bộ test
+chờ picker game mới). Đã xem screenshot desktop/mobile; Axe detail không lỗi.
+
+POWER-05 **chưa hoàn thành vì nguồn 429/Cloudflare**. Backup/restore, migration
+ứng dụng, Compose build/readiness và runtime game/API/UI đã kiểm; 162 backend
+tests pass, E2E Compose trực tiếp 56 pass/4 skip. Lượt đầu đã nhập 45 draw Power có
+prizes (latest đã lưu `00048`, 18/11/2017), checkpoint `00071`, 26 failed;
+upper bound đã đọc trước khi nguồn chặn là `01410` ngày 13/10/2026.
+Audit đã chạy nhưng exit 1 do source 429; collector live cũng chưa đạt.
+Cấu hình local giảm tốc 2 giây/request; giữ trạng thái failed và resume, không
+coi dataset một phần là lịch sử đầy đủ. Bằng chứng/lệnh tiếp tục ở
+[POWER_ACCEPTANCE.md](docs/POWER_ACCEPTANCE.md#power-05--phần-đã-kiểm-chứng-và-phần-bị-chặn).
+
+Chạy lại POWER-05 lúc 08:16–08:21 ngày 14/10/2026: thêm 32 draw, tổng **77**
+kỳ liên tục `00001`–`00077` (25/01/2018), đủ năm hạng giải; lấp hết 26 lỗi cũ.
+Nguồn lại trả 429 từ `00078`; checkpoint `00101`, 24 failed, không còn run treo
+hay correction pending. Schema/readiness đạt, **15 Power E2E passed** trực tiếp
+trên Compose. Chưa chạy lại full audit/hai collector vì history còn thiếu;
+POWER-05 tiếp tục mở. Chi tiết tại
+[bằng chứng chạy lại](docs/POWER_ACCEPTANCE.md), mục “Chạy lại POWER-05”.
+
+Tiếp tục lúc 08:39–08:40 ngày 14/10/2026: host và Compose đều HTTP 429 ngay
+tại latest page dù giảm tốc xuống 5 giây/request (run `301`, `302`, exit 1).
+Không thêm kỳ mới; PostgreSQL vẫn 77 draw đủ bảng giải, checkpoint `00101`,
+24 failed, không có run treo. POWER-05 giữ mở, chờ nguồn truy cập lại để resume;
+full audit/hai collector chưa chạy. Bằng chứng trong `POWER_ACCEPTANCE.md`.
+Thử thêm lúc 08:43: run `303` tiếp tục exit 1/HTTP 429 tại latest page,
+không thêm draw; checkpoint và dữ liệu giữ nguyên, không có run treo.
+
+Power recovery 20/10/2026: lượt đầu thêm 30 draw; thử tiếp một worker/interval
+2 giây thêm 18 draw, tổng **215/1.412**, còn 1.197 ID thiếu. Tùy chọn CLI
+`--workers 1` đã kiểm bằng 195 backend tests và Ruff/Pyright/format.
+Nguồn vẫn Cloudflare challenge; **POWER-05 vẫn mở**. Backup và bằng chứng
+bảo toàn dữ liệu/API ở [POWER_ACCEPTANCE.md](docs/POWER_ACCEPTANCE.md).
+
+## Bổ sung UX — nhảy trực tiếp tới trang (14/10/2026)
+
+- [x] **UX-PAGE-01:** Pager dùng chung thêm “Đến trang” + tổng trang + nút
+  “Đi”; Enter để gửi, Escape khôi phục. Validate số nguyên 1..tổng trang,
+  không request khi gõ/số sai/trang hiện tại; single-page vô hiệu hóa.
+  Giữ trước/sau và URL/filter/back/forward hiện có; mobile wrap, hai mũi tên
+  cùng nhóm, input/nút bấm tối thiểu 44px. Không đổi API hoặc dữ liệu.
+- Kiểm chứng: lint, format, typecheck, build đạt; **17 unit tests pass**.
+  E2E toàn bộ trên Vite local + API Compose: **62 pass, 4 skip theo thiết bị**,
+  gồm 6 ca mới history/pairs trên desktop/tablet/mobile. Đã xem screenshot
+  thanh phân trang desktop/mobile; Axe trên pager và các màn hình đạt,
+  regression breakpoint không overflow. Không rebuild/deploy Compose trong
+  task này; frontend container hiện tại chưa chứa thay đổi mới.
+
+## Sửa đồng bộ kỳ mới — 15/10/2026
+
+- [x] **SYNC-01 — Chặn retry storm và ưu tiên latest.** Challenge hoãn ngay;
+  import dừng submit/drain in-flight đúng counters. Collector lưu latest từ
+  trang đã validate, không refetch, giới hạn 20 ID, checkpoint an toàn ở cả
+  đường lỗi; backlog xoay theo attempted_at, còn thiếu báo partial.
+- [x] **SYNC-02 — Poll và vận hành local.** Poll latest 5 phút, ba game dùng
+  chung throttle tuần tự. Hỗ trợ Windows local tasks (poll/logon + daily),
+  một scheduler owner, đọc `.env` khi chạy, giữ PostgreSQL nguồn duy nhất.
+  Đã cài trên máy hiện tại, tắt scheduler Docker, phục hồi latest ba game.
+- [x] **SYNC-03 — Kiểm chứng và tài liệu.** 175 backend tests, Ruff/Pyright/
+  format; frontend lint/type/build/format, 17 unit và Compose E2E 62 pass/
+  4 skip. Backup trước recovery; source/DB/API latest khớp trong lượt nguồn
+  truy cập được. Review độc lập, README/Data Pipeline/ADR đã cập nhật.
+
+- [x] **SYNC-04 — Khôi phục lịch local và sửa báo lỗi (19/10/2026).** Bật lại
+  `LottoScope-LocalSync` đang Disabled; latest-only không trả lỗi chỉ vì backlog
+  cũ khi latest đã xử lý và không có lỗi hiện tại. Giữ DB `partial`, reconcile
+  vẫn kiểm tra đầy đủ; cập nhật cảnh báo Dashboard và hướng dẫn vận hành.
+  Đã phục hồi latest Lotto/Mega/Power **00954/01577/01412**. Lượt tự động 11:27
+  trả 0, ba nguồn 200, không tạo trùng. 185 backend tests, Ruff/Pyright/format,
+  frontend lint/format/typecheck/build và 17 unit tests đạt; Compose healthy,
+  E2E 62 pass/4 skip theo thiết bị.
+
+- [x] **SYNC-05 — Đổi lịch local (19/10/2026).** Cài hai trigger hằng ngày
+  18:30/21:15 UTC+07; bỏ lịch 5 phút/logon/catch-up, tắt reconcile tự động
+  07:00. Kiểm tra XML task, trạng thái Ready/NextRun 18:30, PowerShell syntax
+  và Docker scheduler vẫn tắt; chưa tới giờ để kiểm chứng trigger thực chạy.
+
+- [x] **SYNC-06 — Đồng bộ thủ công từ UI (20/10/2026).** Nút Tải dữ liệu
+  đồng bộ latest-only cho game đang chọn, pending/error/success và refresh
+  query theo context. POST dùng service/pipeline hiện có, PG lock và cooldown
+  60 giây; giữ partial backlog, correction policy và idempotence. Hai task
+  Windows Disabled, Compose mặc định scheduler false. 192 backend tests,
+  Ruff/Pyright/format, frontend lint/typecheck/build/format và 19 unit đạt.
+  E2E 68 ca pass/4 skip (ba ca retry đã rerun sau sửa selector nhãn cũ).
+  Bấm thật thêm hai Lotto, latest 00956. Chi tiết kiểm chứng/giới hạn ở
+  [ADR 0008](docs/DECISIONS/0008-manual-sync.md).
+
+Bằng chứng, tốc độ đo và giới hạn nguồn ở [ADR 0007](docs/DECISIONS/0007-fast-collection.md).
+Vietlott vẫn có thể trả 429 cả từ host; lịch tự động đã chạy nhưng không cam kết
+nguồn luôn mở. Power đã có latest 01412, full history/audit POWER-05 còn mở.
+
+## Lồng cầu vật lý — 24/10/2026
+
+- [x] **SIM-01 — Cơ chế Rapier:** thành rỗng/cửa/vật lý bóng; chỉ ghi nhận
+  crossing thực, giữ thứ tự và dừng sáu main, timeout/pause/reset an toàn.
+- [x] **SIM-02 — Giao diện Mega/Power:** cảnh React Three Fiber lazy-load,
+  responsive, controls, reduced motion/lỗi WebGL, copy/checker; giữ UI Lotto.
+- [x] **SIM-03 — Nghiệm thu:** quality gates và browser desktop/tablet/mobile,
+  review, cập nhật docs/agent và commit. Contract ở
+  [DRAW_SIMULATION.md](docs/DRAW_SIMULATION.md), quyết định ở
+  [ADR 0009](docs/DECISIONS/0009-physical-draw-simulation.md).
+
+Kiểm chứng SIM: lint/format/typecheck/build đạt, **32 unit tests pass**;
+suite E2E đầy đủ **83 pass/4 skip theo thiết bị**. Sau chỉnh vị trí controls,
+rerun UI unit đạt và **10 feature E2E pass trực tiếp trên Compose** (desktop/
+mobile, vật lý thật, cả hai game, reset/context loss, checker/copy, Axe).
+Đã xem ảnh desktop/mobile, review độc lập không còn finding trọng yếu.
+Frontend image đã build/up; ba service healthy. Không đổi backend/schema/
+ingestion; số draw Lotto/Mega/Power giữ **964/1.577/1.414**.
+
+## Lotto DrawMachine — 25/10/2026
+
+- [x] **SIM-04 — Thay RuleGenerator Lotto:** dùng chung DrawMachine, truyền
+  `main_max`/`main_count` từ API xuống cảnh/vật lý; 35 bóng, đúng 5 main,
+  kết quả/copy/checker và bố cục theo game. Đồng bộ docs/agent, kiểm chứng
+  desktop/tablet/mobile và quality gates, rồi commit.
+
+Kiểm chứng SIM-04: lint/format/typecheck/build đạt; **42 unit tests pass**.
+Full E2E **86 pass/4 skip theo thiết bị**; sau bổ sung đổi game giữa phiên
+Lotto đã có bóng ra, chạy lại ca này trên desktop/tablet/mobile **3 pass**.
+Quay Rapier thật đủ 5 main Lotto và 6 main Mega/Power; kiểm copy/checker,
+game/window, không gọi generator API, Axe và ảnh Lotto desktop/mobile.
+Regression cột thứ sáu thừa và constructor tự suy luận count đã RED → GREEN.
+Lượt unit chạy đồng thời browser từng timeout; chạy riêng full suite đạt với
+timeout giữ nguyên. Review độc lập không có finding quan trọng. Cảnh 3D vẫn
+có cảnh báo bundle lớn/deprecation đã có; chưa kiểm FPS trên điện thoại thật.
+Không deploy hoặc thay backend, schema, ingestion; generator API giữ contract.
+
+## Lotto số đặc biệt và frontend đang chạy — 25/10/2026
+
+- [x] **SIM-05 — Lotto special:** 5 main rồi 1 special vật lý từ lồng 1–12,
+  tách state/hiển thị/copy, checker main-only; pause/reset/lỗi/context an toàn.
+  Kiểm chứng, rebuild/recreate frontend cổng 8088 và xác nhận browser trên
+  container thực; không thay backend/PostgreSQL.
+
+Kiểm chứng SIM-05: **51 unit pass**, lint/format/typecheck/build đạt; review
+độc lập không có finding quan trọng. Rebuild/recreate riêng frontend healthy,
+bundle `index-BvfNwtcn.js` thay `index-BYogNF0A.js` cũ ở cổng 8088; backend và
+PostgreSQL không bị recreate, không đổi dữ liệu/schema. Full E2E trên bản
+Compose **86 pass/4 skip theo thiết bị**, gồm Lotto 5+1 vật lý, pause/resume
+ở special, copy, checker main-only, game/window, reduced motion, WebGL, Axe.
+Đã xem ảnh desktop/mobile; mobile là Chromium emulation, chưa đo máy thật.
+README bổ sung cách cập nhật image frontend; tab cũ cần tải lại bundle.
+
+## Chia sẻ Wi-Fi — 25/10/2026
+
+- [x] **LAN-01 — Frontend qua Wi-Fi:** overlay opt-in, giữ localhost, backend/
+  PostgreSQL loopback; kiểm effective firewall, áp dụng runtime, kiểm HTTP/API
+  và browser qua IP LAN, ghi rõ giới hạn kiểm tra từ thiết bị thứ hai.
+
+Kiểm chứng LAN-01: base Compose chỉ loopback; overlay yêu cầu IP, merge thành
+`127.0.0.1:8088` + `192.168.1.2:8088`, backend `8000`/PostgreSQL `5432` chỉ
+loopback. Chỉ recreate frontend; ba service healthy. HTTP localhost và LAN
+200, API qua Nginx đủ ba game. E2E flow A/B desktop/mobile **4 pass**, Lotto
+vật lý mobile qua LAN **1 pass** (5+1, pause/resume/checker, Axe/overflow).
+Review độc lập không có finding quan trọng. Người dùng ban đầu không mở được,
+sau đó xác nhận **đã truy cập được từ thiết bị khác bằng `http://`**; host có
+kết nối từ client LAN `192.168.1.19`. Rule Docker Public hiện có phù hợp nên
+không sửa firewall/profile; không mở router/Internet. Không thay source app,
+backend, DB hoặc chạy lại unit/build không liên quan. `.env` local giữ IP và
+`COMPOSE_FILE`; hướng dẫn bật/tắt/DHCP/HTTP ở README, quyết định ở ADR 0010.
+
+## Cloud Free — 29/10/2026
+
+- [x] **CLOUD-01 — Cấu hình opt-in:** Vercel SPA + Node gateway cùng origin,
+  Render Blueprint Free, Neon direct URL/psycopg, cloud origin token bắt buộc,
+  không publish docs, scheduler tắt; local giữ nguyên. ADR 0011 và runbook
+  DEPLOYMENT_FREE.md thay proposal Cloudflare cũ cho hướng đã chọn.
+- [x] **CLOUD-02 — Kiểm chứng local:** full backend/frontend gates, gateway
+  regression, Docker cloud command, PostgreSQL migration/backup-restore riêng,
+  schema config và HTTP qua gateway tới container thật.
+- [x] **CLOUD-03 — Kết nối/provision:** xác nhận account access, Free quotas,
+  repository/branch consent; tạo Neon/Render/Vercel, secrets và backup ngoài máy.
+- [ ] **CLOUD-04 — Chuyển dữ liệu/go-live:** restore Neon trống/đối chiếu,
+  readiness, deploy theo SHA, HTTP/browser/edge routing/cold start/source sync,
+  quota và rollback. Website đã live; source sync bị challenge, cold start
+  sau idle chưa đo nên chưa đánh dấu toàn bộ acceptance hoàn thành.
+- [x] **CLOUD-04A — Go-live đã kiểm chứng:** restore/đối chiếu, deploy SHA,
+  HTTP/gateway, browser desktop/mobile, 10 concurrent reads, restart giữ dữ liệu,
+  backup ngoài máy; [biên bản](docs/DEPLOYMENT_ACCEPTANCE.md).
+- [ ] **CLOUD-04B — Nghiệm thu vận hành còn lại:** nguồn Vietlott từ Render
+  trả Cloudflare challenge cho cả ba game; cần sync thành công và kiểm live
+  idempotence khi nguồn truy cập được. Chưa đo cold start sau idle tự nhiên
+  hoặc RAM/tải kéo dài trên Render thật; không thay bằng số đo local/restart.
+
+Kiểm chứng CLOUD-01..02: backend uv sync locked, Ruff lint/format, Pyright,
+Alembic upgrade/check trên `lotto_cloud_20261029_test`, **216 tests pass**
+(10 warnings có sẵn). Frontend lint/format/typecheck/build và **57 tests pass**,
+gồm 6 gateway tests; bundle lớn DrawScene là warning có sẵn. Render/Vercel
+configured values pass published schema validation (vendor Vercel schema
+không pass full draft metaschema của check-jsonschema; instance validation
+chạy trực tiếp bằng jsonschema, không bỏ cấu hình sai).
+
+Backup custom-format dùng exported snapshot READ ONLY từ local, restore sang
+`lotto_cloud_restore_20261029_test`: **7 bảng, counts/content SHA-256 và sequences
+khớp; 3.968 draws**. Không thay source DB. Migration trên clone đạt. Docker
+image riêng `lottoscope-cloud:local`, chạy command Render trên loopback 18081,
+giới hạn **512 MiB / 0.1 CPU**: origin guard, liveness/readiness, ba game,
+gateway GET/query/POST checker, JSON 404 và 10 concurrent reads đạt. Không dùng
+điều này để cam kết latency/SLA Render thật. Compose config đạt; không recreate
+ứng dụng đang chạy. Backup/fingerprint nằm trong backups ignored, không commit.
+
+Tại mốc CLOUD-01..02 mới kiểm local. Resource, chuyển dữ liệu và bằng chứng
+cloud bổ sung ở CLOUD-03..04 bên dưới. Không thêm logo untracked.
+
+### CLOUD-03/CLOUD-04 — Go-live và giới hạn nghiệm thu
+
+CLI chính thức đã xác thực cả ba tài khoản (plugin đã cài nhưng phiên không
+nhận service tools). Vercel team khuong8: Hobby; Neon org: Free. Đã tạo Neon
+project `falling-pine-80552402`, PostgreSQL 16, Singapore, 0.25 CU cố định,
+scale-to-zero mặc định; restore **976 Lotto / 1.577 Mega / 1.415 Power** từ
+snapshot READ ONLY. Cả 7 bảng/counts/content hashes/sequences khớp, migration
+head/check đạt. Local source không bị sửa. Secrets giữ ở .env.cloud ignored.
+
+Đã tạo Render `srv-dbhmfidg1s2s73aevs40`, Singapore, plan free, auto-deploy off;
+Vercel `prj_w0vXLhOQwZmoa3cpnrK2xSyc5fqf`, root frontend, Node 22/Fluid,
+sin1, production server secrets, public access; Git auto-deployment disabled.
+Vercel cuối cùng deploy release 9cc7226; backend Render release 24720a5.
+
+Render build đạt nhưng startup đầu thất bại vì nested shell quoting; thay
+dockerCommand bằng `python -m app.commands.serve`, đọc PORT trực tiếp.
+Ruff lint/format, Pyright và **9 ingress/smoke tests pass**; entrypoint thật
+đã kiểm custom PORT/liveness/guard ở process riêng. Không đổi domain/schema
+hoặc chạy lại full suite không liên quan.
+
+Render commit 24720a5 đã live sau khi chủ tài khoản lưu Docker Command qua
+dashboard (API update bị automatic approval chặn, CLI không hỗ trợ trường
+Docker Command). Public liveness 200, protected readiness 200, direct API 401
+khi thiếu token và 200 khi có token. Backup off-machine đã upload cùng manifest
+lên **draft release trong repository GitHub private**; không publish hoặc bật
+lịch tự động. Không lưu credentials trong dump/manifest.
+
+Vercel runtime phát hiện ESM import `.ts` còn giữ sau compile thành `.js`, gây
+FUNCTION_INVOCATION_FAILED. Đổi import sang `.js`, import node:process rõ ràng
+và thêm types node ở root tsconfig do Vercel compiler không dùng project
+references. Lint/format/typecheck và **57 tests pass** trong Vercel build thật;
+build cuối không còn TypeScript diagnostics, artifact có dependency gateway.js.
+Đã deploy bản sửa: **https://lottoscope-sable.vercel.app**. HTTP smoke thật
+qua Vercel/Render/Neon đạt cho ba game, gateway/query/404/no-store/deep links;
+**6 Playwright desktop/mobile tests pass** với cloud API không mock. Burst
+10 concurrent reads đạt 932 ms; sau restart Render đạt 984 ms, readiness 200,
+3.968 draws/latest và migration head giữ nguyên. Không coi burst này là SLA.
+
+Sync thực cả ba game từ Render trả 503 `sync_source_unavailable`; audit trên
+Neon ghi `Cloudflare challenge; deferred`. Lotto gọi lại trả 429 cooldown,
+không lặp tiếp hoặc bypass. Dữ liệu lịch sử giữ nguyên; source sync live
+**chưa đạt**. Cold start sau idle tự nhiên và RAM/tải dài trên Render thật
+**chưa đo**. Backup ngoài máy một lần đã có, **chưa có lịch tự động**. Chi tiết
+resources/versions/rollback/giới hạn ở [biên bản](docs/DEPLOYMENT_ACCEPTANCE.md).
+
+## Favicon — 29/10/2026
+
+- [x] **ICON-01 — Nhận diện trên tab:** SVG kính lúp/biểu đồ với palette
+  navy/teal/mint hiện có; fallback ICO 16/32/48 px và Apple touch PNG 180 px.
+  Khai báo trong HTML dùng absolute paths để hoạt động trên deep links.
+  Build/typecheck, format, SVG XML và kích thước assets đạt; đã xem bản render
+  16/32/180 px. Không thay logo.png untracked của người dùng.
+- [x] **ICON-02 — Cloud:** Vercel release `14f8a8a`, deployment
+  `dpl_AsW2g6MCYuUKy5ehYVmycSYG68fy` ready tại URL production hiện có;
+  build gates và 57 tests pass. SVG/ICO/PNG trả 200, đúng MIME và bytes khớp;
+  browser desktop 1440 px/mobile 390 px kiểm deep link, title, link icons và
+  decode ảnh đạt. Cloud HTTP smoke ba game/gateway/deep links vẫn đạt.
+
+## UI/UX audit — 29/10/2026
+
+- [x] **UX-AUDIT-01 — Đánh giá theo ui-ux-pro-max:** review sáu màn hình
+  cloud ở desktop/mobile (12 trạng thái), axe không ghi nhận violation tự
+  động và không tràn ngang; kiểm thêm lưới Power 320/768/1024 px, menu
+  Escape/outside/focus, loading giả lập và reduced motion. Có bằng chứng
+  layout và đề xuất ưu tiên ở [UI_UX_AUDIT.md](docs/UI_UX_AUDIT.md).
+  Chỉ phân tích/đề xuất; chưa đổi UI, chưa triển khai redesign.
+
+## Modern clean UI — 29/10/2026
+
+- [x] **UI-01 — Dashboard/mobile:** kết quả gần nhất đứng trước KPI, KPI 2 cột
+  mobile, card tự cao, tần suất tóm tắt 6 số và 3 kỳ gần đây; một refresh chỉ
+  đọc cho dashboard. Lint/typecheck, 13 UI tests và 2 E2E desktop/mobile flow A
+  đạt; đã xem ảnh thực local. Nghiệp vụ và màn hình phân tích đầy đủ giữ nguyên.
+- [x] **UI-02 — Loading/menu:** skeleton có status và thông báo chờ lâu,
+  header đồng bộ gọn, Escape/outside click/focus, skip link và brand mark
+  thống nhất. Lint/typecheck, 17 unit tests liên quan và 9 E2E đạt (1 case
+  menu mobile skip đúng trên desktop); tests sync dùng intercepted POST,
+  không gọi nguồn thật. Power giữ 6 main và special riêng trong kết quả.
+- [x] **UI-03 — Biểu đồ/typography:** tile tần suất có thanh tỷ lệ và số/legend,
+  toolbar gom phạm vi/sort/view, tabular numbers, bảng desktop có scroll/header,
+  checker empty state và focus kết quả. Lint/typecheck đạt; 59 unit tests đạt
+  với maxWorkers=2 (lượt mặc định chạy đồng thời E2E bị worker startup timeout,
+  không coi là pass). 39 E2E desktop/mobile đạt, 3 skip đúng điều kiện device;
+  gồm axe, breakpoint 320–1365, source error/stale/game switching và Power.
+  Đã xem screenshot dashboard/numbers/checker trên desktop/mobile.
+- [x] **UI-04 — Micro-interactions:** motion tokens 140/220 ms, hover/press,
+  chart reveal, latest-result enter, skeleton/busy feedback; reduced motion
+  tắt animation nhưng giữ số liệu và trạng thái. Điều hướng mới cuộn về đầu,
+  không ép scroll khi POP. Lint/format/typecheck/build đạt; 10 E2E mới trên
+  desktop/tablet/mobile đạt, 2 menu cases skip đúng device. Bundle DrawScene
+  vẫn có cảnh báo lớn đã tồn tại; không đổi physics hoặc thêm dependency.
+- [x] **UI-05 — Acceptance/deploy:** lint/format/typecheck/build, 59 unit tests
+  cuối; 78 E2E desktop/tablet/mobile pass (6 skip theo device), 2 lượt quay
+  Lotto đầy đủ desktop/mobile pass. Deploy frontend `a56c58f` Vercel Hobby
+  ready, cloud HTTP smoke và 19 browser tests pass (2 skip theo device), đã
+  xem ảnh production và kiểm Power 320/390/1440 px. Không đổi backend/DB.
+  Chi tiết/giới hạn ở [biên bản UI](docs/UI_REFRESH_ACCEPTANCE.md) và
+  [design system](docs/DESIGN_SYSTEM.md). Source challenge/cold-start/FPS thật
+  vẫn theo giới hạn được ghi; không suy kiểm UI là đồng bộ nguồn đã thành công.
+
+## Trạng thái nghiệm thu MVP ban đầu
 
 - [x] **Backend MVP hoàn thành:** P0–P6 và P8-01, P8-03–P8-07, P8-09 đạt;
   nghiệm thu theo overview mục 15. P7/P8-02/P8-08 có thể còn mở nếu

@@ -19,12 +19,16 @@ describe('URL analysis window', () => {
 })
 
 describe('checker client validation', () => {
-  it('checks count, domain and duplicate for both games', () => {
+  it('checks count, domain and duplicate for all games', () => {
     expect(validateNumbers([1, 2, 3, 4, 5], 1, 35, 5)).toBeNull()
     expect(validateNumbers([1, 2, 3, 4, 5, 6], 1, 45, 6)).toBeNull()
     expect(validateNumbers([1, 2, 3, 4], 1, 35, 5)).toMatch(/đúng 5/)
     expect(validateNumbers([1, 2, 3, 4, 4], 1, 35, 5)).toMatch(/trùng/)
     expect(validateNumbers([1, 2, 3, 4, 46, 6], 1, 45, 6)).toMatch(/1 đến 45/)
+    expect(validateNumbers([1, 2, 3, 4, 54, 55], 1, 55, 6)).toBeNull()
+    expect(validateNumbers([1, 2, 3, 4, 54], 1, 55, 6)).toMatch(/đúng 6/)
+    expect(validateNumbers([1, 2, 3, 4, 55, 55], 1, 55, 6)).toMatch(/trùng/)
+    expect(validateNumbers([1, 2, 3, 4, 55, 56], 1, 55, 6)).toMatch(/1 đến 55/)
   })
 })
 

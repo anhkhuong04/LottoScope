@@ -28,7 +28,13 @@ from app.db.base import Base
 class DrawRow(Base):
     __tablename__ = "draws"
     __table_args__ = (
-        CheckConstraint("game IN ('lotto_535', 'mega_645')", name="ck_draws_game"),
+        CheckConstraint(
+            "(prizes IS NULL AND prizes_retrieved_at IS NULL) OR "
+            "(prizes IS NOT NULL AND prizes_retrieved_at IS NOT NULL "
+            "AND jsonb_typeof(prizes) = 'array' AND jsonb_array_length(prizes) > 0)",
+            name="ck_draws_prizes_snapshot",
+        ),
+        CheckConstraint("game IN ('lotto_535', 'mega_645', 'power_655')", name="ck_draws_game"),
         CheckConstraint(
             "draw_id ~ '^[0-9]{5}$' AND draw_seq > 0 AND draw_seq = CAST(draw_id AS integer)",
             name="ck_draws_id_seq",
@@ -37,7 +43,10 @@ class DrawRow(Base):
             "(game = 'lotto_535' AND cardinality(main_numbers) = 5 "
             "AND special_number BETWEEN 1 AND 12) OR "
             "(game = 'mega_645' AND cardinality(main_numbers) = 6 "
-            "AND special_number IS NULL)",
+            "AND special_number IS NULL) OR "
+            "(game = 'power_655' AND cardinality(main_numbers) = 6 "
+            "AND special_number IS NOT NULL AND special_number BETWEEN 1 AND 55 "
+            "AND special_number <> ALL(main_numbers))",
             name="ck_draws_game_numbers",
         ),
         UniqueConstraint("game", "draw_id", name="uq_draws_game_draw_id"),
@@ -57,6 +66,12 @@ class DrawRow(Base):
     source_url: Mapped[str] = mapped_column(Text, nullable=False)
     source_retrieved_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     source_sha256: Mapped[str] = mapped_column(CHAR(64), nullable=False)
+    prizes: Mapped[list[dict[str, object]] | None] = mapped_column(
+        JSONB(none_as_null=True), nullable=True
+    )
+    prizes_retrieved_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -68,7 +83,9 @@ class DrawRow(Base):
 class GameDataStateRow(Base):
     __tablename__ = "game_data_state"
     __table_args__ = (
-        CheckConstraint("game IN ('lotto_535', 'mega_645')", name="ck_game_data_state_game"),
+        CheckConstraint(
+            "game IN ('lotto_535', 'mega_645', 'power_655')", name="ck_game_data_state_game"
+        ),
         CheckConstraint("version >= 0", name="ck_game_data_state_version"),
     )
 

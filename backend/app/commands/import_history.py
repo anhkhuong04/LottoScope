@@ -7,23 +7,36 @@ from datetime import date
 import httpx
 
 from app.db.session import get_engine
-from app.ingestion.fetcher import VietlottFetcher
+from app.games.definitions import GAMES
+from app.ingestion.fetcher import configured_fetcher
 from app.ingestion.service import IngestionService
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Import official Vietlott historical draws")
-    parser.add_argument("--game", required=True, choices=["lotto_535", "mega_645"])
+    parser.add_argument("--game", required=True, choices=list(GAMES))
     parser.add_argument("--start-id")
     parser.add_argument("--end-id")
     parser.add_argument("--from-date", type=date.fromisoformat)
     parser.add_argument("--to-date", type=date.fromisoformat)
     parser.add_argument("--recheck", action="store_true")
+    parser.add_argument(
+        "--results-only", action="store_true", help="Skip parsing and storing prize snapshots"
+    )
+    parser.add_argument(
+        "--workers",
+        type=int,
+        choices=(1, 2, 3),
+        default=3,
+        help="Concurrent history requests; use 1 for strictly sequential import",
+    )
     args = parser.parse_args()
     with httpx.Client(follow_redirects=True) as client:
         summary = IngestionService(
             get_engine(),
-            VietlottFetcher(client),
+            configured_fetcher(client),
+            import_workers=args.workers,
+            include_prizes=not args.results_only,
             progress=lambda sequence, counts: print(
                 json.dumps({"draw_seq": sequence, "counters": counts}), flush=True
             ),

@@ -1,4 +1,148 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
+
+.sync-controls {
+  margin-bottom: 24px;
+}
+.sync-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.sync-toolbar .muted {
+  flex: 1 1 200px;
+}
+
+.prize-card {
+  margin-top: 20px;
+}
+.prize-jackpot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 18px 20px;
+  border-radius: 12px;
+  background: #b91c1c;
+  color: white;
+  font-size: 1.15rem;
+}
+.prize-highlights {
+  display: grid;
+  gap: 12px;
+}
+.prize-jackpot > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+}
+.prize-jackpot strong {
+  overflow-wrap: anywhere;
+}
+.prize-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.prize-table th,
+.prize-table td {
+  padding: 16px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+}
+.prize-table thead th {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.prize-table th[scope='row'] {
+  font-weight: 600;
+}
+.prize-table td:nth-child(n + 3),
+.prize-table thead th:nth-child(n + 3) {
+  text-align: right;
+}
+.prize-amount {
+  color: #b91c1c;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.prize-conditions {
+  display: grid;
+  gap: 9px;
+}
+.prize-match,
+.prize-main-symbols,
+.prize-special-symbols {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.prize-match {
+  width: max-content;
+}
+.prize-symbol {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid #b91c1c;
+  border-radius: 50%;
+}
+.prize-symbol.special {
+  border-color: #ac6500;
+}
+.prize-mobile-label {
+  display: none;
+}
+.prize-source {
+  font-size: 0.85rem;
+  margin-bottom: 0;
+}
+.prize-source a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+@media (max-width: 767px) {
+  .prize-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .prize-table tbody,
+  .prize-table tr {
+    display: block;
+  }
+  .prize-table tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    border-bottom: 1px solid var(--line);
+    padding: 12px 0;
+  }
+  .prize-table th,
+  .prize-table td {
+    border: 0;
+    padding: 8px 0;
+  }
+  .prize-table th[scope='row'],
+  .prize-table td:nth-child(2) {
+    grid-column: 1 / -1;
+  }
+  .prize-mobile-label {
+    display: block;
+    color: var(--muted);
+    font-size: 0.8rem;
+    font-weight: 400;
+    margin-bottom: 4px;
+  }
+  .prize-table td.prize-count {
+    text-align: left;
+  }
+}
 :root {
   font-family: 'DM Sans', system-ui, sans-serif;
   color: #182939;
@@ -544,6 +688,7 @@ small,
 }
 .pagination {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   align-items: center;
   gap: 9px;
@@ -552,6 +697,50 @@ small,
 }
 .pagination .btn {
   min-width: 44px;
+}
+.pagination-summary {
+  margin-right: auto;
+}
+.pagination-arrows {
+  display: flex;
+  gap: 8px;
+}
+.page-jump {
+  min-width: 0;
+}
+.page-jump-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.page-jump-controls .text-input {
+  width: 68px;
+  min-width: 0;
+  min-height: 44px;
+  text-align: center;
+}
+.page-jump-controls input[aria-invalid='true'] {
+  border-color: #b42318;
+}
+.page-jump-error {
+  display: block;
+  max-width: 240px;
+  margin-top: 6px;
+  color: #b42318;
+}
+@media (max-width: 767px) {
+  .pagination-summary {
+    flex-basis: 100%;
+  }
+  .pagination {
+    justify-content: flex-start;
+  }
+  .page-jump-controls {
+    gap: 6px;
+  }
+  .page-jump-controls .text-input {
+    width: 60px;
+  }
 }
 .breadcrumb {
   display: inline-flex;

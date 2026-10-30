@@ -6,7 +6,15 @@ lại analytics. Tất cả number trong JSON là integer; UI tự hiển thị 
 
 ## Quy ước chung
 
-- Path `game` là `lotto_535` hoặc `mega_645`. Game lạ → 404 `unknown_game`.
+- Cloud opt-in theo [ADR 0011](DECISIONS/0011-free-cloud-deployment.md): browser
+  vẫn dùng `/api/v1` cùng origin Vercel. Render yêu cầu server token ở header
+  `X-Lotto-Origin-Token` cho mọi path trừ GET `/health/live`; không token/sai
+  → 401 `unauthorized`. Token không cấp cho browser. Local giữ access hiện có.
+  Gateway giới hạn JSON POST 64 KiB, GET/POST, no-store, không retry writes;
+  deadline 270 giây trả 504 `gateway_timeout`, outcome sync có thể chưa biết.
+  Cloud tắt docs/OpenAPI. Website Vercel công khai theo yêu cầu người dùng.
+
+- Path `game` là `lotto_535`, `mega_645` hoặc `power_655`. Game lạ → 404 `unknown_game`.
   Dates dùng `YYYY-MM-DD` theo Việt Nam; timestamps dùng RFC 3339 có `Z`.
   `draw_time` nếu có dùng `HH:MM:SS`, hiểu theo Việt Nam. `null` là thiếu
   dữ liệu/không áp dụng, không thay bằng 0 hoặc chuỗi rỗng.
@@ -30,11 +38,39 @@ lại analytics. Tất cả number trong JSON là integer; UI tự hiển thị 
   `data_version` tăng khi insert/correction, không là thời gian quay.
 - Request validation server-side; invalid path/game/cutoff → 404; invalid
   field/window/rule/page → 422; history thiếu với rule bắt buộc → 409;
-  lỗi upstream khi trigger ingestion (nếu có endpoint sau MVP) → 502/503;
+  lỗi upstream khi trigger ingestion → 502/503;
   internal error → 500. Không lộ traceback/SQL/secrets.
 - Error JSON: `{"error":{"code":"invalid_window","message":"...",
   "details":{...}}}`. `code` ổn định cho client; `message` dễ đọc, không
   chứa HTML từ nguồn. Thông tin không có exact match là response 200 hợp lệ.
+
+## Đồng bộ thủ công
+
+`POST /games/{game}/sync`, JSON body `{}`. Chỉ đồng bộ game trong path bằng
+collector latest-only hiện có, tối đa 20 ID/lượt; không nhập toàn lịch sử.
+Request chạy trong worker thread và trả sau khi xử lý xong. Body thiếu,
+form hoặc field lạ → 422; GET không kích hoạt đồng bộ.
+
+Response 200: `{game,run_id,status,created,enriched,unchanged,remaining_unresolved,source}`.
+`source` là `official|community` (mặc định official), cho biết nguồn của lượt
+thành công. Fallback opt-in/challenge theo ADR 0012, UI phải nêu nguồn cộng đồng.
+Nguồn từng draw tiếp tục ở `source_url`/`source_retrieved_at`.
+`status` giữ nguyên `success|partial` của run trong DB. Partial chỉ vì backlog
+cũ, latest đã xử lý và không có lỗi hiện tại vẫn trả 200; client phải nêu
+`remaining_unresolved`, không diễn giải thành history đầy đủ. `created=0` có
+thể là đã có kỳ mới nhất, không phải lỗi.
+
+- 409 `ingestion_busy`: đang có lượt manual khác hoặc ingestion cùng game.
+- 429 `sync_cooldown`, `Retry-After: 60`: một collector cùng game vừa hoàn
+  tất trong 60 giây, kể cả thất bại; không gọi nguồn thêm.
+- 503 `sync_source_unavailable`: lượt hiện tại chưa hoàn tất vì nguồn/parse
+  hoặc validation. Phần đã commit vẫn giữ; client đọc lại DB nhưng báo lỗi.
+- 409 `sync_review_pending`: nguồn khác dữ liệu đã lưu, cần correction review.
+
+Endpoint dùng cùng origin với UI; cloud công khai opt-in theo ADR 0011 có
+gateway bảo vệ origin, không thêm quyền quản trị theo user. Giao diện chặn click trùng,
+giữ context và tải lại các query sau lượt sync kể cả khi lỗi. Collector vẫn
+ghi run/counters và giữ idempotence/lock/correction policy hiện có.
 
 ## Endpoints đọc
 
@@ -45,13 +81,27 @@ lại analytics. Tất cả number trong JSON là integer; UI tự hiển thị 
 | `GET /games/{game}/draws/latest` | — | Một draw; 404 `no_draws` nếu DB rỗng |
 | `GET /games/{game}/draws` | `from_date`, `to_date`, `draw_id`, `page`, `page_size`, `sort=asc|desc` | Paginated draws, default newest trước |
 | `GET /games/{game}/draws/{draw_id}` | — | Một draw; 404 `draw_not_found` |
-| `GET /games/{game}/analytics/numbers` | Window + cutoff; `sort=number|frequency_desc|frequency_asc|gap_desc`; paging không cần vì tối đa 45 | `context`, `items:[{number,frequency,frequency_percent,frequency_rank,current_gap,average_gap,max_gap,last_seen_draw_id}]` |
+| `GET /games/{game}/draws/{draw_id}/prizes` | — | Snapshot giải; bổ sung đúng kỳ từ nguồn nếu chưa có; 404 `draw_not_found` |
+| `GET /games/{game}/analytics/numbers` | Window + cutoff; `sort=number|frequency_desc|frequency_asc|gap_desc`; paging không cần vì tối đa 55 | `context`, `items:[{number,frequency,frequency_percent,frequency_rank,current_gap,average_gap,max_gap,last_seen_draw_id}]` |
 | `GET /games/{game}/analytics/numbers/{number}` | Window + cutoff; `page`,`page_size` cho history | `context`, một number metrics, `appearance_draws` paginated, `pair_partners` top 10 và timeline draw IDs |
 | `GET /games/{game}/analytics/pairs` | Window + cutoff; `min_frequency>=0`, `sort=frequency_desc|frequency_asc|pair`, paging | `context`, paginated `{numbers:[a,b],frequency,percent_of_draws,current_gap,last_seen_draw_id}` |
 | `GET /games/{game}/analytics/pairs/{a}/{b}` | Window + cutoff; paging history | `context`, pair metrics, `appearance_draws` paginated, timeline draw IDs |
 
 Draw JSON: `{draw_id,draw_date,draw_time,main_numbers,special_number,
 source_url,source_retrieved_at}`. `source_url` chỉ đến trang kết quả cụ thể.
+Prizes JSON: `{draw_id,currency:"VND",items:[{name,matches:[{main_count,special}],
+winner_count,amount_vnd}],source_url,source_retrieved_at}`. `winner_count` là
+integer kể cả 0; `amount_vnd` là **chuỗi thập phân** (ví dụ `"178900548500"`)
+để client không làm tròn tiền. Nguồn không có bảng hợp lệ sau fetch thành công
+→ `items:[]`, timestamp `null`; không tạo hạng/giá trị giả. Timestamp này riêng
+với lúc thu thập kết quả quay. Endpoint chi tiết/latest/history hiện có giữ shape cũ.
+
+Endpoint prizes đọc snapshot từ PostgreSQL khi có. Khi chưa có, service chạy
+ingestion giới hạn đúng kỳ và lưu snapshot idempotent. Source lỗi/parse lỗi
+→ 503 `prize_source_unavailable`; job khác đang chạy → 409 `ingestion_busy`,
+thử lại sau; source khác nội dung đã lưu → 409 `prize_review_pending`, cần
+correction review. Lỗi prizes không ảnh hưởng endpoint chi tiết kết quả quay.
+
 Number/pair không trong miền hoặc pair trùng số → 422. Pair path đảo thứ tự
 được canonical trước lookup. Detail history chỉ chứa draw trong window.
 
@@ -95,6 +145,9 @@ Ví dụ fixture Lotto trong analytics: checker `01 02 03 04 05` có
 đổi kết quả. No match trả `exact_match_count=0`, `last_exact_match=null`.
 
 ## Generator
+
+Contract backend này được giữ nguyên cho cả ba game. Frontend `/generator`
+dùng [lồng cầu cục bộ](DRAW_SIMULATION.md), không gọi endpoint này để chọn số.
 
 `POST /games/{game}/combinations/generate` body:
 

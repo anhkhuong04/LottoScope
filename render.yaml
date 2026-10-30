@@ -1,0 +1,23 @@
+# Free backend only. PostgreSQL is hosted separately on Neon.
+services:
+  - type: web
+    name: lottoscope-api
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    dockerCommand: python -m app.commands.serve
+    healthCheckPath: /health/live
+    autoDeployTrigger: "off"
+    envVars:
+      - key: LOTTO_DEPLOYMENT_MODE
+        value: cloud
+      - key: LOTTO_SCHEDULER_ENABLED
+        value: "false"
+      - key: LOTTO_COMMUNITY_FALLBACK_ENABLED
+        value: "true"
+      - key: LOTTO_DATABASE_URL
+        sync: false
+      - key: LOTTO_ORIGIN_TOKEN
+        sync: false

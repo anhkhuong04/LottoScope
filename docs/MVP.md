@@ -10,6 +10,12 @@ MVP frontend. Dự án triển khai **backend trước, frontend sau**, rồi ng
 
 Hỗ trợ đúng hai game Lotto 5/35 và Mega 6/45. Luồng bắt buộc:
 
+Đây là scope MVP đã nghiệm thu ngày 01/10/2026. Yêu cầu ngày 14/10/2026
+bổ sung Power 6/55 qua milestone hậu MVP `POWER-01..05`, áp dụng cùng sáu
+luồng bên dưới cho game thứ ba. Quyết định ở
+[ADR 0006](DECISIONS/0006-power-655.md); bằng chứng nghiệm thu Power ghi riêng,
+không thay kết quả lịch sử trong `MVP_ACCEPTANCE.md`.
+
 1. Import lịch sử từ nguồn xác định, lưu draw có nguồn và tự cập nhật kỳ mới;
    job chạy lại không nhân đôi dữ liệu.
 2. Truy vấn latest draw, lịch sử theo ID/ngày/game và phân trang ổn định.
@@ -32,6 +38,11 @@ Frontend đọc API thật, không tính lại nghiệp vụ. Nghiệm thu đủ
 wireframe mục 33, bao gồm chuyển game/window, loading/empty/error, desktop và
 mobile, input validation và explanation. Mốc F chỉ hoàn tất khi backend phục vụ
 được các flow A–D ở wireframe mục 31.
+
+Thay đổi sau nghiệm thu MVP: `/generator` chuyển từ rule/explanation sang
+[lồng cầu mô phỏng](DRAW_SIMULATION.md) cho Mega/Power (24/10/2026) và Lotto
+(25/10/2026). Generator API backend theo rule vẫn giữ nguyên; bằng chứng MVP
+ban đầu không thay đổi. UX hiện hành theo wireframe và spec mô phỏng.
 
 ## Mốc A — Ứng dụng MVP
 

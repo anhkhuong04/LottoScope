@@ -18,6 +18,9 @@
   game selector, analysis window, number ball, metric card, table và states.
 - Frontend làm presentation và validation input; không tính core frequency,
   gap, pair, checker, generator hoặc backtest thay backend.
+  Ngoại lệ được người dùng chốt: lồng cầu Lotto/Mega/Power chạy vật lý cục bộ theo
+  [DRAW_SIMULATION.md](../docs/DRAW_SIMULATION.md); không dùng generator backend
+  để quyết định bóng ra và không ghi kết quả mô phỏng vào lịch sử thật.
 
 ## 2. Context, state và dữ liệu
 
@@ -44,10 +47,12 @@
   main-only. Không thêm full-ticket mode hoặc chèn special vào main tokens.
 - Kết quả checker theo thứ tự: exact match → overlap summary → similar draws
   → per-number analytics → pairs; không bắt đầu bằng score tổng hợp.
-- Rule generator có toggle/value/help text; hỗ trợ chỉ bật rule người dùng chọn,
-  validate constraints và hiển thị partial/no-result theo status từ backend.
-- Mỗi generated result có explanation; desktop dùng drawer, mobile dùng
-  full-screen sheet/page phù hợp. Không viết logic rule lần hai trong UI.
+- `/generator` dùng chung DrawMachine cho cả ba game; lấy số bóng và số kết quả
+  từ game definition API. Lotto quay 5 main rồi 1 special từ lồng riêng 1–12;
+  Mega/Power giữ 6 main. Special không nhập vào main, được phép trùng giá trị
+  main Lotto. Chuyển game phải hủy phiên cũ; copy Lotto ghi riêng `ĐB: NN`,
+  checker chỉ nhận main tăng dần và đúng context.
+  Giao diện rule/explanation MVP đã được thay thế; generator API vẫn giữ contract.
 - Display số 2 chữ số; màu/ball chỉ phục vụ nhận diện dữ liệu, không tạo hàm ý
   số tốt/xấu hoặc sắp thắng.
 
@@ -73,7 +78,9 @@
   contrast rõ. Drawer/modal quản lý focus đúng; chart có textual summary/
   fallback. Không dùng color làm tín hiệu duy nhất.
 - Frequency dùng bar chart/grid; gap dùng sorted bar/table; timeline đơn giản;
-  không dùng pie chart cho toàn 35/45 số hoặc roulette/slot animation.
+  không dùng pie chart cho toàn miền số hoặc roulette/slot animation.
+  Lồng cầu mô phỏng là màn hình riêng được phép chuyển động/va chạm vật lý;
+  phải có pause, giảm chuyển động và xử lý lỗi theo specification riêng.
 - Tables có sort/paging/empty/focus phù hợp; không client-filter toàn dataset
   khi API đã hỗ trợ.
 - UI wording dùng Frequency/Gap/Historical overlap/Backtest result; không

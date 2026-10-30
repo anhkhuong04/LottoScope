@@ -7,6 +7,21 @@ export type Game = {
   special_min: number | null
   special_max: number | null
 }
+export type SyncResult = {
+  game: string
+  run_id: number
+  status: 'success' | 'partial' | 'failed'
+  created: number
+  enriched: number
+  unchanged: number
+  remaining_unresolved: number
+  source?: 'official' | 'community'
+}
+export function drawSourceLabel(url: string): string {
+  return url.startsWith('https://raw.githubusercontent.com/vietvudanh/vietlott-data/')
+    ? 'Cộng đồng · vietvudanh/vietlott-data'
+    : 'Vietlott'
+}
 export type Draw = {
   draw_id: string
   draw_date: string
@@ -17,6 +32,20 @@ export type Draw = {
   source_retrieved_at: string
 }
 export type Page<T> = { items: T[]; page: number; page_size: number; total: number }
+export type PrizeMatch = { main_count: number; special: boolean }
+export type PrizeTier = {
+  name: string
+  matches: PrizeMatch[]
+  winner_count: number
+  amount_vnd: string
+}
+export type PrizeDetails = {
+  draw_id: string
+  items: PrizeTier[]
+  currency: 'VND'
+  source_url: string
+  source_retrieved_at: string | null
+}
 export type AnalysisWindow =
   | { kind: 'last_draws'; count: number }
   | { kind: 'date_range'; from_date: string; to_date: string }
@@ -108,14 +137,17 @@ export type GenerateResponse = {
 export class ApiError extends Error {
   kind: 'network' | 'server' | 'invalid' | 'missing'
   status?: number
+  code?: string
   constructor(
     kind: 'network' | 'server' | 'invalid' | 'missing',
     message: string,
     status?: number,
+    code?: string,
   ) {
     super(message)
     this.kind = kind
     this.status = status
+    this.code = code
   }
 }
 
@@ -133,7 +165,7 @@ export async function api<T>(path: string, signal?: AbortSignal, body?: unknown)
     throw new ApiError('network', 'Không kết nối được API. Kiểm tra mạng hoặc backend.')
   }
   if (!response.ok) {
-    let payload: { error?: { message?: string } } = {}
+    let payload: { error?: { message?: string; code?: string } } = {}
     try {
       payload = await response.json()
     } catch {
@@ -145,6 +177,7 @@ export async function api<T>(path: string, signal?: AbortSignal, body?: unknown)
       kind,
       payload.error?.message ?? `API trả về HTTP ${response.status}.`,
       response.status,
+      payload.error?.code,
     )
   }
   return response.json() as Promise<T>

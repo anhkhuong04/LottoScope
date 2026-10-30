@@ -1,6 +1,7 @@
 """MVP HTTP contract and source-to-PostgreSQL-to-API integration."""
 
 import os
+from dataclasses import replace
 from datetime import UTC, date, datetime
 from pathlib import Path
 from threading import current_thread
@@ -10,13 +11,79 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session
+from test_draw_prizes import prize_draw
+from test_ingestion_service import FixtureFetcher as PrizeFixtureFetcher
 
 from app.analytics.service import AnalyticsService
+from app.api.v1 import get_prize_service
 from app.db.session import get_engine
 from app.domain.draw import Draw
 from app.ingestion.service import IngestionService
 from app.main import create_app
 from app.repositories.draws import DrawRepository
+from app.services.prizes import DrawPrizeService
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("game", ["lotto_535", "mega_645"])
+def test_prize_api_keeps_money_exact_and_main_detail_compatible(client, engine, game) -> None:
+    draw = prize_draw(game)
+    with Session(engine) as session, session.begin():
+        DrawRepository(session).add(draw)
+    path = f"/api/v1/games/{game}/draws/{draw.draw_id}"
+    response = client.get(path + "/prizes")
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["currency"] == "VND"
+    assert payload["items"][0]["winner_count"] == 0
+    assert payload["items"][0]["amount_vnd"] == (
+        "7749247500" if game == "lotto_535" else "178900548500"
+    )
+    assert payload["source_retrieved_at"].endswith("Z")
+    assert "items" not in client.get(path).json()
+
+
+@pytest.mark.integration
+def test_prize_api_reports_not_found_source_failure_and_review(client, engine) -> None:
+    path = "/api/v1/games/lotto_535/draws/00922"
+    assert client.get(path + "/prizes").json()["error"]["code"] == "draw_not_found"
+    assert client.get("/api/v1/games/unknown/draws/00922/prizes").status_code == 404
+    draw = prize_draw("lotto_535")
+    with Session(engine) as session, session.begin():
+        DrawRepository(session).add(replace(draw, prizes=None, prizes_retrieved_at=None))
+    fetcher = PrizeFixtureFetcher(latest=draw.draw_id, pages={})
+    client.app.dependency_overrides[get_prize_service] = lambda: DrawPrizeService(engine, fetcher)
+    failed = client.get(path + "/prizes")
+    assert failed.status_code == 503
+    assert failed.json()["error"]["code"] == "prize_source_unavailable"
+    assert client.get(path).json()["main_numbers"] == list(draw.main_numbers)
+    page = (FIXTURES / "535_00922_prizes.html").read_text(encoding="utf-8")
+    fetcher.pages[draw.draw_id] = page.replace('small">05</span>', 'small">06</span>')
+    changed = client.get(path + "/prizes")
+    assert changed.status_code == 409
+    assert changed.json()["error"]["code"] == "prize_review_pending"
+    with engine.connect() as lock:
+        lock.execute(text("SELECT pg_advisory_lock(5043, hashtext('lotto_535'))"))
+        try:
+            busy = client.get(path + "/prizes")
+            assert busy.status_code == 409
+            assert busy.json()["error"]["code"] == "ingestion_busy"
+        finally:
+            lock.execute(text("SELECT pg_advisory_unlock(5043, hashtext('lotto_535'))"))
+
+
+@pytest.mark.integration
+def test_prize_api_money_beyond_javascript_safe_integer_is_decimal_string(client, engine) -> None:
+    draw = prize_draw("mega_645")
+    large = replace(
+        draw, prizes=(replace(draw.prizes[0], amount_vnd=9007199254740993), *draw.prizes[1:])
+    )
+    with Session(engine) as session, session.begin():
+        DrawRepository(session).add(large)
+    result = client.get(f"/api/v1/games/{draw.game}/draws/{draw.draw_id}/prizes")
+    assert result.status_code == 200
+    assert result.json()["items"][0]["amount_vnd"] == "9007199254740993"
+
 
 FIXTURES = Path(__file__).parent / "fixtures" / "vietlott"
 

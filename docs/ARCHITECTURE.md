@@ -19,6 +19,12 @@ cùng origin với `/api` theo [ADR 0003](DECISIONS/0003-compose-frontend.md).
 UI chỉ gọi API, không giữ domain
 analytics riêng.
 
+Ngoại lệ cục bộ sau MVP: [lồng cầu](DRAW_SIMULATION.md) dùng Three.js/Fiber/Rapier
+để mô phỏng chuyển động và lấy main theo game definition (Lotto năm số;
+Mega/Power sáu số); Lotto tiếp tục quay một special từ lồng riêng 1–12.
+Session controller giữ main/special riêng và thay pool vật lý giữa hai lượt;
+không thay analytics backend hay schema.
+
 ## Luồng và boundaries
 
 ```text
@@ -42,6 +48,19 @@ cùng kết quả đã tính, không tính lại trên dataset khác. `data_vers
 để nhận diện dữ liệu thay đổi; không thêm cache trước khi có nhu cầu đo được.
 
 ## Chạy và vận hành
+
+Cloud opt-in (29/10/2026): [ADR 0011](DECISIONS/0011-free-cloud-deployment.md)
+chọn Vercel SPA + Node gateway, Render Web Free CPython và Neon PostgreSQL
+direct TLS. Website công khai, token chỉ bảo vệ origin; scheduler tắt,
+migration explicit và local Compose giữ mặc định. Thiết lập tài khoản,
+chuyển dữ liệu và nghiệm thu ở [DEPLOYMENT_FREE.md](DEPLOYMENT_FREE.md).
+Quyết định kiến trúc không đồng nghĩa cloud đã được provision/go-live.
+
+Wi-Fi opt-in sau MVP: `compose.lan.yaml` thêm binding frontend lên IP Wi-Fi
+cụ thể qua `FRONTEND_LAN_IP`, giữ mapping localhost; backend/PostgreSQL vẫn
+loopback. Không dùng `0.0.0.0`, không thêm public ingress hoặc auth. Cách bật,
+tắt và giới hạn vận hành ở [README](../README.md#chia-sẻ-cho-thiết-bị-cùng-wi-fi)
+và [ADR 0010](DECISIONS/0010-local-wifi-access.md).
 
 Docker Compose chạy `frontend` + `backend` + `postgres`, persistent volume và health
 checks. MVP chạy một API worker nếu APScheduler nằm cùng backend process;

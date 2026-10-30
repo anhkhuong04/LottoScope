@@ -13,6 +13,7 @@ class DomainValidationError(ValueError):
 class GameId(StrEnum):
     LOTTO_535 = "lotto_535"
     MEGA_645 = "mega_645"
+    POWER_655 = "power_655"
 
 
 @dataclass(frozen=True, slots=True)
@@ -22,6 +23,7 @@ class GameDefinition:
     main_count: int
     main_max: int
     special_max: int | None
+    special_excludes_main: bool = False
 
     @property
     def main_min(self) -> int:
@@ -35,6 +37,7 @@ class GameDefinition:
 GAMES: dict[GameId, GameDefinition] = {
     GameId.LOTTO_535: GameDefinition(GameId.LOTTO_535, "Lotto 5/35", 5, 35, 12),
     GameId.MEGA_645: GameDefinition(GameId.MEGA_645, "Mega 6/45", 6, 45, None),
+    GameId.POWER_655: GameDefinition(GameId.POWER_655, "Power 6/55", 6, 55, 55, True),
 }
 
 

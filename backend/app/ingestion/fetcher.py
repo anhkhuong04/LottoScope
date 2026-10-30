@@ -9,11 +9,17 @@ from threading import Lock
 
 import httpx
 
+from app.core.config import get_settings
+
 
 class SourceFetchError(RuntimeError):
     def __init__(self, url: str, detail: str, *, missing: bool = False) -> None:
         super().__init__(f"{url}: {detail}")
         self.missing = missing
+
+
+class SourceDeferredError(SourceFetchError):
+    """Source is rate limited/challenged; stop this batch instead of trying every ID."""
 
 
 class VietlottFetcher:
@@ -71,6 +77,8 @@ class VietlottFetcher:
                 if attempt == 3:
                     raise SourceFetchError(url, type(exc).__name__) from exc
             else:
+                if response.headers.get("cf-mitigated", "").lower() == "challenge":
+                    raise SourceDeferredError(url, "Cloudflare challenge; deferred")
                 if response.status_code == 200:
                     return response.text, self.now()
                 if response.status_code == 404:
@@ -78,9 +86,16 @@ class VietlottFetcher:
                 if response.status_code != 429 and response.status_code < 500:
                     raise SourceFetchError(url, f"HTTP {response.status_code}")
                 if attempt == 3:
+                    if response.status_code == 429:
+                        raise SourceDeferredError(url, "HTTP 429; deferred")
                     raise SourceFetchError(url, f"HTTP {response.status_code}")
             delay = self._retry_delay(response, attempt)
             if delay > 60.0:
-                raise SourceFetchError(url, "Retry-After exceeds 60 seconds; deferred")
+                raise SourceDeferredError(url, "Retry-After exceeds 60 seconds; deferred")
             self.sleep(delay)
         raise AssertionError("bounded fetch loop did not return or raise")
+
+
+def configured_fetcher(client: httpx.Client) -> VietlottFetcher:
+    """Allow operators to slow source requests while keeping the one-request/s ceiling."""
+    return VietlottFetcher(client, min_interval=get_settings().source_request_interval)

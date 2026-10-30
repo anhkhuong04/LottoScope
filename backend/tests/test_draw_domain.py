@@ -83,3 +83,74 @@ def test_reject_invalid_provenance() -> None:
         replace(draw(), source_retrieved_at=datetime(2026, 1, 1))
     with pytest.raises(DomainValidationError, match="draw_time"):
         replace(draw(), draw_time=time(13, 0, tzinfo=UTC))
+
+
+def power_draw() -> Draw:
+    return Draw(
+        game="power_655",
+        draw_id="00001",
+        draw_date=date(2017, 8, 1),
+        draw_time=None,
+        main_numbers=(38, 24, 23, 14, 10, 5),
+        special_number=35,
+        source_url="https://vietlott.vn/vi/trung-thuong/ket-qua-trung-thuong/655?id=00001&nocatche=1",
+        source_retrieved_at=datetime(2026, 10, 14, tzinfo=UTC),
+    )
+
+
+def test_power_definition_identity_and_special_is_draw_only() -> None:
+    definition = get_game("power_655")
+    assert (definition.main_count, definition.main_max, definition.special_max) == (6, 55, 55)
+    original = power_draw()
+    assert original.main_numbers == (5, 10, 14, 23, 24, 38)
+    assert (
+        original.source_sha256
+        == replace(original, main_numbers=(5, 10, 14, 23, 24, 38)).source_sha256
+    )
+    assert (
+        Draw.from_canonical_payload(
+            original.canonical_payload(),
+            source_url=original.source_url,
+            source_retrieved_at=original.source_retrieved_at,
+        )
+        == original
+    )
+    assert replace(original, special_number=55).source_sha256 != original.source_sha256
+    assert normalize_pair("power_655", 55, 1) == (1, 55)
+    assert Combination("power_655", (55, 54, 4, 3, 2, 1)).main_numbers == (1, 2, 3, 4, 54, 55)
+    assert replace(draw(), special_number=1).special_number == 1  # Lotto allows same value as main.
+
+
+@pytest.mark.parametrize("special", [None, 0, 56, True, 1.0, "1", 5, 38])
+def test_power_rejects_missing_invalid_or_main_special(special: object) -> None:
+    original = power_draw()
+    payload = original.canonical_payload() | {"special_number": special}
+    with pytest.raises(DomainValidationError, match="special_number"):
+        Draw.from_canonical_payload(
+            payload,
+            source_url=original.source_url,
+            source_retrieved_at=original.source_retrieved_at,
+        )
+
+
+@pytest.mark.parametrize(
+    "numbers",
+    [
+        (1, 2, 3, 4, 5),
+        (1, 2, 3, 4, 5, 6, 7),
+        (1, 2, 3, 4, 5, 5),
+        (0, 2, 3, 4, 5, 55),
+        (1, 2, 3, 4, 5, 56),
+        (1, 2, 3, 4, 5, True),
+        (1, 2, 3, 4, 5, 55.0),
+        (1, 2, 3, 4, 5, "55"),
+    ],
+)
+def test_power_rejects_invalid_main(numbers: tuple[object, ...]) -> None:
+    original = power_draw()
+    with pytest.raises(DomainValidationError, match="main_numbers"):
+        Draw.from_canonical_payload(
+            original.canonical_payload() | {"main_numbers": list(numbers)},
+            source_url=original.source_url,
+            source_retrieved_at=original.source_retrieved_at,
+        )

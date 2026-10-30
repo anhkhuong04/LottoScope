@@ -6,6 +6,7 @@ from dataclasses import asdict
 from datetime import datetime
 
 from app.db.session import get_engine
+from app.games.definitions import GAMES
 from app.ingestion.service import IngestionService
 
 
@@ -16,7 +17,7 @@ class _UnusedFetcher:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Read ingestion status for one game")
-    parser.add_argument("--game", required=True, choices=["lotto_535", "mega_645"])
+    parser.add_argument("--game", required=True, choices=list(GAMES))
     args = parser.parse_args()
     status = IngestionService(get_engine(), _UnusedFetcher()).status(args.game)
     print(json.dumps(asdict(status), default=str))

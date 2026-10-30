@@ -79,7 +79,20 @@ current gap 1. Lotto candidate `01 02 03 04 05` exact match 1 lần, overlap
 histogram: `match_2=2`, `match_5=1`. Mega candidate `01 02 03 04 05 06`
 cho `match_2=2`, `match_6=1`. Special `01` của L1 không làm count main 01 tăng.
 
+Power dùng fixture giả lập P1/P2/P3 ngày 2099-01-01/02/03, ID 90001/02/03:
+main `01 02 03 04 54 55` / `01 02 07 08 09 10` / `02 03 11 12 13 14`,
+special `53` / `55` / `54`. Trong ba draw: 55 có main frequency 1, gap 2;
+54 có main frequency 1 dù xuất hiện special ở P3; 53 có count 0/gap null.
+Pair (54,55) có count 1; candidate P1 có `match_6=1,match_2=2`.
+Toàn miền có 55 numbers và 1.485 canonical pairs. Các công thức/rules giữ
+nguyên, luôn loại special và tách biệt game kể cả cùng draw ID.
+
 ## Generator MVP
+
+Contract dưới đây tiếp tục áp dụng cho generator API backend.
+UI cả ba game được thay bằng [lồng cầu vật lý](DRAW_SIMULATION.md) sau MVP
+(Mega/Power ngày 24/10/2026, Lotto ngày 25/10/2026);
+mô phỏng không sử dụng các rule lịch sử dưới đây để chọn kết quả.
 
 Tạo main combinations theo game, không sinh special. Rule **chỉ áp dụng khi
 được bật**, không có default ẩn. Rules và metric dùng cùng implementation

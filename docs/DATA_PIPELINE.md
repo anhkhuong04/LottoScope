@@ -21,7 +21,40 @@ không là API ổn định; access, cấu trúc HTML và quyền sử dụng c�
 khi triển khai P3. Không sử dụng một nguồn bên thứ ba im lặng khi nguồn chính
 không truy cập được.
 
+### Fallback cộng đồng được duyệt — 30/10/2026
+
+Ngoại lệ official-only được người dùng cho phép tại [ADR 0012](DECISIONS/0012-community-source-fallback.md):
+manual sync opt-in `LOTTO_COMMUNITY_FALLBACK_ENABLED=true`, chỉ sau official
+Cloudflare challenge, dùng JSONL `vietvudanh/vietlott-data` trên GitHub raw.
+Nguồn được ghi rõ trong DB/audit/API/UI. Không vượt challenge.
+
+Chỉ thêm tối đa 20 kỳ mới liên tiếp sau latest đã lưu, sau khi 20 kỳ gần nhất
+khớp ngày/main/special. Validate identity, strict integer, count/range/duplicate,
+ngày không tương lai/không đảo thứ tự. Lỗi hoặc mismatch thì không thêm bất kỳ
+kỳ nào. Không ghi đè lịch sử, không suy giờ quay hoặc giải thưởng. Checkpoint
+và backlog vẫn theo coverage thực, không tự lấp history thiếu. Default local tắt;
+cloud bật; scheduler và import/audit official vẫn giữ nguồn chính thức.
+
 ## Import lịch sử
+
+### Mở rộng Power 6/55 — 14/10/2026
+
+Trang nguồn: `https://vietlott.vn/vi/trung-thuong/ket-qua-trung-thuong/655?id={draw_id}&nocatche=1`.
+Đã đọc trực tiếp `00001` (01/08/2017, main `05 10 14 23 24 38`, special `35`)
+và `01385` (15/08/2026, main `16 20 25 27 30 50`, special `02`).
+Nguồn Power dùng CSS `mega645`/`maga645_table` như Mega; adapter phải kiểm
+đúng cả path `655`, tiêu đề `Power 6/55`, ID và số, không suy game từ CSS.
+Special có `active`; bảng Jackpot 2 dùng `O O O O O | <span class="active">O</span>`.
+Parser kiểm đúng năm hạng và điều kiện `(6,false),(5,true),(5,false),(4,false),(3,false)`.
+Core tests dùng fixture cố định; live fetch chỉ phục vụ import/audit/smoke.
+
+Power poll mặc định 19:30 thứ Ba/Năm/Bảy (`LOTTO_POWER_POLL`), reconcile 07:00
+hằng ngày và startup catch-up như các game hiện có. Lịch quay 18:00 lấy từ
+[hướng dẫn chơi](https://vietlott.vn/vi/choi/power-6-55/cach-choi); giờ poll
+không được lưu thành `draw_time`. Import phải quét `00001..latest` trước khi
+collector chạy; missing/failed/invalid không được xem là lịch sử đầy đủ.
+
+### Quy trình chung
 
 1. Fetch trang mới nhất của từng game và parse `draw_id` làm upper bound;
    kiểm tra ID hợp lệ, không tin số kỳ ghi ở query nếu nội dung khác.
@@ -38,6 +71,37 @@ không truy cập được.
 Import là resumable; một transaction cho **một draw và cập nhật checkpoint**.
 Draw lỗi không làm rollback toàn lịch sử, nhưng job tổng thể là `partial`/
 `failed`, không báo `success`. Chạy lại không tạo bản sao.
+CLI `import_history --workers 1|2|3` chọn mức concurrency, mặc định 3.
+Tùy chọn `--results-only` bỏ qua parse/lưu bảng giải, đặt `prizes` và timestamp
+giải là `null` cho draw mới. Game/ID/ngày/main/special vẫn được xác thực đầy đủ.
+Run scope ghi `include_prizes=false`; không xóa hoặc ghi đè snapshot cũ khi
+recheck. Mặc định vẫn lấy bảng giải như trước. Cả hai chế độ dùng cùng trang
+HTML nguồn, không có endpoint nhẹ riêng hoặc cam kết giảm request.
+`--workers 1` chỉ xử lý một kỳ tại một thời điểm và không submit kỳ kế tiếp
+sau challenge; throttle theo `LOTTO_SOURCE_REQUEST_INTERVAL` vẫn áp dụng
+cho mọi request, kể cả latest/retry. Giảm concurrency không bảo đảm nguồn
+cho phép import; không coi challenge là HTML kết quả hợp lệ.
+
+## Nhập bảng Power do người dùng cung cấp
+
+CLI `import_power_file --file <path> [--dry-run]` đọc Markdown có ba cột:
+`Kỳ quay | Ngày quay | Kết quả (6 số chính; số đặc biệt)`, ngày `DD/MM/YYYY`.
+Toàn file phải hợp lệ trước khi ghi: ID 5 chữ số, không trùng, ngày đúng thứ
+tự, main/special theo domain. Không thực thi nội dung file hoặc nhập giải.
+`--dry-run` chỉ validate file, không truy cập/ghi DB.
+
+Lượt nhập dùng cùng advisory lock theo game và repository; **một transaction
+cho cả file**. Lỗi DB/chronology rollback cả lượt; dữ liệu khác nội dung đi
+vào correction review và run `partial`, không overwrite. Row trùng giữ
+nguyên provenance/prizes; item/checkpoint cập nhật trong cùng transaction.
+Run `success` nghĩa là xử lý đủ file, không chứng minh history đầy đủ.
+
+Nguồn thực là file người dùng: scope lưu `source_kind=user_file`, basename,
+SHA-256 và giờ đọc. `source_url` của row mới là URL Vietlott **để tham chiếu**,
+không chứng minh đã fetch live; `source_retrieved_at` là lúc đọc file.
+Scope đánh dấu `official_reference_not_live_fetch` để phân biệt. Sau nhập,
+CLI liệt kê ID thiếu từ 1 đến latest đã lưu; tra cứu nguồn riêng để xác nhận
+upper bound hiện tại và bổ sung ngoài phạm vi file.
 
 ## Collector kỳ mới
 
@@ -49,19 +113,63 @@ và [Mega](https://vietlott.vn/vi/trung-thuong/ket-qua-trung-thuong/645?id=01530
 Giờ poll là giờ **kiểm tra**, không là `draw_time` và không bảo đảm kết quả
 đã được đăng đúng lúc đó.
 
-Mỗi lần poll lấy latest ID, rồi backfill mọi ID từ ID đã xử lý gần nhất đến
-latest và retry các lỗ hổng tồn. Nếu chưa có local history, dùng import riêng
+Với scheduler trong Docker, ngoài cron còn kiểm tra latest mỗi 5 phút
+(`LOTTO_LATEST_POLL_MINUTES`, 5–60). Ba game chạy tuần tự, chung fetcher/throttle; poll nhanh không recheck
+lịch sử cũ. Cron/startup/lệnh `collect` vẫn đối chiếu recent và retry backlog.
+
+Cấu hình mặc định từ 20/10/2026 dùng nút **Tải dữ liệu**, đồng bộ latest-only
+cho game đang chọn rồi làm mới số liệu. Docker scheduler và hai task Windows
+đều tắt; lịch 18:30/21:15 cũ chỉ còn là tùy chọn. API/cooldown ở
+[API](API.md#đồng-bộ-thủ-công), quyết định ở [ADR 0008](DECISIONS/0008-manual-sync.md),
+thao tác chuyển chế độ và đối chiếu thủ công ở
+[README](../README.md#collector-trên-windows-khi-nguồn-chặn-docker).
+
+Mỗi lần poll lấy latest ID, rồi bù các ID mới trong giới hạn batch. Lượt
+cron/startup/`collect` đối chiếu thêm recent và các lỗ hổng tồn. Nếu chưa có local history, dùng import riêng
 thay vì ngầm backfill toàn lịch sử trong một poll. Không dùng điều kiện
 "latest page không đổi" để bỏ qua các ID còn thiếu/correction. Reconcile
 gần nhất kiểm tra lại 7 ID cuối; khác nội dung đi theo correction policy.
 
+Mỗi collector xử lý tối đa 20 ID: lưu draw latest đã validate ngay từ lần
+fetch đầu, không tải lại cùng ID; sau đó bù ID chưa scan theo thứ tự tăng,
+recent và backlog theo lần thử cũ nhất. Latest ghi trước không được đẩy
+checkpoint qua ID chưa thử, kể cả khi persist latest lỗi. Chỉ nâng checkpoint
+đến latest khi mọi ID trước đó đã scan. `remaining_unresolved` đếm ID chưa
+found đến source latest; còn thiếu thì run `partial`, không tuyên bố history
+đầy đủ. Quyết định/vận hành local ở [ADR 0007](DECISIONS/0007-fast-collection.md).
+
 ## Retry, duplicate, correction
+
+### Bảng giải thưởng
+
+Adapter đọc bảng `chitietketqua_table` đúng game cùng trang theo kỳ: 7 hạng
+Lotto, 4 hạng Mega; validate heading, tên/thứ tự hạng, điều kiện main/special
+và integer có dấu phân tách hàng nghìn. Thiếu bảng cho phép nhập kết quả quay
+với snapshot chưa biết; bảng hiện diện nhưng malformed phải báo lỗi.
+
+Collector/import lưu cả bảng nếu có. Kỳ đã lưu chưa có snapshot được bổ sung
+bằng import giới hạn đúng ID, `recheck=True`, khi gọi API bảng giải; dùng cùng
+advisory lock, throttle, retry, run/item và checkpoint. Counter `enriched` đếm
+snapshot được bổ sung lần đầu, không tăng số draw/`inserted`. Conflict bảng
+đã biết đi theo correction dưới đây; domain policy ở
+[DOMAIN.md](DOMAIN.md#bảng-giải-thưởng-công-bố).
+
+### Xử lý lỗi và thay đổi nguồn
 
 - HTTP connect/read timeout 10 giây mỗi request; tối đa 3 attempts với
   exponential backoff có jitter cho timeout/429/5xx. `Retry-After` trên 60 giây
   được hoãn sang lượt sau, không retry sớm. 4xx khác 429, HTML
   không đúng schema, game/ID không khớp hoặc số sai được báo lỗi/quarantine,
   không retry mù. Tôn trọng `Retry-After` và giảm tốc nếu bị rate limit.
+  `LOTTO_SOURCE_REQUEST_INTERVAL` mặc định 1 giây, chỉ cho phép >=1 và hữu hạn;
+  tăng giá trị để giảm tốc cho import/collector/audit/enrichment. CLI host vẫn
+  dùng cùng nguồn/adapter và PostgreSQL, không chuyển sang bên thứ ba. Khi
+  website trả trang Cloudflare challenge/429, giữ trạng thái lỗi và retry sau,
+  không coi HTML challenge là draw hoặc thay bằng dữ liệu tự dựng.
+  Header `cf-mitigated: challenge` dừng ngay, không retry request đó. HTTP 429
+  thường sau tối đa 3 attempts hoặc Retry-After quá dài cũng hoãn cả batch.
+  Import ngừng submit ID mới, chờ tối đa 3 task đang chạy và ghi counters đúng;
+  collector dừng ở ID lỗi. Không tiếp tục hàng nghìn request khi đã bị chặn.
 - `(game, draw_id)` unique ở PostgreSQL. Insert dùng transaction và DB
   conflict handling, không chỉ check-before-insert. Payload canonical bằng
   nhau: không đổi draw, ghi `attempted_at` trong `ingestion_items`; khác
@@ -81,5 +189,10 @@ APScheduler chạy trong **một process** backend ở Compose MVP. Không mở 
 API workers cùng khởi scheduler; dùng advisory lock PostgreSQL theo game/job
 để ngăn overlap kể cả trigger tay. Scheduler gọi cùng ingestion service với
 manual import. Khi sau này scale backend, phải tách job runner hoặc đổi cơ chế
-ownership trước; không nhân bản scheduler. `last_successful_ingestion_at` và
+ownership trước; không nhân bản scheduler. Khi bật scheduler, mỗi lần backend
+khởi động tạo một lượt collector nền cho mỗi game để bù kỳ bỏ lỡ lúc máy/Docker
+tắt; không chặn HTTP và không chờ cron kế tiếp. Lượt này dùng checkpoint, retry
+và khóa của collector hiện có; không tự import lịch sử trống. Nếu lỗi nguồn,
+lượt sau theo lịch sẽ thử lại. Quyết định ở [ADR 0004](DECISIONS/0004-collector-startup-catchup.md).
+`last_successful_ingestion_at` và
 `last_failed_ingestion_at` được hiển thị riêng với `latest_draw_date`.

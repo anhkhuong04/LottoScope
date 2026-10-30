@@ -21,7 +21,9 @@ from app.db.base import Base
 class IngestionRunRow(Base):
     __tablename__ = "ingestion_runs"
     __table_args__ = (
-        CheckConstraint("game IN ('lotto_535', 'mega_645')", name="ck_ingestion_runs_game"),
+        CheckConstraint(
+            "game IN ('lotto_535', 'mega_645', 'power_655')", name="ck_ingestion_runs_game"
+        ),
         CheckConstraint("kind IN ('import', 'collector')", name="ck_ingestion_runs_kind"),
         CheckConstraint(
             "status IN ('running', 'success', 'partial', 'failed')", name="ck_ingestion_runs_status"
@@ -42,7 +44,9 @@ class IngestionRunRow(Base):
 class IngestionCheckpointRow(Base):
     __tablename__ = "ingestion_checkpoints"
     __table_args__ = (
-        CheckConstraint("game IN ('lotto_535', 'mega_645')", name="ck_ingestion_checkpoints_game"),
+        CheckConstraint(
+            "game IN ('lotto_535', 'mega_645', 'power_655')", name="ck_ingestion_checkpoints_game"
+        ),
         CheckConstraint("last_scanned_seq >= 0", name="ck_ingestion_checkpoints_seq"),
     )
 
@@ -54,7 +58,9 @@ class IngestionCheckpointRow(Base):
 class IngestionItemRow(Base):
     __tablename__ = "ingestion_items"
     __table_args__ = (
-        CheckConstraint("game IN ('lotto_535', 'mega_645')", name="ck_ingestion_items_game"),
+        CheckConstraint(
+            "game IN ('lotto_535', 'mega_645', 'power_655')", name="ck_ingestion_items_game"
+        ),
         CheckConstraint("draw_seq > 0", name="ck_ingestion_items_seq"),
         CheckConstraint(
             "status IN ('found', 'missing', 'invalid', 'failed', 'excluded')",

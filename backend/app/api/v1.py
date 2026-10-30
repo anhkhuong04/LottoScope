@@ -8,6 +8,7 @@ from sqlalchemy import Engine
 
 from app.analytics.service import AnalysisWindow, AnalyticsService
 from app.api.errors import ApiNotFoundError
+from app.core.config import get_settings
 from app.db.session import get_engine
 from app.games.definitions import GAMES
 from app.schemas.v1 import (
@@ -23,16 +24,38 @@ from app.schemas.v1 import (
     NumbersOut,
     PairDetailOut,
     PairsOut,
+    PrizesOut,
     StatusOut,
+    StrictBody,
+    SyncOut,
     WindowIn,
 )
 from app.services.checker import CheckerService
 from app.services.generator import GeneratorService
 from app.services.history import DrawHistoryService
+from app.services.prizes import DrawPrizeService
 from app.services.status import game_status
+from app.services.sync import ManualSyncService
 
 router = APIRouter(prefix="/api/v1", tags=["v1"])
 Database = Annotated[Engine, Depends(get_engine)]
+
+
+def get_prize_service(engine: Database) -> DrawPrizeService:
+    return DrawPrizeService(engine)
+
+
+def get_sync_service(engine: Database) -> ManualSyncService:
+    return ManualSyncService(
+        engine, community_fallback_enabled=get_settings().community_fallback_enabled
+    )
+
+
+@router.post("/games/{game}/sync", response_model=SyncOut)
+def sync_game(
+    game: str, _body: StrictBody, service: Annotated[ManualSyncService, Depends(get_sync_service)]
+) -> SyncOut:
+    return SyncOut.model_validate(service.sync(game))
 
 
 def analysis_window(
@@ -108,6 +131,16 @@ def draw_by_id(game: str, draw_id: str, engine: Database) -> DrawOut:
     if draw is None:
         raise ApiNotFoundError("draw_not_found", "Draw was not found")
     return DrawOut.model_validate(draw)
+
+
+@router.get("/games/{game}/draws/{draw_id}/prizes", response_model=PrizesOut)
+def draw_prizes(
+    game: str, draw_id: str, service: Annotated[DrawPrizeService, Depends(get_prize_service)]
+) -> PrizesOut:
+    details = service.get(game, draw_id)
+    if details is None:
+        raise ApiNotFoundError("draw_not_found", "Draw was not found")
+    return PrizesOut.model_validate(details)
 
 
 @router.get("/games/{game}/analytics/numbers", response_model=NumbersOut)

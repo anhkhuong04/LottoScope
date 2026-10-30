@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 import { api, globalSearch, type CheckResponse } from '../api'
 import { useApp } from '../state'
 import { Ball, Balls, Card, DrawRows, PageHead, Pager, WindowSelector, formatPercent } from '../ui'
+import { parseCombination } from '../features/draw-machine/checkerLink'
 
 export function validateNumbers(
   numbers: number[],
@@ -19,7 +20,10 @@ export function validateNumbers(
 
 export function Checker() {
   const { game, window } = useApp()
-  const [selected, setSelected] = useState<number[]>([])
+  const [search] = useSearchParams()
+  const [selected, setSelected] = useState<number[]>(() =>
+    parseCombination(search.get('numbers'), game!.main_min, game!.main_max, game!.main_count),
+  )
   const [input, setInput] = useState('')
   const [inputError, setInputError] = useState<string | null>(null)
   const [similarPage, setSimilarPage] = useState(1)
@@ -27,6 +31,8 @@ export function Checker() {
   const [error, setError] = useState<string | null>(null)
   const [loadingKey, setLoadingKey] = useState<string | null>(null)
   const controller = useRef<AbortController | null>(null)
+  const resultFocus = useRef<HTMLDivElement>(null)
+  const focusOnResult = useRef(false)
   const contextKey = `${game!.id}:${JSON.stringify(window)}:${[...selected].sort((a, b) => a - b).join(',')}`
   const key = `${contextKey}:${similarPage}`
   const loading = loadingKey?.startsWith(`${contextKey}:`) ?? false
@@ -87,6 +93,7 @@ export function Checker() {
     }
     controller.current?.abort()
     const request = new AbortController()
+    focusOnResult.current = page === 1
     controller.current = request
     const requestKey = `${game!.id}:${JSON.stringify(window)}:${selected.join(',')}:${page}`
     setLoadingKey(requestKey)
@@ -115,6 +122,12 @@ export function Checker() {
   }
   const data = result?.key === key ? result.data : null
   const visibleError = result?.key === key ? error : null
+  useEffect(() => {
+    if (data && focusOnResult.current) {
+      resultFocus.current?.focus()
+      focusOnResult.current = false
+    }
+  }, [data])
   return (
     <>
       <PageHead
@@ -194,39 +207,69 @@ export function Checker() {
           </button>
         </Card>
         <Card title="Kết quả đối chiếu">
-          <div aria-live="polite">
-            {!data && !loading && !visibleError && (
-              <p className="muted">Chọn đủ số rồi bắt đầu kiểm tra.</p>
-            )}
-            {loading && <p className="muted">Đang đối chiếu dữ liệu…</p>}
-            {visibleError && (
-              <div className="notice error" role="alert">
-                {data ? 'Kết quả cũ trong cùng phạm vi. ' : ''}
-                {visibleError} <button onClick={() => run()}>Thử lại</button>
+          <div
+            className="result-focus"
+            ref={resultFocus}
+            tabIndex={-1}
+            aria-label="Kết quả đối chiếu"
+          >
+            <div aria-live="polite">
+              {!data && !loading && !visibleError && (
+                <div className="checker-empty">
+                  <div className="checker-slots" aria-hidden="true">
+                    {Array.from({ length: game!.main_count }, (_, index) => (
+                      <span className={selected[index] !== undefined ? 'filled' : ''} key={index}>
+                        {selected[index] !== undefined
+                          ? String(selected[index]).padStart(2, '0')
+                          : '—'}
+                      </span>
+                    ))}
+                  </div>
+                  <h3>
+                    {selected.length === game!.main_count
+                      ? 'Bộ số đã sẵn sàng'
+                      : 'Bắt đầu từ bộ số của bạn'}
+                  </h3>
+                  <p className="muted">
+                    {selected.length}/{game!.main_count} số chính đã chọn. Chọn đủ số rồi bắt đầu
+                    kiểm tra.
+                  </p>
+                  <p className="muted">
+                    Bạn sẽ thấy các kỳ trùng chính xác, mức trùng số và thống kê trong phạm vi đã
+                    chọn.
+                  </p>
+                </div>
+              )}
+              {loading && <p className="muted">Đang đối chiếu dữ liệu…</p>}
+              {visibleError && (
+                <div className="notice error" role="alert">
+                  {data ? 'Kết quả cũ trong cùng phạm vi. ' : ''}
+                  {visibleError} <button onClick={() => run()}>Thử lại</button>
+                </div>
+              )}
+            </div>
+            {data && (
+              <div className="stack">
+                <Balls values={data.main_numbers} large />
+                <span className="pill">Đối chiếu {data.history_draw_count} kỳ trong lịch sử</span>
+                <h2>Trùng chính xác: {data.exact_match_count} kỳ</h2>
+                {data.last_exact_match ? (
+                  <div>
+                    Kỳ gần nhất:{' '}
+                    <Link
+                      to={`/history/${data.last_exact_match.draw_id}${globalSearch(game!.id, window)}`}
+                    >
+                      {data.last_exact_match.draw_id}
+                    </Link>
+                  </div>
+                ) : (
+                  <p className="muted">
+                    Không có kỳ trùng chính xác; đây là kết quả kiểm tra hợp lệ.
+                  </p>
+                )}
               </div>
             )}
           </div>
-          {data && (
-            <div className="stack">
-              <Balls values={data.main_numbers} large />
-              <span className="pill">Đối chiếu {data.history_draw_count} kỳ trong lịch sử</span>
-              <h2>Trùng chính xác: {data.exact_match_count} kỳ</h2>
-              {data.last_exact_match ? (
-                <div>
-                  Kỳ gần nhất:{' '}
-                  <Link
-                    to={`/history/${data.last_exact_match.draw_id}${globalSearch(game!.id, window)}`}
-                  >
-                    {data.last_exact_match.draw_id}
-                  </Link>
-                </div>
-              ) : (
-                <p className="muted">
-                  Không có kỳ trùng chính xác; đây là kết quả kiểm tra hợp lệ.
-                </p>
-              )}
-            </div>
-          )}
         </Card>
       </div>
       {data && (

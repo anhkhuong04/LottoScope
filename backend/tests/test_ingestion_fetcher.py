@@ -6,10 +6,34 @@ from time import monotonic
 
 import httpx
 import pytest
+from pydantic import ValidationError
 
-from app.ingestion.fetcher import SourceFetchError, VietlottFetcher
+from app.core.config import Settings, get_settings
+from app.ingestion.fetcher import SourceFetchError, VietlottFetcher, configured_fetcher
 
 URL = "https://vietlott.vn/example"
+
+
+def test_operator_can_slow_source_requests(monkeypatch) -> None:
+    monkeypatch.setenv(
+        "LOTTO_DATABASE_URL", "postgresql+psycopg://lotto:example@localhost/lotto_test"
+    )
+    monkeypatch.setenv("LOTTO_SOURCE_REQUEST_INTERVAL", "2.0")
+    get_settings.cache_clear()
+    try:
+        with httpx.Client() as client:
+            assert configured_fetcher(client).min_interval == 2.0
+    finally:
+        get_settings.cache_clear()
+
+
+@pytest.mark.parametrize("interval", [0, 0.5, -1, float("inf"), float("nan")])
+def test_source_interval_cannot_exceed_request_rate_ceiling(interval: float) -> None:
+    with pytest.raises(ValidationError):
+        Settings(
+            database_url="postgresql+psycopg://lotto:example@localhost/lotto_test",
+            source_request_interval=interval,
+        )
 
 
 def test_retry_transient_with_retry_after_and_bounded_attempts() -> None:
@@ -111,3 +135,20 @@ def test_server_error_retries_then_succeeds() -> None:
         html, _ = VietlottFetcher(client, sleep=lambda _: None, jitter=lambda: 0.0).fetch(URL)
     assert html == "ok"
     assert calls == 2
+
+
+@pytest.mark.parametrize("code", [200, 403, 429])
+def test_cloudflare_challenge_defers_immediately_without_retries(code: int) -> None:
+    calls = 0
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal calls
+        calls += 1
+        return httpx.Response(
+            code, headers={"cf-mitigated": "challenge"}, text="challenge", request=request
+        )
+
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        with pytest.raises(SourceFetchError, match="challenge"):
+            VietlottFetcher(client, sleep=lambda _: None).fetch(URL)
+    assert calls == 1

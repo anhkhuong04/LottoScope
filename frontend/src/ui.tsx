@@ -1,14 +1,6 @@
-import {
-  AlertCircle,
-  ArrowLeft,
-  ArrowRight,
-  Clock3,
-  DatabaseZap,
-  LoaderCircle,
-  RefreshCw,
-} from 'lucide-react'
+import { AlertCircle, ArrowLeft, ArrowRight, Clock3, DatabaseZap, RefreshCw } from 'lucide-react'
 import { Link, useLocation } from 'react-router'
-import { useState, type ReactNode } from 'react'
+import { useEffect, useId, useState, type ReactNode } from 'react'
 import {
   ApiError,
   globalSearch,
@@ -78,7 +70,12 @@ export function DataTable({
   mobileHidden?: boolean
 }) {
   return (
-    <div className={`${mobileHidden ? 'desktop-only ' : ''}table-wrap`}>
+    <div
+      role="region"
+      aria-label="Bảng dữ liệu"
+      tabIndex={0}
+      className={`${mobileHidden ? 'desktop-only ' : ''}table-wrap`}
+    >
       <table className="data-table">{children}</table>
     </div>
   )
@@ -98,6 +95,30 @@ export function Ball({
     </span>
   )
 }
+export function FrequencyTile({
+  number,
+  frequency,
+  maximum,
+  to,
+}: {
+  number: number
+  frequency: number
+  maximum: number
+  to: string
+}) {
+  return (
+    <Link className="number-tile frequency-tile" to={to}>
+      <Ball value={number} />
+      <span className="frequency-value">
+        {frequency} <small>kỳ</small>
+      </span>
+      <span className="frequency-meter" aria-hidden="true">
+        <span style={{ width: `${(100 * frequency) / Math.max(1, maximum)}%` }} />
+      </span>
+    </Link>
+  )
+}
+
 export function Balls({
   values,
   special,
@@ -135,6 +156,7 @@ export function DataState({
   hasData,
   empty = 'Chưa có dữ liệu trong phạm vi này.',
   retry,
+  showRefresh = true,
   children,
 }: {
   loading: boolean
@@ -142,15 +164,10 @@ export function DataState({
   hasData: boolean
   empty?: string
   retry: () => void
+  showRefresh?: boolean
   children: ReactNode
 }) {
-  if (!hasData && loading)
-    return (
-      <div className="state" role="status">
-        <LoaderCircle size={26} />
-        <h3>Đang tải dữ liệu…</h3>
-      </div>
-    )
+  if (!hasData && loading) return <LoadingSkeleton />
   if (!hasData && error && !(error instanceof ApiError && error.kind === 'missing'))
     return (
       <div className="state" role="alert">
@@ -181,33 +198,87 @@ export function DataState({
           Đang cập nhật dữ liệu…
         </div>
       )}
-      {children}
-      <div className="refresh-row">
-        <button className="btn ghost" disabled={loading} onClick={retry}>
-          <RefreshCw size={15} /> Cập nhật
-        </button>
-      </div>
+      <div className="data-content">{children}</div>
+      {showRefresh && (
+        <div className="refresh-row">
+          <button className="btn ghost" disabled={loading} onClick={retry}>
+            <RefreshCw size={15} /> Làm mới hiển thị
+          </button>
+        </div>
+      )}
     </>
   )
 }
-export function WindowSelector() {
+
+export function LoadingSkeleton({ page = false }: { page?: boolean }) {
+  const [waiting, setWaiting] = useState(false)
+  useEffect(() => {
+    const timer = setTimeout(() => setWaiting(true), 8000)
+    return () => clearTimeout(timer)
+  }, [])
+  return (
+    <div
+      className={`loading-skeleton${page ? ' page-skeleton' : ''}`}
+      role="status"
+      aria-busy="true"
+    >
+      <span className="sr-only">
+        {page ? 'Đang tải danh sách game và dữ liệu…' : 'Đang tải dữ liệu…'}
+      </span>
+      <div className="skeleton-content" aria-hidden="true">
+        <div className="skeleton-line short" />
+        <div className="skeleton-line title" />
+        <div className="skeleton-balls">
+          {[0, 1, 2, 3, 4].map((item) => (
+            <span key={item} />
+          ))}
+        </div>
+        <div className="skeleton-line" />
+        <div className="skeleton-line short" />
+      </div>
+      {page && (
+        <div className="skeleton-panels" aria-hidden="true">
+          {[0, 1, 2, 3].map((item) => (
+            <div className="skeleton-content" key={item}>
+              <div className="skeleton-line short" />
+              <div className="skeleton-line title" />
+            </div>
+          ))}
+        </div>
+      )}
+      {waiting && (
+        <p className="loading-hint">
+          Dịch vụ đang kết nối. Lần mở đầu có thể cần thêm thời gian; bạn có thể giữ trang này để
+          chờ.
+        </p>
+      )}
+    </div>
+  )
+}
+export function WindowSelector({ children }: { children?: ReactNode }) {
   const { window, setWindow } = useApp()
-  return <WindowSelectorForm key={JSON.stringify(window)} window={window} setWindow={setWindow} />
+  return (
+    <WindowSelectorForm key={JSON.stringify(window)} window={window} setWindow={setWindow}>
+      {children}
+    </WindowSelectorForm>
+  )
 }
 
 function WindowSelectorForm({
   window,
   setWindow,
+  children,
 }: {
   window: AnalysisWindow
   setWindow: (value: AnalysisWindow) => void
+  children?: ReactNode
 }) {
   const [from, setFrom] = useState(window.kind === 'date_range' ? window.from_date : '')
   const [to, setTo] = useState(window.kind === 'date_range' ? window.to_date : '')
   const [draftMode, setDraftMode] = useState<string | null>(null)
   const value = draftMode ?? (window.kind === 'last_draws' ? String(window.count) : window.kind)
   return (
-    <div className="toolbar">
+    <div className="toolbar window-toolbar">
       <label className="field">
         Phạm vi phân tích
         <select
@@ -258,6 +329,7 @@ function WindowSelectorForm({
           </button>
         </>
       )}
+      {children}
     </div>
   )
 }
@@ -310,27 +382,97 @@ export function Pager({
 }) {
   const pages = Math.max(1, Math.ceil(total / pageSize))
   return (
-    <div className="pagination">
-      <span>
+    <nav className="pagination" aria-label="Phân trang">
+      <span className="pagination-summary" aria-live="polite">
         Trang {page}/{pages} · {total} mục
       </span>
-      <button
-        aria-label="Trang trước"
-        className="btn"
-        disabled={page <= 1}
-        onClick={() => setPage(page - 1)}
-      >
-        <ArrowLeft size={16} />
-      </button>
-      <button
-        aria-label="Trang sau"
-        className="btn"
-        disabled={page >= pages}
-        onClick={() => setPage(page + 1)}
-      >
-        <ArrowRight size={16} />
-      </button>
-    </div>
+      <PageJump key={`${page}:${pages}:${total}`} page={page} pages={pages} setPage={setPage} />
+      <div className="pagination-arrows">
+        <button
+          aria-label="Trang trước"
+          className="btn"
+          disabled={page <= 1}
+          onClick={() => setPage(page - 1)}
+        >
+          <ArrowLeft size={16} />
+        </button>
+        <button
+          aria-label="Trang sau"
+          className="btn"
+          disabled={page >= pages}
+          onClick={() => setPage(page + 1)}
+        >
+          <ArrowRight size={16} />
+        </button>
+      </div>
+    </nav>
+  )
+}
+
+function PageJump({
+  page,
+  pages,
+  setPage,
+}: {
+  page: number
+  pages: number
+  setPage: (page: number) => void
+}) {
+  const id = useId()
+  const [draft, setDraft] = useState(String(page))
+  const [error, setError] = useState<string | null>(null)
+  return (
+    <form
+      className="page-jump"
+      noValidate
+      onSubmit={(event) => {
+        event.preventDefault()
+        const value = draft.trim()
+        const target = Number(value)
+        if (!/^\d+$/.test(value) || !Number.isSafeInteger(target) || target < 1 || target > pages) {
+          setError(`Nhập số trang từ 1 đến ${pages}.`)
+          return
+        }
+        setError(null)
+        setDraft(String(target))
+        if (target !== page) setPage(target)
+      }}
+    >
+      <div className="page-jump-controls">
+        <label htmlFor={id}>Đến trang</label>
+        <input
+          id={id}
+          className="text-input"
+          type="text"
+          inputMode="numeric"
+          value={draft}
+          disabled={pages <= 1}
+          aria-invalid={!!error}
+          aria-describedby={`${id}-hint${error ? ` ${id}-error` : ''}`}
+          onChange={(event) => {
+            setDraft(event.target.value)
+            setError(null)
+          }}
+          onKeyDown={(event) => {
+            if (event.key === 'Escape') {
+              setDraft(String(page))
+              setError(null)
+            }
+          }}
+        />
+        <span id={`${id}-hint`} className="muted">
+          / {pages}
+        </span>
+        <button className="btn" type="submit" disabled={pages <= 1}>
+          Đi
+        </button>
+      </div>
+      {error && (
+        <span id={`${id}-error`} className="page-jump-error" role="alert">
+          {error}
+        </span>
+      )}
+    </form>
   )
 }
 export function ContextNote({ count, version }: { count: number; version: number }) {
@@ -352,7 +494,10 @@ export function BackLink({ to, label }: { to: string; label: string }) {
 export function PairLink({ pair }: { pair: PairMetric }) {
   const { gameId, window } = useApp()
   return (
-    <Link to={`/pairs/${pair.numbers.join('-')}${globalSearch(gameId, window)}`}>
+    <Link
+      className="pair-link"
+      to={`/pairs/${pair.numbers.join('-')}${globalSearch(gameId, window)}`}
+    >
       <Balls values={pair.numbers} />
     </Link>
   )
