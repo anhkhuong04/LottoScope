@@ -75,6 +75,12 @@ khi chuyển URL, không ghi đè Neon hiện tại.
 
 ## Phần nghiệm thu chưa đạt / chưa đo
 
+Cập nhật 30/10/2026: manual sync đã được khôi phục bằng fallback cộng đồng
+được duyệt ở ADR 0012. Render/Vercel đã release và thêm 4 kỳ Mega, 2 kỳ Power;
+lịch sử cũ giữ nguyên. Bằng chứng, idempotence, provenance và backlog Power
+`01410` ở [SOURCE_FALLBACK_ACCEPTANCE.md](SOURCE_FALLBACK_ACCEPTANCE.md).
+Đoạn dưới ghi nhận giới hạn truy cập **nguồn chính thức**, vẫn còn hiệu lực.
+
 **Tải dữ liệu mới bị nguồn chặn.** Gọi sync thực có chủ đích từ Render cho cả
 ba game trả HTTP 503 `sync_source_unavailable`; ingestion audit trên Neon ghi
 `Cloudflare challenge; deferred`. Gọi Lotto lần nữa trong cooldown trả 429

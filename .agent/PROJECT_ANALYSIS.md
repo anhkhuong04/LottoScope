@@ -38,7 +38,9 @@ contract POST/cooldown ở API, vận hành mặc định không scheduler ở R
   chọn Vercel + Render Free + Neon Free cho khoảng 10 người, ưu tiên $0 và
   không phụ thuộc máy cá nhân. Gateway giữ origin token, PostgreSQL direct,
   scheduler tắt; [runbook](../docs/DEPLOYMENT_FREE.md). Resources/go-live đã có
-  [bằng chứng](../docs/DEPLOYMENT_ACCEPTANCE.md); live source sync bị challenge,
+  [bằng chứng](../docs/DEPLOYMENT_ACCEPTANCE.md); nguồn chính thức bị challenge,
+  manual sync được khôi phục bằng fallback theo ADR 0012 và
+  [nghiệm thu](../docs/SOURCE_FALLBACK_ACCEPTANCE.md);
   cold start sau idle chưa đo. Thay proposal Cloudflare
   trong task-deloy.md cho hướng deployment được chọn, không port Workers/D1.
 
