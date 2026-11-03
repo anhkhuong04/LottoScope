@@ -26,7 +26,6 @@ export function Pairs() {
   return (
     <>
       <PageHead
-        kicker="Phân tích cặp"
         title="Cặp số trong lịch sử"
         description="Tần suất đồng xuất hiện của hai số chính qua các kỳ."
       />
@@ -122,7 +121,6 @@ export function PairDetailPage() {
     <>
       <BackLink to="/pairs" label="Về cặp số" />
       <PageHead
-        kicker="Chi tiết cặp"
         title={`Cặp ${pair}`}
         description="Các kỳ có cả hai số chính trong phạm vi phân tích."
       />

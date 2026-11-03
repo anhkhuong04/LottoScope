@@ -35,7 +35,6 @@ export function Numbers() {
   return (
     <>
       <PageHead
-        kicker="Phân tích số"
         title="Tần suất & khoảng cách"
         description="Mỗi số chính được thống kê độc lập trong phạm vi đã chọn."
       />
@@ -167,7 +166,6 @@ export function NumberDetailPage() {
     <>
       <BackLink to="/numbers" label="Về phân tích số" />
       <PageHead
-        kicker="Chi tiết số"
         title={`Số ${String(number).padStart(2, '0')}`}
         description={`Thống kê từ các kỳ ${game!.label} trong phạm vi đã chọn.`}
       />

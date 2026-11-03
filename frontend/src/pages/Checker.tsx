@@ -131,7 +131,6 @@ export function Checker() {
   return (
     <>
       <PageHead
-        kicker="Kiểm tra bộ số"
         title="Đối chiếu với lịch sử"
         description="So sánh số chính của bộ bạn chọn với các kỳ đã lưu; không bao gồm số đặc biệt."
       />

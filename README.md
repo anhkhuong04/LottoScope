@@ -53,8 +53,8 @@ không phải kết quả quay chính thức hoặc dự đoán.
 
 ### Cập nhật dữ liệu và thời gian chờ
 
-- **Đồng bộ** liên hệ nguồn và lưu kỳ mới. **Làm mới hiển thị** chỉ đọc lại
-  dữ liệu đã lưu, không yêu cầu nguồn cập nhật.
+- **Đồng bộ** liên hệ nguồn, lưu kỳ mới và tự cập nhật giao diện. Thay bộ lọc
+  tự tải dữ liệu tương ứng; khi gặp lỗi, dùng **Thử lại** tại phần bị lỗi.
 - Website hiện đồng bộ **thủ công**, không có lịch tự lấy kỳ mới. Dữ liệu có
   thể chậm hơn thời điểm quay; xem ID/ngày kỳ mới nhất và tình trạng đồng bộ.
 - Cloud ưu tiên Vietlott. Khi nguồn chính thức trả Cloudflare challenge, hệ

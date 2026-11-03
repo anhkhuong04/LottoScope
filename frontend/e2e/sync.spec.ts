@@ -46,7 +46,7 @@ test('manual sync posts once and reloads stored dashboard data after completion'
   await expect(
     page.getByRole('status').filter({ hasText: 'Lotto 5/35: đã thêm 2 kỳ mới' }),
   ).toBeVisible()
-  await expect(page.locator('.metric-value').first()).toHaveText('99999')
+  await expect(page.locator('.latest-meta span').first()).toHaveText('Kỳ 99999')
   await expect(page.locator('.sync-feedback')).not.toContainText(/Minh Chính|Minh Ngọc|vietvudanh/)
   await expect(
     page.getByRole('link', { name: /Minh Chính|Minh Ngọc|Vietlott|vietvudanh/ }),
@@ -90,10 +90,10 @@ test('a late sync keeps the selected game and reports source errors without losi
     page.getByRole('status').filter({ hasText: 'Lotto 5/35: đã kiểm tra nguồn' }),
   ).toBeVisible()
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Tổng quan Mega 6/45')
-  await expect(page.locator('.metric-value').first()).toHaveText(/^\d{5}$/)
-  const saved = await page.locator('.metric-value').first().textContent()
+  await expect(page.locator('.latest-meta span').first()).toHaveText(/^Kỳ \d{5}$/)
+  const saved = await page.locator('.latest-meta span').first().textContent()
   await page.getByRole('button', { name: 'Đồng bộ', exact: true }).click()
   await expect(page.getByRole('alert')).toContainText('Mega 6/45: Chưa thể hoàn tất')
   await expect(page.getByRole('alert')).toContainText('Dữ liệu đã lưu vẫn được giữ')
-  await expect(page.locator('.metric-value').first()).toHaveText(saved!)
+  await expect(page.locator('.latest-meta span').first()).toHaveText(saved!)
 })

@@ -24,6 +24,10 @@ contract POST/cooldown ở API, vận hành mặc định không scheduler ở R
 
 ## Phạm vi
 
+- UI cleanup 03/11/2026: người dùng yêu cầu bỏ slogan/caption/KPI trùng và
+  refresh dư thừa, gom metadata và giải thích phương pháp; quy ước ở
+  [Design system](../docs/DESIGN_SYSTEM.md). Giữ routes, query và logic thống kê.
+
 - Nguồn dự phòng 03/11/2026: [ADR 0013](../docs/DECISIONS/0013-publisher-source-fallback.md)
   thay GitHub bằng Minh Chính (Lotto)/Minh Ngọc (Mega/Power). User yêu cầu ẩn
   tên nguồn trên UI; provenance DB/API/audit và invariants ADR 0012 vẫn giữ.

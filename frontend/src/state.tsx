@@ -16,6 +16,8 @@ type AppContext = {
 }
 const Context = createContext<AppContext | null>(null)
 const allowedCounts = [10, 20, 30, 50, 100]
+// UI capabilities, independent of the games the API may add later.
+const supportedGames = new Set(['lotto_535', 'mega_645', 'power_655'])
 
 export function parseWindow(search: URLSearchParams): AnalysisWindow {
   if (search.get('window') === 'all_time') return { kind: 'all_time' }
@@ -45,8 +47,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const controller = new AbortController()
     api<{ items: Game[] }>('/games', controller.signal)
       .then((result) => {
-        setGames(result.items)
-        setGameError(null)
+        const available = result.items.filter((item) => supportedGames.has(item.id))
+        setGames(available)
+        setGameError(available.length ? null : 'Chưa có game được hỗ trợ.')
       })
       .catch((error) => {
         if (!controller.signal.aborted)

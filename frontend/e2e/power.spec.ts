@@ -120,7 +120,12 @@ test('late Mega response cannot replace Power analytics; Power error can retry',
   await page.route('**/api/v1/games/power_655/analytics/numbers?*', async (route) =>
     failed ? route.abort() : route.fallback(),
   )
-  await page.getByRole('button', { name: 'Làm mới hiển thị' }).click()
+  await page.route('**/api/v1/games/power_655/sync', (route) =>
+    route.fulfill({
+      json: { created: 0, enriched: 0, remaining_unresolved: 0 },
+    }),
+  )
+  await page.getByRole('button', { name: 'Đồng bộ', exact: true }).click()
   await expect(page.getByText(/Dữ liệu cũ trong cùng phạm vi/)).toBeVisible()
   failed = false
   await page.getByRole('button', { name: 'Thử lại' }).click()

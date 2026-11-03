@@ -12,12 +12,10 @@ import {
 import { useApp } from './state'
 
 export function PageHead({
-  kicker,
   title,
   description,
   children,
 }: {
-  kicker: string
   title: string
   description: string
   children?: ReactNode
@@ -25,7 +23,6 @@ export function PageHead({
   return (
     <div className="page-head">
       <div>
-        <p className="eyebrow">{kicker}</p>
         <h1>{title}</h1>
         <p className="page-intro">{description}</p>
       </div>
@@ -141,22 +138,12 @@ export function Balls({
     </div>
   )
 }
-export function Metric({ label, value, foot }: { label: string; value: ReactNode; foot?: string }) {
-  return (
-    <div className="card metric">
-      <div className="metric-label">{label}</div>
-      <div className="metric-value">{value ?? '—'}</div>
-      {foot && <div className="metric-foot">{foot}</div>}
-    </div>
-  )
-}
 export function DataState({
   loading,
   error,
   hasData,
   empty = 'Chưa có dữ liệu trong phạm vi này.',
   retry,
-  showRefresh = true,
   children,
 }: {
   loading: boolean
@@ -164,7 +151,6 @@ export function DataState({
   hasData: boolean
   empty?: string
   retry: () => void
-  showRefresh?: boolean
   children: ReactNode
 }) {
   if (!hasData && loading) return <LoadingSkeleton />
@@ -199,13 +185,6 @@ export function DataState({
         </div>
       )}
       <div className="data-content">{children}</div>
-      {showRefresh && (
-        <div className="refresh-row">
-          <button className="btn ghost" disabled={loading} onClick={retry}>
-            <RefreshCw size={15} /> Làm mới hiển thị
-          </button>
-        </div>
-      )}
     </>
   )
 }
@@ -477,9 +456,22 @@ function PageJump({
 }
 export function ContextNote({ count, version }: { count: number; version: number }) {
   return (
-    <span className="pill">
-      <Clock3 size={13} /> {count} kỳ trong phạm vi · bản dữ liệu {version}
-    </span>
+    <details className="data-details context-details">
+      <summary>
+        <Clock3 size={16} aria-hidden="true" />
+        Thông tin dữ liệu
+      </summary>
+      <dl className="data-facts">
+        <div>
+          <dt>Số kỳ trong phạm vi</dt>
+          <dd>{count}</dd>
+        </div>
+        <div>
+          <dt>Phiên bản dữ liệu</dt>
+          <dd>{version}</dd>
+        </div>
+      </dl>
+    </details>
   )
 }
 export function BackLink({ to, label }: { to: string; label: string }) {

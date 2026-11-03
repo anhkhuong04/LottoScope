@@ -28,7 +28,6 @@ export function History() {
   return (
     <>
       <PageHead
-        kicker="Lịch sử"
         title="Kết quả các kỳ quay"
         description="Tìm theo ngày hoặc mã kỳ; số đặc biệt được hiển thị riêng."
       />
@@ -146,7 +145,7 @@ export function DrawDetail() {
   return (
     <>
       <BackLink to="/history" label="Về lịch sử" />
-      <PageHead kicker="Chi tiết kỳ quay" title={`Kỳ ${drawId}`} description={game!.label} />
+      <PageHead title={`Kỳ ${drawId}`} description={game!.label} />
       <Card>
         <DataState {...result} hasData={!!result.data} empty="Không tìm thấy kỳ quay.">
           {result.data && (
