@@ -24,6 +24,10 @@ contract POST/cooldown ở API, vận hành mặc định không scheduler ở R
 
 ## Phạm vi
 
+- Nguồn dự phòng 03/11/2026: [ADR 0013](../docs/DECISIONS/0013-publisher-source-fallback.md)
+  thay GitHub bằng Minh Chính (Lotto)/Minh Ngọc (Mega/Power). User yêu cầu ẩn
+  tên nguồn trên UI; provenance DB/API/audit và invariants ADR 0012 vẫn giữ.
+
 - Nguồn dự phòng cloud (30/10/2026): người dùng duyệt community fallback có
   provenance/validation tại [ADR 0012](../docs/DECISIONS/0012-community-source-fallback.md).
   Chỉ append kỳ mới khi official Cloudflare challenge; không thay lịch sử hoặc domain.

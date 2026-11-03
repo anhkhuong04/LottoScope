@@ -1,5 +1,41 @@
 # SOURCE — Khôi phục cập nhật dữ liệu cloud
 
+## Thay publisher — 03/11/2026
+
+Theo [ADR 0013](DECISIONS/0013-publisher-source-fallback.md), implementation đã
+bỏ GitHub JSONL: Lotto dùng Minh Chính, Mega/Power dùng Minh Ngọc. Provenance
+giữ trong DB/API/audit; giao diện ẩn nhà cung cấp, nút **Đồng bộ**, icon ×
+đóng thông báo góc trên phải (44px, có accessible label).
+
+Live read-only từ máy local: 20 kỳ gần nhất mỗi game khớp database local,
+tổng 60/60; nguồn trả latest Lotto `00985`, Mega `01583`, Power `01419`.
+Không nhập các kỳ này trong lượt kiểm tra. Review độc lập đọc được 40 kỳ/game:
+Lotto 10 trang, Mega/Power 5 trang; không truy cập database production.
+
+Regression gồm frozen HTML của ba publisher/game, hai ID Lotto cùng ngày,
+live placeholder, domain/special, identity/date, duplicate/conflict, paging
+và giới hạn 12 trang, host/game allowlist, chặn redirect trước khi follow,
+giữ các kiểm tra PostgreSQL atomic/anchors/idempotence/challenge gate.
+
+Quality gates: Ruff check/format, Pyright đạt; **271 pytest** đạt trên database
+dedicated `lotto_cloud_20261029_test` (10 deprecation warnings có sẵn).
+Frontend lint/format/typecheck/build và **60 unit tests** đạt. Một lượt unit
+chạy cùng các suite khác timeout test physics 6/45; chạy lại nguyên suite
+riêng đạt 60/60, không sửa physics hoặc tăng timeout. Build còn cảnh báo
+bundle DrawScene lớn có sẵn.
+
+Playwright: sync **6/6**, prizes **12/12** trên desktop/tablet/mobile. Đã sửa
+wait selector của sync test từ frequency tiles sang balls trong latest-card;
+selector cũ chờ widget không liên quan và có thể timeout khi tải song song.
+Ảnh desktop/mobile xác nhận icon × đúng góc, không đè nội dung; dismiss có
+accessible label và target 44px. Review độc lập đã kiểm lại redirect fix và
+29 unit tests parser/publisher đạt.
+
+Chưa deploy lên Render/Vercel hoặc xác minh truy cập từ Render. Các mốc cloud
+bên dưới là bằng chứng lịch sử của implementation cũ, không phải release mới.
+
+## Bằng chứng release trước — 30/10/2026
+
 Ngày 30/10/2026, nhánh `deploy/free-cloud`, phạm vi theo
 [ADR 0012](DECISIONS/0012-community-source-fallback.md).
 

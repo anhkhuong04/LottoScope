@@ -1,4 +1,4 @@
-import { Download, LoaderCircle } from 'lucide-react'
+import { LoaderCircle, RefreshCw, X } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { api, ApiError, type SyncResult } from './api'
 import { useApp } from './state'
@@ -6,7 +6,7 @@ import { useApp } from './state'
 const syncErrors: Record<string, string> = {
   sync_cooldown: 'Vừa đồng bộ game này. Vui lòng chờ 60 giây trước khi thử lại.',
   ingestion_busy: 'Một lượt nhập hoặc đồng bộ đang chạy. Vui lòng thử lại sau.',
-  sync_source_unavailable: 'Chưa thể hoàn tất lấy kỳ mới từ Vietlott. Vui lòng thử lại sau.',
+  sync_source_unavailable: 'Chưa thể hoàn tất lấy kỳ mới. Vui lòng thử lại sau.',
   sync_review_pending: 'Dữ liệu nguồn thay đổi và cần được kiểm tra trước khi cập nhật.',
 }
 
@@ -32,11 +32,7 @@ export function SyncControls() {
       const backlog = result.remaining_unresolved
         ? ` Còn ${result.remaining_unresolved} kỳ lịch sử chưa hoàn tất.`
         : ''
-      const source =
-        result.source === 'community'
-          ? ' Nguồn dự phòng cộng đồng: vietvudanh/vietlott-data (Vietlott đang chặn truy cập).'
-          : ''
-      setNotice({ error: false, text: `${selected.label}: ${outcome}${backlog}${source}` })
+      setNotice({ error: false, text: `${selected.label}: ${outcome}${backlog}` })
     } catch (error) {
       const message =
         error instanceof ApiError && error.code && syncErrors[error.code]
@@ -60,16 +56,16 @@ export function SyncControls() {
       <button
         className={`btn sync-trigger${pending ? ' is-loading' : ''}`}
         title={`Lấy kỳ mới cho ${game?.label ?? 'game đang chọn'}`}
-        aria-label={pending ? 'Đang đồng bộ…' : 'Tải dữ liệu'}
+        aria-label={pending ? 'Đang đồng bộ…' : 'Đồng bộ'}
         disabled={!game || pending}
         onClick={sync}
       >
         {pending ? (
           <LoaderCircle size={16} aria-hidden="true" />
         ) : (
-          <Download size={16} aria-hidden="true" />
+          <RefreshCw size={16} aria-hidden="true" />
         )}
-        <span>{pending ? 'Đang đồng bộ…' : 'Tải dữ liệu'}</span>
+        <span>{pending ? 'Đang đồng bộ…' : 'Đồng bộ'}</span>
       </button>
       {(pending || notice) && (
         <div className="sync-feedback">
@@ -83,8 +79,13 @@ export function SyncControls() {
             </p>
           )}
           {notice && (
-            <button className="btn ghost" onClick={() => setNotice(null)}>
-              Đóng thông báo đồng bộ
+            <button
+              className="btn ghost sync-dismiss"
+              aria-label="Đóng thông báo đồng bộ"
+              title="Đóng thông báo"
+              onClick={() => setNotice(null)}
+            >
+              <X size={18} aria-hidden="true" />
             </button>
           )}
         </div>

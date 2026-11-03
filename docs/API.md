@@ -53,7 +53,8 @@ form hoặc field lạ → 422; GET không kích hoạt đồng bộ.
 
 Response 200: `{game,run_id,status,created,enriched,unchanged,remaining_unresolved,source}`.
 `source` là `official|community` (mặc định official), cho biết nguồn của lượt
-thành công. Fallback opt-in/challenge theo ADR 0012, UI phải nêu nguồn cộng đồng.
+thành công. Fallback opt-in/challenge theo ADR 0012/0013; `community` giữ để
+tương thích và chỉ nguồn bên thứ ba. UI không hiển thị tên/link nhà cung cấp.
 Nguồn từng draw tiếp tục ở `source_url`/`source_retrieved_at`.
 `status` giữ nguyên `success|partial` của run trong DB. Partial chỉ vì backlog
 cũ, latest đã xử lý và không có lỗi hiện tại vẫn trả 200; client phải nêu

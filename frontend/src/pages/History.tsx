@@ -1,5 +1,5 @@
 import { Link, useLocation, useParams } from 'react-router'
-import { api, drawSourceLabel, globalSearch, params, type Draw, type Page } from '../api'
+import { api, globalSearch, params, type Draw, type Page } from '../api'
 import { useApp, useQuery, useUrlField } from '../state'
 import { DrawPrizes } from './DrawPrizes'
 import {
@@ -161,12 +161,6 @@ export function DrawDetail() {
               </div>
               <div>
                 <strong>Giờ quay:</strong> {result.data.draw_time ?? 'Không có dữ liệu'}
-              </div>
-              <div>
-                <strong>Nguồn:</strong>{' '}
-                <a href={result.data.source_url} target="_blank" rel="noreferrer">
-                  {drawSourceLabel(result.data.source_url)}
-                </a>
               </div>
               <div>
                 <strong>Thu thập lúc:</strong> {formatVietnamTime(result.data.source_retrieved_at)}

@@ -49,6 +49,8 @@ thêm bảng giải nếu biết, không bao gồm thời điểm fetch. Quyết
   theo trang nguồn (ví dụ `00830`); không bỏ số 0 đầu. `draw_seq` là integer
   suy ra từ ID để hỗ trợ thứ tự và kiểm tra. Nếu nguồn đổi format, parser dừng
   và yêu cầu cập nhật contract thay vì ép ID không hợp lệ.
+  Ngoại lệ adapter được duyệt tại ADR 0013: Minh Chính công bố ID không padding,
+  ví dụ `#985`; thêm zero thành `00985`, không suy ID từ ngày hay vị trí.
 - Draw payload: `draw_date`, `draw_time` tùy chọn, main numbers canonical
   tăng dần, special (theo game), source/provenance. Kết quả cùng combination
   ở hai kỳ vẫn là hai draw khác nhau.

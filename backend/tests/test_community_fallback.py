@@ -1,6 +1,5 @@
 """Fixed untrusted feeds and real PostgreSQL append-only fallback regression checks."""
 
-import json
 from datetime import UTC, date, datetime, timedelta
 
 import pytest
@@ -31,7 +30,37 @@ def record(game, sequence):
 
 
 def body(game, end=121):
-    return "\n".join(json.dumps(record(game, seq)) for seq in range(100, end + 1))
+    return html(game, [record(game, seq) for seq in range(100, end + 1)])
+
+
+def html(game, records):
+    cards = []
+    for row in records:
+        day = row["date"]
+        if isinstance(day, str) and len(day) == 10:
+            day = f"{day[8:10]}/{day[5:7]}/{day[:4]}"
+        numbers = row["result"]
+        if game == "lotto_535":
+            balls = "".join(
+                f'<span class="ball {"ball_lotto_2" if n == 5 else "ball_lotto"}">{v}</span>'
+                for n, v in enumerate(numbers)
+            )
+            cards.append(
+                f'<div class="boxketqua_vl"><div class="title">Lotto5/35</div>'
+                f'<div class="ngay">#{row["id"]} ngày {day}</div>'
+                f'<div class="box_ketqua">{balls}</div></div>'
+            )
+        else:
+            label = "Mega 6/45" if game == "mega_645" else "Power 6/55"
+            balls = "".join(
+                f'<li class="{"number_special" if n == 6 else ""}"><div class="bool">{v}</div></li>'
+                for n, v in enumerate(numbers)
+            )
+            cards.append(
+                f'<div class="boxkqxsdientoan"><h4>{label} NGÀY:{day}</h4>'
+                f'<p>Kỳ vé: #{row["id"]}</p><ul class="result-number">{balls}</ul></div>'
+            )
+    return "".join(cards)
 
 
 class FeedFetcher:
@@ -94,20 +123,18 @@ def test_parse_preserves_separate_main_special_and_unknown_time(game):
         ("result", [1, 2, 3, 4, 5]),
         ("date", "2099-01-01"),
         ("date", 20260101),
-        ("id", "100"),
+        ("id", "bad"),
     ],
 )
 def test_invalid_recent_record_rejected(field, value):
     row = record("lotto_535", 100)
     row[field] = value
     with pytest.raises(ValueError):
-        parse_feed(json.dumps(row), "lotto_535", 100, NOW)
+        parse_feed(html("lotto_535", [row]), "lotto_535", 100, NOW)
 
 
-def test_duplicate_ids_rejected_but_old_bad_content_not_imported():
+def test_duplicate_ids_rejected():
     content = body("power_655", 100)
-    old_bad = '{"id":"00099","date":"wrong","result":[1]}'
-    assert list(parse_feed(old_bad + "\n" + content, "power_655", 100, NOW)) == [100]
     with pytest.raises(ValueError, match="duplicate"):
         parse_feed(content + "\n" + content, "power_655", 100, NOW)
 
@@ -146,9 +173,7 @@ def test_bad_feed_is_atomic_and_audited(engine, defect):
         records[-1]["date"] = "2026-01-01"
     else:
         records.extend(record(game, seq) for seq in range(122, 141))
-    result = CommunityFallbackService(
-        engine, FeedFetcher("\n".join(json.dumps(row) for row in records))
-    ).collect(game)
+    result = CommunityFallbackService(engine, FeedFetcher(html(game, records))).collect(game)
     assert result.status == "failed" and result.counters["created"] == 0
     with Session(engine) as session:
         assert session.scalar(select(func.count()).select_from(DrawRow)) == 20

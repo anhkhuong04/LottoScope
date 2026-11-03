@@ -6,14 +6,14 @@ Các lệnh PowerShell dưới đây chạy tại **root repository**, trừ khi
 
 Đồng bộ cloud hiện có fallback cộng đồng được duyệt; collector/import/audit
 local trong tài liệu này vẫn dùng luồng chính thức. Chi tiết:
-[Data Pipeline](DATA_PIPELINE.md), [ADR 0012](DECISIONS/0012-community-source-fallback.md).
+[Data Pipeline](DATA_PIPELINE.md), [ADR 0013](DECISIONS/0013-publisher-source-fallback.md).
 PostgreSQL local và Neon online là hai database độc lập, không tự đồng bộ nhau.
 
 ## Bật fallback cộng đồng cho manual sync local
 
 Mặc định local tắt fallback. Chỉ bật nếu chấp nhận nguồn cộng đồng và đã có
 lịch sử/checkpoint cùng tối thiểu 20 kỳ tham chiếu khớp feed. Cơ chế này chỉ
-áp dụng nút **Tải dữ liệu** / API manual sync khi Vietlott trả Cloudflare
+áp dụng nút **Đồng bộ** / API manual sync khi Vietlott trả Cloudflare
 challenge; không áp dụng `import_history`, `collect`, `audit_import` hoặc prizes.
 
 Compose hiện không chuyển flag từ `.env` vào backend. Tạo file local

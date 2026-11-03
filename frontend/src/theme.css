@@ -306,6 +306,17 @@ h1 {
   z-index: 20;
   line-height: 1.5;
 }
+.sync-feedback:has(.sync-dismiss) {
+  padding-right: 54px;
+}
+.sync-dismiss {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+}
 .loading-skeleton {
   min-height: 200px;
   position: relative;

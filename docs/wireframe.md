@@ -563,8 +563,10 @@ Prize tiers / match conditions / winner count / published VND amount
 Bổ sung theo yêu cầu 07/10/2026: bảng giải thưởng nằm dưới kết quả quay,
 loading/error/retry độc lập. Desktop/tablet dùng bảng, mobile hiển thị từng
 hạng thành card; nhấn mạnh Jackpot/Độc Đắc, phân biệt main và special trong
-điều kiện. Nguồn/thu thập của bảng riêng với kết quả quay; thiếu dữ liệu không
+điều kiện. Thời điểm thu thập của bảng riêng với kết quả quay; thiếu dữ liệu không
 thay bằng 0. Contract ở [API.md](API.md).
+Yêu cầu 03/11/2026: không hiển thị tên/link nhà cung cấp trên các màn hình;
+provenance vẫn lưu DB/API/audit theo ADR 0013.
 
 Optional:
 
@@ -1136,6 +1138,8 @@ trước KPI, KPI mobile 2 cột khi đủ chỗ; card theo chiều cao nội du
 6 số có tần suất cao và 3 kỳ gần đây, dẫn tới các màn hình đầy đủ. Chọn số
 đồng hạng theo thứ tự số tăng dần để trình bày; không đổi metric/backend.
 Thông tin đồng bộ có chi tiết mở rộng, không dùng trạng thái “Live” giả.
+Nút ghi **Đồng bộ**; thông báo đóng bằng icon × góc trên phải, có accessible
+label và touch target tối thiểu 44px.
 Các URL/game/window, quy tắc dữ liệu và main/special giữ nguyên.
 
 Mỗi data section phải có loading state riêng.

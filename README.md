@@ -33,7 +33,7 @@ Database local và online **độc lập**, không tự đồng bộ dữ liệu
    cửa sổ thống kê, chẳng hạn 30 kỳ gần nhất.
 3. Dùng menu để khám phá các chức năng bên dưới. Trên điện thoại, menu nằm dưới
    màn hình; **Thêm** mở các mục còn lại.
-4. Bấm **Tải dữ liệu** để lấy kỳ mới cho game đang chọn. Chờ hoàn tất và đọc
+4. Bấm **Đồng bộ** để lấy kỳ mới cho game đang chọn. Chờ hoàn tất và đọc
    thông báo; mỗi game chờ tối thiểu 60 giây giữa hai lượt.
 
 | Chức năng | Cách sử dụng |
@@ -53,17 +53,17 @@ không phải kết quả quay chính thức hoặc dự đoán.
 
 ### Cập nhật dữ liệu và thời gian chờ
 
-- **Tải dữ liệu** liên hệ nguồn và lưu kỳ mới. **Làm mới hiển thị** chỉ đọc lại
+- **Đồng bộ** liên hệ nguồn và lưu kỳ mới. **Làm mới hiển thị** chỉ đọc lại
   dữ liệu đã lưu, không yêu cầu nguồn cập nhật.
 - Website hiện đồng bộ **thủ công**, không có lịch tự lấy kỳ mới. Dữ liệu có
   thể chậm hơn thời điểm quay; xem ID/ngày kỳ mới nhất và tình trạng đồng bộ.
 - Cloud ưu tiên Vietlott. Khi nguồn chính thức trả Cloudflare challenge, hệ
-  thống được phép dùng nguồn cộng đồng
-  [vietvudanh/vietlott-data](https://github.com/vietvudanh/vietlott-data): đối
-  chiếu 20 kỳ gần nhất, kiểm dữ liệu và chỉ thêm kỳ mới liên tiếp. Nguồn cộng
-  đồng được ghi rõ trên giao diện; không ghi đè lịch sử cũ.
-- Nguồn dự phòng không có bảng giải thưởng/giờ quay. Các thông tin này có thể
-  chưa hiển thị; không tự suy hoặc điền giá trị. Nếu fetch/validation thất bại,
+  thống dùng Minh Chính (Lotto) hoặc Minh Ngọc (Mega/Power): đối chiếu 20 kỳ
+  gần nhất và chỉ thêm kỳ mới liên tiếp. Nguồn lưu trong DB/audit, không hiển
+  thị tên trên giao diện; không ghi đè lịch sử cũ.
+  [Policy nguồn dự phòng](docs/DECISIONS/0013-publisher-source-fallback.md).
+- Adapter dự phòng chỉ lấy kết quả, không nhập bảng giải thưởng/giờ quay.
+  Các thông tin này có thể chưa hiển thị; không tự suy hoặc điền giá trị. Nếu fetch/validation thất bại,
   dữ liệu đã lưu vẫn được giữ.
 - Render Free có thể ngủ khi không có truy cập. Lần mở đầu có thể mất khoảng
   một phút hoặc lâu hơn; nếu báo backend đang khởi động, chờ rồi tải lại trang.
@@ -170,7 +170,7 @@ docker compose run --rm --no-deps -e LOTTO_SCHEDULER_ENABLED=false backend pytho
 Lệnh lấy lịch sử từ nguồn chính thức; có thể mất nhiều thời gian vì giới hạn
 tốc độ và số kỳ. Khi nguồn trả challenge/429, batch dừng và ghi audit; không coi
 partial/failed là hoàn tất. Chạy lại cùng lệnh sẽ tiếp tục theo trạng thái đã
-lưu, không tạo draw trùng. Nút **Tải dữ liệu** dành cho kỳ mới sau khi đã có
+lưu, không tạo draw trùng. Nút **Đồng bộ** dành cho kỳ mới sau khi đã có
 lịch sử/checkpoint; không thay bước nhập lần đầu.
 
 Fallback cộng đồng chỉ áp dụng cho **manual sync opt-in**, cần 20 kỳ tham chiếu
@@ -178,7 +178,7 @@ Fallback cộng đồng chỉ áp dụng cho **manual sync opt-in**, cần 20 k�
 `LOTTO_COMMUNITY_FALLBACK_ENABLED` vào backend: chỉ đổi dòng này trong `.env`
 không bật fallback trong container. Có thể opt-in bằng
 [Compose override cho local](docs/LOCAL_OPERATIONS.md#bật-fallback-cộng-đồng-cho-manual-sync-local);
-giới hạn áp dụng theo [policy](docs/DECISIONS/0012-community-source-fallback.md).
+giới hạn áp dụng theo [policy](docs/DECISIONS/0013-publisher-source-fallback.md).
 
 Sau nhập, tải lại giao diện, chọn game và sử dụng như bản online. Dữ liệu bền
 vững nằm trong volume PostgreSQL `postgres_data`.
@@ -229,7 +229,7 @@ Triển khai mới, thay secrets, migration hoặc rollback theo
 | Hiện tượng | Kiểm tra / xử lý |
 | --- | --- |
 | Online báo backend đang khởi động | Chờ Render thức rồi tải lại trang; xem trạng thái dịch vụ nếu tiếp tục lỗi |
-| Bấm Tải dữ liệu báo phải chờ | Chờ ít nhất 60 giây cho game đó; không bấm liên tục |
+| Bấm Đồng bộ báo phải chờ | Chờ ít nhất 60 giây cho game đó; không bấm liên tục |
 | Local chưa có kỳ quay | Hoàn tất migration và nhập lịch sử ở bước 3 |
 | Không lấy được kỳ mới / nguồn chặn | Đọc thông báo, giữ dữ liệu cũ; chờ rồi thử lại. Fallback cũng dừng khi dữ liệu không hợp lệ |
 | Không có giải thưởng nhưng vẫn xem được số | Kỳ chưa có snapshot giải và nguồn chính thức đang không khả dụng |
