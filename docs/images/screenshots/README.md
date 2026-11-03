@@ -18,3 +18,11 @@ Chờ dữ liệu và lồng cầu tải xong trước khi chụp; giữ game v�
 cầu xanh/đỏ chữ trắng và thống kê special theo ADR 0014. Không sửa ảnh cũ để
 giả lập giao diện mới; chỉ thay ảnh sau khi chụp lại bản đã triển khai.
 Không đưa secrets, dashboard quản trị hoặc dữ liệu cá nhân vào ảnh.
+
+## Bản thiết kế local chờ duyệt — 03/11/2026
+
+`machine-preview-static.png`: chụp canvas thật từ source local tại
+`/generator/preview?game=power_655`, góc phối cảnh, 55 bóng teal bố trí tĩnh,
+khung trắng/acrylic. Đây là bản duyệt thiết kế, **chưa tích hợp Rapier**, không
+phải ảnh website online hoặc kết quả quay. Không thay ảnh `draw-machine.png`
+của bản đang triển khai. Phân tích và phạm vi ở [DRAW_MACHINE_REDESIGN](../../DRAW_MACHINE_REDESIGN.md).

@@ -26,6 +26,7 @@ import { Numbers, NumberDetailPage } from './pages/Numbers'
 import { Pairs, PairDetailPage } from './pages/Pairs'
 import { Checker } from './pages/Checker'
 import { Generator } from './pages/Generator'
+import { MachinePreview } from './features/draw-machine/preview/MachinePreview'
 import { globalSearch } from './api'
 import './index.css'
 import './theme.css'
@@ -177,6 +178,7 @@ function Shell() {
               <Route path="/pairs/:pair" element={<PairDetailPage />} />
               <Route path="/checker" element={<Checker key={game.id} />} />
               <Route path="/generator" element={<Generator key={game.id} />} />
+              <Route path="/generator/preview" element={<MachinePreview key={game.id} />} />
               <Route
                 path="*"
                 element={
