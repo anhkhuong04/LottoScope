@@ -1,15 +1,18 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, type RefObject } from 'react'
 import {
   CanvasTexture,
   DoubleSide,
   MeshPhysicalMaterial,
   MeshStandardMaterial,
   SRGBColorSpace,
+  Group,
+  Mesh,
 } from 'three'
 import { BallPool } from './BallPool'
 import { validateDesign, type Design } from './design'
 import { bandGeometry, housingGeometry, shellGeometry } from './geometry'
 import { GateAndChute, Supports, type Materials } from './MachineHardware'
+import { OUTLET_ANGLE, outletPoint } from '../config'
 
 function CageFrame({ materials, cutaway }: { materials: Materials; cutaway: boolean }) {
   const resource = useMemo(
@@ -117,11 +120,17 @@ export function MachineModel({
   count,
   cutaway,
   gateOpen,
+  hatchRef,
+  rotorRef,
+  showBalls = true,
 }: {
   design: Design
   count: number
   cutaway: boolean
   gateOpen: boolean
+  hatchRef?: RefObject<Mesh | null>
+  rotorRef?: RefObject<Group | null>
+  showBalls?: boolean
 }) {
   validateDesign(design)
   const materials = useMemo<Materials>(
@@ -162,14 +171,30 @@ export function MachineModel({
     radius: 2.5,
     ballRadius: (design.ballRadius * 2.5) / design.radius,
   }
+  const funnel = outletPoint(2.2)
   return (
     <group scale={(design.scale * design.radius) / 2.5}>
       <Housing materials={materials} />
       <Supports materials={materials} />
-      <BallPool count={count} design={normalized} />
+      {showBalls && <BallPool count={count} design={normalized} />}
       <mesh geometry={shell} material={materials.acrylic} renderOrder={3} />
       <CageFrame materials={materials} cutaway={cutaway} />
-      <GateAndChute materials={materials} open={gateOpen} />
+      <group ref={rotorRef}>
+        {[-0.9, 0.9].map((x) => (
+          <mesh key={x} position={[x, 0, 0]} material={materials.white}>
+            <boxGeometry args={[0.11, 3.7, 0.24]} />
+          </mesh>
+        ))}
+      </group>
+      <GateAndChute materials={materials} open={gateOpen} hatchRef={hatchRef} />
+      <mesh
+        position={[funnel.x, funnel.y, funnel.z]}
+        rotation={[OUTLET_ANGLE, 0, 0]}
+        material={materials.acrylic}
+        renderOrder={2}
+      >
+        <cylinderGeometry args={[0.8, 0.37, 0.7, 24, 1, true]} />
+      </mesh>
     </group>
   )
 }

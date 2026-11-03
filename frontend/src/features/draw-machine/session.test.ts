@@ -2,10 +2,10 @@
 import RAPIER from '@dimforge/rapier3d-compat'
 import { afterEach, beforeAll, describe, expect, it } from 'vitest'
 import { afterSessionStep, createSession, sessionSnapshot } from './session'
+import { EXIT_DEPTH, outletPoint } from './config'
 import {
   beforeStep,
   destroyMachine,
-  EXIT_Y,
   pauseMachine,
   resumeMachine,
   startMachine,
@@ -32,8 +32,8 @@ function exit(session: ReturnType<typeof setup>, number: number) {
   m.status = 'drawing'
   m.gate.setEnabled(false)
   const ball = m.balls[number - 1]
-  ball.previous = { x: 0, y: EXIT_Y + 0.1, z: 0 }
-  ball.body.setTranslation({ x: 0, y: EXIT_Y - 0.1, z: 0 }, true)
+  ball.previous = outletPoint(EXIT_DEPTH - 0.1)
+  ball.body.setTranslation(outletPoint(EXIT_DEPTH + 0.1), true)
   afterSessionStep(session)
 }
 describe('Lotto physical session', () => {
@@ -62,7 +62,7 @@ describe('Lotto physical session', () => {
         specialNumber: null,
         error: null,
       })
-      expect(world.bodies.len()).toBe(max)
+      expect(world.bodies.len()).toBe(max + 1)
     },
   )
 
@@ -77,7 +77,7 @@ describe('Lotto physical session', () => {
       error: null,
     })
     expect(s.machine.balls).toHaveLength(12)
-    expect(s.machine.world.bodies.len()).toBe(12)
+    expect(s.machine.world.bodies.len()).toBe(13)
     expect(s.machine.count).toBe(1)
     exit(s, 9)
     expect(sessionSnapshot(s)).toEqual({

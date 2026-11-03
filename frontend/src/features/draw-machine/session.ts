@@ -1,4 +1,5 @@
 import type RAPIER from '@dimforge/rapier3d-compat'
+import { defaultSimulation, type SimulationConfig } from './config'
 import {
   afterStep,
   createMachine,
@@ -22,6 +23,7 @@ type Session = {
   specialMax: number | null
   rapier: typeof RAPIER
   random: () => number
+  config: Readonly<SimulationConfig>
 }
 export function createSession(
   world: RAPIER.World,
@@ -30,6 +32,7 @@ export function createSession(
   count: number,
   specialMax: number | null,
   random: () => number,
+  config: Readonly<SimulationConfig> = defaultSimulation,
 ): Session {
   // The scene reuses the main pool's numbered meshes for the special pool.
   if (
@@ -39,12 +42,13 @@ export function createSession(
     throw new Error('Miền bóng đặc biệt phải là số nguyên dương không vượt quá miền bóng chính.')
   }
   return {
-    machine: createMachine(world, rapier, max, random, count),
+    machine: createMachine(world, rapier, max, random, count, config),
     mainDrawn: [],
     phase: 'main',
     specialMax,
     rapier,
     random,
+    config: Object.freeze({ ...config }),
   }
 }
 export function afterSessionStep(session: Session) {
@@ -57,7 +61,14 @@ export function afterSessionStep(session: Session) {
     const world = session.machine.world
     session.mainDrawn = [...session.machine.drawn]
     destroyMachine(session.machine)
-    session.machine = createMachine(world, session.rapier, session.specialMax, session.random, 1)
+    session.machine = createMachine(
+      world,
+      session.rapier,
+      session.specialMax,
+      session.random,
+      1,
+      session.config,
+    )
     session.phase = 'special'
     startMachine(session.machine)
   }

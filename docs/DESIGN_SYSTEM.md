@@ -8,8 +8,9 @@ hiện tại; domain/API và [wireframe](wireframe.md) vẫn giữ thẩm quyề
 
 - Navy `#102b36`, teal `#006d67`, mint `#57d5bd`; nền sáng và card trắng.
 - Main/special có label riêng; cầu main xanh lá `#15803d`, special đỏ `#b91c1c`,
-  chữ số trắng `#ffffff` theo yêu cầu 03/11/2026. Áp dụng badges và textures
-  mô phỏng; không thay physics. Màu tần suất
+  chữ số trắng `#ffffff` theo yêu cầu 03/11/2026. Áp dụng badges và khay kết quả.
+  Riêng bóng bên trong máy 3D dùng teal/số trắng theo mẫu đã duyệt tại
+  [DRAW_MACHINE_REDESIGN](DRAW_MACHINE_REDESIGN.md). Màu tần suất
   chỉ biểu diễn số kỳ đã xuất hiện, không diễn giải khả năng thắng.
 - Brand mark dùng chung `/lottoscope.svg` trong sidebar/mobile/favicon.
 - Outfit cho heading/số nổi bật, DM Sans cho nội dung, system fallback;

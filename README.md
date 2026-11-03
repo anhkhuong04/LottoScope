@@ -56,8 +56,9 @@ Lồng cầu Lotto mô phỏng thêm special
 từ lồng riêng 1–12; lồng Mega/Power hiện chỉ quay số chính. Kết quả mô phỏng
 không phải kết quả quay chính thức hoặc dự đoán.
 
-Bản source có thêm **Tạo bộ số → Xem thiết kế lồng cầu mới** để duyệt mô hình
-3D tĩnh theo ảnh tham chiếu; chưa thay mô phỏng hiện hành. [Thiết kế và kiểm chứng](docs/DRAW_MACHINE_REDESIGN.md).
+Bản local dùng mô hình đã duyệt: khung trắng, acrylic, bóng teal và góc phối
+cảnh cố định trong **Tạo bộ số**. [Thiết kế và kiểm chứng](docs/DRAW_MACHINE_REDESIGN.md).
+Thay đổi này chưa deploy lên website online.
 
 ### Cập nhật dữ liệu và thời gian chờ
 

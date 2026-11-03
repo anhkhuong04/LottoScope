@@ -19,10 +19,16 @@ cầu xanh/đỏ chữ trắng và thống kê special theo ADR 0014. Không s�
 giả lập giao diện mới; chỉ thay ảnh sau khi chụp lại bản đã triển khai.
 Không đưa secrets, dashboard quản trị hoặc dữ liệu cá nhân vào ảnh.
 
-## Bản thiết kế local chờ duyệt — 03/11/2026
+## Thiết kế lồng cầu local — 03/11/2026
 
 `machine-preview-static.png`: chụp canvas thật từ source local tại
 `/generator/preview?game=power_655`, góc phối cảnh, 55 bóng teal bố trí tĩnh,
 khung trắng/acrylic. Đây là bản duyệt thiết kế, **chưa tích hợp Rapier**, không
 phải ảnh website online hoặc kết quả quay. Không thay ảnh `draw-machine.png`
 của bản đang triển khai. Phân tích và phạm vi ở [DRAW_MACHINE_REDESIGN](../../DRAW_MACHINE_REDESIGN.md).
+
+`machine-integrated.png`: bản Docker local sau khi tích hợp Rapier, viewport
+1365 × 900, chụp toàn trang Power 6/55 hoàn tất 6 số chính. Phối cảnh cố định,
+khung trắng/acrylic và bóng teal; kết quả do phiên mô phỏng thật trong browser,
+không phải kỳ quay chính thức. Mẫu đã được duyệt; ảnh tĩnh phía trên giữ làm
+mốc lịch sử. Chưa cập nhật website online hoặc các ảnh online cũ.

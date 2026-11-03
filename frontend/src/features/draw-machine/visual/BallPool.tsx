@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, type RefObject } from 'react'
 import {
   CanvasTexture,
   InstancedBufferAttribute,
@@ -11,8 +11,17 @@ import {
 } from 'three'
 import { staticBallPositions, type Design } from './design'
 
-export function BallPool({ count, design }: { count: number; design: Design }) {
-  const mesh = useRef<InstancedMesh>(null)
+export function BallPool({
+  count,
+  design,
+  meshRef,
+}: {
+  count: number
+  design: Design
+  meshRef?: RefObject<InstancedMesh | null>
+}) {
+  const ownMesh = useRef<InstancedMesh>(null)
+  const mesh = meshRef ?? ownMesh
   const resource = useMemo(() => {
     const tileWidth = design.quality === 'economy' ? 128 : 256
     const tileHeight = tileWidth / 2
@@ -71,14 +80,16 @@ export function BallPool({ count, design }: { count: number; design: Design }) {
     [count, design.radius, design.ballRadius],
   )
   useLayoutEffect(() => {
+    const instance = mesh.current
+    if (!instance) return
     const matrix = new Matrix4()
     positions.forEach((position, index) => {
       matrix.makeTranslation(...position)
-      mesh.current!.setMatrixAt(index, matrix)
+      instance.setMatrixAt(index, matrix)
     })
-    mesh.current!.instanceMatrix.needsUpdate = true
-    mesh.current!.computeBoundingSphere()
-  }, [positions, resource])
+    instance.instanceMatrix.needsUpdate = true
+    instance.computeBoundingSphere()
+  }, [positions, resource, mesh])
   useEffect(
     () => () => {
       resource.geometry.dispose()
@@ -88,6 +99,11 @@ export function BallPool({ count, design }: { count: number; design: Design }) {
     [resource],
   )
   return (
-    <instancedMesh ref={mesh} args={[resource.geometry, resource.material, count]} receiveShadow />
+    <instancedMesh
+      ref={mesh}
+      args={[resource.geometry, resource.material, count]}
+      receiveShadow
+      frustumCulled={false}
+    />
   )
 }

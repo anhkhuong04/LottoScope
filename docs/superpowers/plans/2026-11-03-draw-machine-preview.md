@@ -22,4 +22,6 @@ User đã yêu cầu bản tĩnh để duyệt; chỉ mốc này được triể
 - [x] Frontend gates/unit; E2E preview desktop/mobile, cấu hình/góc nhìn,
   không kết quả/physics request, WebGL và context loss; regression quay cũ.
 - [x] Kiểm ảnh so tham chiếu, review độc lập, ghi kết quả và commit bản tĩnh.
-- [ ] **Chờ người dùng duyệt:** bước 4 tích hợp Rapier, sau đó bước 5 nghiệm thu.
+- [x] Người dùng duyệt mô hình; triển khai bước 4–5 theo
+  [DRAW-VIS-02](2026-11-03-draw-machine-integration.md). Mốc tĩnh ở trên là
+  lịch sử kiểm chứng, editor/đa góc nhìn không còn trong luồng sử dụng.

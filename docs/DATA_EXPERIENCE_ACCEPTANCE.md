@@ -11,7 +11,8 @@ Ngày: **03/11/2026**. Phạm vi đã chốt tại [ADR 0014](DECISIONS/0014-spe
   hiển thị phạm vi response, số kỳ thực tế và cutoff; lịch sử hiển thị bộ lọc riêng.
   Các response độc lập có scope riêng khi refresh chỉ thành công một phần.
 - Số/cặp đồng tần suất cùng hạng; danh sách Dashboard ghi rõ giới hạn và tie-break.
-  Cầu chính xanh lá, cầu phụ đỏ, chữ trắng ở lịch sử, analytics và mô phỏng 3D/khay kết quả.
+  Cầu chính xanh lá, cầu phụ đỏ, chữ trắng ở lịch sử, analytics và khay kết quả.
+  Bóng trong máy 3D về sau theo mẫu đã duyệt tại [DRAW_MACHINE_REDESIGN](DRAW_MACHINE_REDESIGN.md).
 
 ## Kiểm chứng
 
@@ -34,7 +35,11 @@ Ngày: **03/11/2026**. Phạm vi đã chốt tại [ADR 0014](DECISIONS/0014-spe
 
 ## Trạng thái vận hành
 
-Chỉ kiểm chứng bản source local: backend QA tắt scheduler/fallback, dùng bản sao
+Tại mốc DATA-01 chỉ kiểm chứng source local: backend QA tắt scheduler/fallback, dùng bản sao
 DB riêng; các lượt Đồng bộ trong browser test được mock, không gọi nhà cung cấp.
 Không sửa DB ứng dụng, rebuild Docker, push hoặc deploy website online.
 Ảnh trong README vẫn là snapshot online cũ, được ghi chú tại [screenshot README](images/screenshots/README.md).
+
+Sau khi người dùng duyệt mô hình, Docker local được cập nhật cả backend/frontend
+trong [DRAW-VIS-02](superpowers/plans/2026-11-03-draw-machine-integration.md).
+Bằng chứng vận hành mới nằm tại checklist đó; website online chưa cập nhật.

@@ -10,9 +10,9 @@ import {
   resumeMachine,
   destroyMachine,
   STEP,
-  EXIT_Y,
   type Machine,
 } from './physics'
+import { EXIT_DEPTH, outletPoint, outletCoordinates } from './config'
 
 beforeAll(async () => {
   await RAPIER.init()
@@ -43,6 +43,20 @@ function tick(machine: Machine, seconds: number) {
 }
 
 describe('real Rapier draw machine', () => {
+  it.each([17, 209, 4231])('spawns balls clear of the axle and rotor (seed %s)', (seed) => {
+    const m = setup(55, seed)
+    m.world.propagateModifiedBodyPositionsToColliders()
+    const obstacles = [m.fixed[m.fixed.length - 1], m.rotor.collider(0), m.rotor.collider(1)]
+    for (const ball of m.balls)
+      for (const obstacle of obstacles) {
+        const contact = ball.body.collider(0).contactCollider(obstacle, 0)
+        expect(
+          contact?.distance ?? 0,
+          `ball ${ball.number} starts inside the mechanism`,
+        ).toBeGreaterThanOrEqual(-0.0001)
+      }
+  })
+
   it('requires an explicit result count instead of inferring it from the ball pool', () => {
     const world = new RAPIER.World({ x: 0, y: -9.81, z: 0 })
     worlds.push(world)
@@ -71,15 +85,17 @@ describe('real Rapier draw machine', () => {
     const m = setup()
     const a = m.balls[0].body
     const b = m.balls[1].body
-    a.setTranslation({ x: -0.19, y: 0, z: 0 }, true)
-    b.setTranslation({ x: 0.19, y: 0, z: 0 }, true)
+    a.setTranslation({ x: -0.19, y: 0.7, z: 0 }, true)
+    b.setTranslation({ x: 0.19, y: 0.7, z: 0 }, true)
     a.setLinvel({ x: 1, y: 0, z: 0 }, true)
     b.setLinvel({ x: -1, y: 0, z: 0 }, true)
     m.world.step()
     expect(a.linvel().x).toBeLessThan(0)
     expect(b.linvel().x).toBeGreaterThan(0)
     for (let i = 0; i < 600; i++) m.world.step()
-    expect(m.balls.every((ball) => ball.body.translation().y > EXIT_Y)).toBe(true)
+    expect(
+      m.balls.every((ball) => outletCoordinates(ball.body.translation()).depth < EXIT_DEPTH),
+    ).toBe(true)
     expect(m.drawn).toEqual([])
   })
 
@@ -90,11 +106,23 @@ describe('real Rapier draw machine', () => {
   ])(
     'physically draws exactly $count distinct main balls from $max',
     ({ max, count }) => {
-      for (const seed of [17, 209, 4231]) {
+      for (const seed of [17, 209, 4231, 97, 991]) {
         const m = setup(max, seed, count)
         startMachine(m)
         tick(m, 120)
-        expect(m.status, `seed ${seed}: ${m.error}`).toBe('complete')
+        const outside = m.balls
+          .filter(
+            (ball) =>
+              !ball.captured && Math.hypot(...Object.values(ball.body.translation())) > 2.65,
+          )
+          .map((ball) => ({
+            number: ball.number,
+            ...ball.body.translation(),
+            ...outletCoordinates(ball.body.translation()),
+          }))
+        expect(m.status, `seed ${seed}: ${m.error}; outside=${JSON.stringify(outside)}`).toBe(
+          'complete',
+        )
         expect(m.drawn).toHaveLength(count)
         expect(new Set(m.drawn).size).toBe(count)
         expect(m.drawn.every((n) => n >= 1 && n <= max)).toBe(true)
@@ -115,13 +143,67 @@ describe('real Rapier draw machine', () => {
     m.status = 'drawing'
     m.gate.setEnabled(false)
     const ball = m.balls[0]
-    ball.previous = { x: 0, y: EXIT_Y + 0.1, z: 0 }
-    ball.body.setTranslation({ x: 0, y: EXIT_Y - 0.1, z: 0 }, true)
+    ball.previous = outletPoint(EXIT_DEPTH - 0.1)
+    ball.body.setTranslation(outletPoint(EXIT_DEPTH + 0.1), true)
     afterStep(m)
     expect(m.drawn).toEqual([ball.number])
     afterStep(m)
     expect(m.drawn).toEqual([ball.number])
     expect(ball.captured).toBe(true)
+  })
+
+  it('physically blocks the front gate when closed and releases through its throat when opened', () => {
+    const m = setup(35, 17, 5)
+    m.balls.forEach((ball) => ball.body.setEnabled(false))
+    m.rotor.setEnabled(false)
+    const ball = m.balls[0]
+    ball.body.setEnabled(true)
+    const place = () => {
+      ball.body.setTranslation(outletPoint(2.1), true)
+      ball.body.setLinvel(outletPoint(2), true)
+    }
+    place()
+    for (let i = 0; i < 60; i++) {
+      m.world.timestep = STEP
+      m.world.step()
+      expect(outletCoordinates(ball.body.translation()).depth).toBeLessThan(EXIT_DEPTH)
+    }
+    place()
+    startMachine(m)
+    m.status = 'drawing'
+    m.gate.setEnabled(false)
+    for (let i = 0; i < 60 && !ball.captured; i++) {
+      ball.previous = { ...ball.body.translation() }
+      m.world.step()
+      afterStep(m)
+    }
+    expect(m.drawn).toEqual([ball.number])
+    expect(m.gate.isEnabled()).toBe(true)
+  })
+
+  it.each(['reverse', 'closed', 'off_axis'] as const)('does not record a %s crossing', (kind) => {
+    const m = setup()
+    startMachine(m)
+    m.status = 'drawing'
+    m.gate.setEnabled(kind === 'closed')
+    const ball = m.balls[0]
+    const x = kind === 'off_axis' ? 0.34 : 0
+    ball.previous = outletPoint(EXIT_DEPTH + (kind === 'reverse' ? 0.1 : -0.1), x)
+    ball.body.setTranslation(outletPoint(EXIT_DEPTH + (kind === 'reverse' ? -0.1 : 0.1), x), true)
+    afterStep(m)
+    expect(m.drawn).toEqual([])
+    expect(ball.captured).toBe(false)
+  })
+
+  it('rejects invalid physical configuration before allocating colliders or bodies', () => {
+    const m = setup()
+    const bodies = m.world.bodies.len()
+    const colliders = m.world.colliders.len()
+    expect(() =>
+      createMachine(m.world, RAPIER, 35, random(17), 5, { ...m.config, mass: -1 }),
+    ).toThrow()
+    expect(m.world.bodies.len()).toBe(bodies)
+    expect(m.world.colliders.len()).toBe(colliders)
   })
 
   it('pauses without consuming time; timeout resumes mixing without picking a substitute', () => {
@@ -159,10 +241,11 @@ describe('real Rapier draw machine', () => {
   it('does not remove foreign bodies if the renderer has already replaced its world', () => {
     const old = setup()
     const replacement = setup()
+    const colliderCount = replacement.world.colliders.len()
     old.world = replacement.world
     destroyMachine(old)
-    expect(replacement.world.bodies.len()).toBe(55)
-    expect(replacement.world.colliders.len()).toBe(81)
+    expect(replacement.world.bodies.len()).toBe(56)
+    expect(replacement.world.colliders.len()).toBe(colliderCount)
   })
 
   it('records a real exit on the timeout boundary before deciding the machine is stalled', () => {
@@ -172,9 +255,9 @@ describe('real Rapier draw machine', () => {
     m.gate.setEnabled(false)
     m.sinceCapture = 29.999
     const ball = m.balls[0]
-    ball.body.setTranslation({ x: 0, y: EXIT_Y + 0.1, z: 0 }, true)
+    ball.body.setTranslation(outletPoint(EXIT_DEPTH - 0.1), true)
     beforeStep(m)
-    ball.body.setTranslation({ x: 0, y: EXIT_Y - 0.1, z: 0 }, true)
+    ball.body.setTranslation(outletPoint(EXIT_DEPTH + 0.1), true)
     afterStep(m)
     expect(m.drawn).toEqual([ball.number])
     expect(m.status).toBe('mixing')

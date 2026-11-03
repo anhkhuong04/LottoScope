@@ -42,7 +42,7 @@ export function cameraPose(view: View, aspect: number) {
       Math.abs(delta.dot(up)) / tanVertical + delta.dot(direction),
     )
   }
-  // Reserve space at the maximum 125% size; changing the size slider remains visible.
+  // Keep a framing margin for the configurable machine dimensions.
   distance *= 1.09
   return { target, position: target.clone().addScaledVector(direction, distance), distance }
 }

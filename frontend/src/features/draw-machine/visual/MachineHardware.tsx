@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, type RefObject } from 'react'
 import {
   CatmullRomCurve3,
   ExtrudeGeometry,
@@ -8,6 +8,7 @@ import {
   Shape,
   TubeGeometry,
   Vector3,
+  Mesh,
 } from 'three'
 
 export type Materials = {
@@ -107,7 +108,15 @@ export function Supports({ materials }: { materials: Materials }) {
   )
 }
 
-export function GateAndChute({ materials, open }: { materials: Materials; open: boolean }) {
+export function GateAndChute({
+  materials,
+  open,
+  hatchRef,
+}: {
+  materials: Materials
+  open: boolean
+  hatchRef?: RefObject<Mesh | null>
+}) {
   const { flange, hatch, spring } = useMemo(() => {
     const shape = roundedRectangle(1.12, 1.06, 0.2)
     const hole = new Path()
@@ -151,7 +160,12 @@ export function GateAndChute({ materials, open }: { materials: Materials; open: 
   return (
     <group position={[0, -1.62, 2.02]}>
       <mesh geometry={flange} material={materials.white} />
-      <mesh geometry={hatch} material={materials.silver} position={[0, open ? 0.77 : 0, -0.065]} />
+      <mesh
+        ref={hatchRef}
+        geometry={hatch}
+        material={materials.silver}
+        position={[0, open ? 0.77 : 0, -0.065]}
+      />
       <mesh geometry={spring} position={[0, 0, 0.12]} material={materials.silver} />
       <mesh
         position={[0.47, 0.08, 0.18]}
