@@ -34,21 +34,15 @@ type Props = {
   onSnapshot: (s: Snapshot) => void
   onError: () => void
 }
-const colors = ['#f8cd47', '#69c8e1', '#f48d77', '#9eb7ff', '#87cfaa', '#d1a2e9']
-
-function numberMaterial(number: number) {
+function numberMaterial(number: number, special = false) {
   const canvas = document.createElement('canvas')
   canvas.width = 256
   canvas.height = 128
   const context = canvas.getContext('2d')!
-  context.fillStyle = colors[Math.floor((number - 1) / 10) % colors.length]
+  context.fillStyle = special ? '#b91c1c' : '#15803d'
   context.fillRect(0, 0, 256, 128)
   for (const x of [64, 192]) {
-    context.fillStyle = '#fffdf5'
-    context.beginPath()
-    context.arc(x, 64, 39, 0, Math.PI * 2)
-    context.fill()
-    context.fillStyle = '#152439'
+    context.fillStyle = '#ffffff'
     context.font = 'bold 48px Arial'
     context.textAlign = 'center'
     context.textBaseline = 'middle'
@@ -143,6 +137,10 @@ function Mechanism({
     () => Array.from({ length: max }, (_, i) => numberMaterial(i + 1)),
     [max],
   )
+  const specialMaterials = useMemo(
+    () => Array.from({ length: specialMax ?? 0 }, (_, i) => numberMaterial(i + 1, true)),
+    [specialMax],
+  )
   const publish = useCallback(() => {
     const s = session.current
     if (!s) return
@@ -164,12 +162,12 @@ function Mechanism({
   useEffect(
     () => () => {
       geometry.dispose()
-      materials.forEach((material) => {
+      ;[...materials, ...specialMaterials].forEach((material) => {
         material.map?.dispose()
         material.dispose()
       })
     },
-    [geometry, materials],
+    [geometry, materials, specialMaterials],
   )
   useEffect(() => {
     const m = session.current?.machine
@@ -202,6 +200,7 @@ function Mechanism({
       const ball = m.balls[i]
       const mesh = meshes.current[i]
       if (!mesh) continue
+      mesh.material = session.current?.phase === 'special' ? specialMaterials[i] : materials[i]
       if (ball.captured) {
         const index = m.drawn.indexOf(ball.number)
         const destination = new Vector3((index - (m.count - 1) / 2) * 0.52, -3.64, 0.15)

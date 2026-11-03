@@ -9,6 +9,9 @@
   --radius-card: 16px;
   --text-meta: 0.875rem;
   --card-padding: 24px;
+  --ball-main: #15803d;
+  --ball-special: #b91c1c;
+  --ball-text: #fff;
   --surface-subtle: #f7fbfa;
   --border-accent: #c6e5df;
   --teal-strong: #005b56;
@@ -95,6 +98,35 @@ h3 {
 .bar-row strong,
 .draw-id {
   font-variant-numeric: tabular-nums;
+}
+.ball {
+  background: var(--ball-main);
+  color: var(--ball-text);
+}
+.ball.special {
+  background: var(--ball-special);
+  color: var(--ball-text);
+}
+.scope-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  color: var(--muted);
+  font-size: var(--text-meta);
+  line-height: 1.6;
+  margin: 0 0 var(--space-4);
+}
+.rank-label {
+  color: var(--muted);
+  font-size: var(--text-meta);
+  font-weight: 500;
+}
+.inline-link {
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+.special-grid {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
 }
 .link-arrow {
   display: inline-flex;
@@ -467,12 +499,14 @@ h3 {
   min-width: 48px;
   height: 48px;
   font-size: 1.15rem;
-  background: #fff;
-  border: 1px solid #c6e5df;
+  background: var(--ball-main);
+  color: var(--ball-text);
+  border: 1px solid var(--ball-main);
 }
 .latest-card .ball.special {
-  background: #fff0df;
-  border-color: #f0d5b1;
+  background: var(--ball-special);
+  color: var(--ball-text);
+  border-color: var(--ball-special);
 }
 .data-freshness {
   border-left: 1px solid var(--border-accent);
@@ -527,6 +561,9 @@ h3 {
   padding: 8px 0;
 }
 @media (max-width: 767px) {
+  .special-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
   .page-head {
     align-items: flex-start;
   }

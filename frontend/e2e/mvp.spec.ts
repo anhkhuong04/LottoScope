@@ -197,6 +197,11 @@ test('key screens have no automated WCAG A/AA violations', async ({ page }) => {
   ]) {
     await page.goto(`${path}?game=lotto_535`)
     await page.getByLabel('Chọn game').waitFor()
+    await expect(page.locator('.skeleton-content')).toHaveCount(0)
+    // Scan resolved, opaque content instead of an entrance-animation frame.
+    await expect(page.locator('.page-head')).toHaveCSS('opacity', '1')
+    if (path === '/dashboard')
+      await expect(page.locator('.latest-result .data-content')).toHaveCSS('opacity', '1')
     const report = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
       .analyze()

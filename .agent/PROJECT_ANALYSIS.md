@@ -24,6 +24,10 @@ contract POST/cooldown ở API, vận hành mặc định không scheduler ở R
 
 ## Phạm vi
 
+- Data Experience và special Lotto 03/11/2026: [ADR 0014](../docs/DECISIONS/0014-special-number-data-experience.md)
+  chốt thống kê riêng 01–12, filter/scope/rank nhất quán và màu cầu xanh/đỏ,
+  chữ trắng. Main/checker/pair/generator và physics giữ invariants cũ.
+
 - UI cleanup 03/11/2026: người dùng yêu cầu bỏ slogan/caption/KPI trùng và
   refresh dư thừa, gom metadata và giải thích phương pháp; quy ước ở
   [Design system](../docs/DESIGN_SYSTEM.md). Giữ routes, query và logic thống kê.
@@ -80,7 +84,7 @@ contract POST/cooldown ở API, vận hành mặc định không scheduler ở R
 | Q03 — Draw/time/ordering | Đã chốt trong [DOMAIN.md](../docs/DOMAIN.md) |
 | Q04 — Window/freshness | Đã chốt trong [ANALYTICS.md](../docs/ANALYTICS.md) và [API.md](../docs/API.md) |
 | Q05 — Frequency/gap/pair formula | Đã chốt trong [ANALYTICS.md](../docs/ANALYTICS.md); MVP không có Hot/Cold threshold riêng |
-| Q06 — Exact/overlap/special | Đã chốt main-only trong [DOMAIN.md](../docs/DOMAIN.md) và [ANALYTICS.md](../docs/ANALYTICS.md) |
+| Q06 — Exact/overlap/special | Checker/cặp main-only; thống kê Lotto special riêng theo [ADR 0014](../docs/DECISIONS/0014-special-number-data-experience.md). Công thức ở [ANALYTICS.md](../docs/ANALYTICS.md) |
 | Q07 — Generator rules | Đã chốt trong [ANALYTICS.md](../docs/ANALYTICS.md) |
 | Q08 — API contract | Đã chốt trong [API.md](../docs/API.md) |
 | Q09 — Versions/frontend stack | Backend chọn trong [ARCHITECTURE.md](../docs/ARCHITECTURE.md); frontend stack chốt trong [ADR 0002](../docs/DECISIONS/0002-frontend-stack.md) |

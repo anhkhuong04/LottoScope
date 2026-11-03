@@ -143,9 +143,9 @@
   font-variant-numeric: tabular-nums;
 }
 .draw-slot.filled {
-  color: #173b47;
-  border: 1px solid #7fa6b0;
-  background: radial-gradient(circle at 35% 25%, #ffffff, #d4e9ec);
+  color: var(--ball-text);
+  border: 1px solid var(--ball-main);
+  background: var(--ball-main);
   box-shadow: 0 3px 5px #213d4312;
 }
 .draw-special-result {
@@ -160,6 +160,11 @@
   border-color: #ad7b26;
   background: #fff4d8;
   color: #6d4200;
+}
+.draw-special-result .draw-slot.filled {
+  border-color: var(--ball-special);
+  background: var(--ball-special);
+  color: var(--ball-text);
 }
 .draw-special-result strong,
 .draw-special-result small {

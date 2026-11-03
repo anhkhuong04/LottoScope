@@ -6,6 +6,15 @@ lại analytics. Tất cả number trong JSON là integer; UI tự hiển thị 
 
 ## Quy ước chung
 
+Mở rộng analytics theo [ADR 0014](DECISIONS/0014-special-number-data-experience.md):
+`GET /games/{game}/analytics/numbers` và `.../numbers/{number}` nhận
+`number_kind=main|special`, mặc định main. Special chỉ hợp lệ với Lotto 5/35,
+miền 01–12; game/number/kind không hợp lệ trả 422. Cùng window/cutoff/sort/
+paging hiện có. List/detail trả thêm `number_kind`; special detail trả
+`pair_partners=[]`, appearance history chỉ lọc cột special. `PairOut` thêm
+`frequency_rank` (dense), count/sort/paging cũ giữ nguyên. Không thay request
+checker/generator hoặc định nghĩa cặp main-only.
+
 - Cloud opt-in theo [ADR 0011](DECISIONS/0011-free-cloud-deployment.md): browser
   vẫn dùng `/api/v1` cùng origin Vercel. Render yêu cầu server token ở header
   `X-Lotto-Origin-Token` cho mọi path trừ GET `/health/live`; không token/sai

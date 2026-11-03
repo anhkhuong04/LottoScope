@@ -10,7 +10,7 @@ test('dashboard keeps useful analysis without decorative labels, duplicate KPIs 
     page.locator('.dashboard-metrics, .eyebrow, .sidebar-caption, .topbar-title'),
   ).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Làm mới hiển thị' })).toHaveCount(0)
-  await expect(page.locator('.frequency-tile')).toHaveCount(6)
+  await expect(page.locator('.dashboard-sections .frequency-tile')).toHaveCount(6)
   await expect(page.getByRole('heading', { name: 'Các cặp xuất hiện nhiều' })).toBeVisible()
   const request = page.waitForResponse(
     (response) =>

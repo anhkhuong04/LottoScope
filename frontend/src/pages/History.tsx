@@ -8,6 +8,7 @@ import {
   Card,
   DataState,
   DataTable,
+  FilterBar,
   DrawRows,
   PageHead,
   Pager,
@@ -31,7 +32,7 @@ export function History() {
         title="Kết quả các kỳ quay"
         description="Tìm theo ngày hoặc mã kỳ; số đặc biệt được hiển thị riêng."
       />
-      <div className="toolbar">
+      <FilterBar>
         <label className="field">
           Từ ngày
           <input
@@ -65,7 +66,7 @@ export function History() {
             <option value="asc">Cũ trước</option>
           </select>
         </label>
-      </div>
+      </FilterBar>
       {from && to && from > to ? (
         <div className="notice error">Ngày bắt đầu phải trước hoặc bằng ngày kết thúc.</div>
       ) : (
@@ -73,6 +74,16 @@ export function History() {
           <DataState {...result} hasData={!!result.data} empty="Không có kỳ quay khớp bộ lọc.">
             {result.data && (
               <>
+                <p className="scope-summary">
+                  <span>{result.data.total} kỳ phù hợp</span>
+                  <span>
+                    {from || to
+                      ? `${from || 'Từ đầu lịch sử'} → ${to || 'Hiện tại'}`
+                      : 'Toàn bộ lịch sử'}
+                  </span>
+                  {drawId && <span>Mã kỳ: {drawId}</span>}
+                  <span>{sort === 'asc' ? 'Cũ trước' : 'Mới trước'}</span>
+                </p>
                 <DataTable mobileHidden>
                   <thead>
                     <tr>

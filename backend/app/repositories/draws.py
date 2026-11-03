@@ -321,6 +321,7 @@ class DrawRepository:
         to_date: date | None = None,
         draw_id: str | None = None,
         main_contains: tuple[int, ...] | None = None,
+        special_number: int | None = None,
         first: Draw | None = None,
         last: Draw | None = None,
         page: int = 1,
@@ -328,6 +329,12 @@ class DrawRepository:
         sort: Literal["asc", "desc"] = "desc",
     ) -> DrawPage:
         definition = get_game(game)
+        if special_number is not None and (
+            type(special_number) is not int
+            or definition.special_max is None
+            or not 1 <= special_number <= definition.special_max
+        ):
+            raise DomainValidationError("special_number", "outside the game's special range")
         if from_date is not None and type(from_date) is not date:
             raise DomainValidationError("from_date", "expected date")
         if to_date is not None and type(to_date) is not date:
@@ -368,6 +375,8 @@ class DrawRepository:
             filters.append(DrawRow.draw_id == draw_id)
         if main_contains is not None:
             filters.append(DrawRow.main_numbers.contains(list(main_contains)))
+        if special_number is not None:
+            filters.append(DrawRow.special_number == special_number)
         if first is not None:
             filters.append(
                 tuple_(DrawRow.draw_date, DrawRow.draw_seq) >= (first.draw_date, first.draw_seq)

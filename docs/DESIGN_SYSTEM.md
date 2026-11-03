@@ -7,7 +7,9 @@ hiện tại; domain/API và [wireframe](wireframe.md) vẫn giữ thẩm quyề
 ## Nhận diện và typography
 
 - Navy `#102b36`, teal `#006d67`, mint `#57d5bd`; nền sáng và card trắng.
-- Main/special có label riêng; amber hỗ trợ nhận diện special. Màu tần suất
+- Main/special có label riêng; cầu main xanh lá `#15803d`, special đỏ `#b91c1c`,
+  chữ số trắng `#ffffff` theo yêu cầu 03/11/2026. Áp dụng badges và textures
+  mô phỏng; không thay physics. Màu tần suất
   chỉ biểu diễn số kỳ đã xuất hiện, không diễn giải khả năng thắng.
 - Brand mark dùng chung `/lottoscope.svg` trong sidebar/mobile/favicon.
 - Outfit cho heading/số nổi bật, DM Sans cho nội dung, system fallback;
@@ -37,6 +39,11 @@ hiện tại; domain/API và [wireframe](wireframe.md) vẫn giữ thẩm quyề
 - Toolbar phạm vi/sort/view dùng một nhóm có label; date-range giữ validation
   và URL như trước. Bảng desktop có vùng scroll/header sticky và keyboard
   focus; mobile bỏ giới hạn chiều cao, bảng phụ có thể cuộn ngang.
+- Data Experience theo ADR 0014: bộ lọc đặt dưới page heading, dùng FilterBar
+  chung. Phạm vi áp dụng/số kỳ thực tế/cutoff luôn đọc từ response context;
+  metadata version vẫn nằm trong details. History nêu bộ lọc lịch sử riêng.
+  Cùng tần suất cùng dense rank, tie xếp số/cặp tăng dần; dashboard ghi rõ
+  danh sách rút gọn. Lotto special có nhóm riêng, không trộn cặp hoặc main.
 - Number tile có số, tần suất và thanh tỷ lệ theo maximum trong cùng phạm vi;
   legend ghi rõ cách đọc. Có table view để đọc đầy đủ chỉ số.
 - Checker có slot minh họa và số lượng đã chọn; kết quả không bị giả lập.

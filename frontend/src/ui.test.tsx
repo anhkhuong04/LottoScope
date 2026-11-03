@@ -1,11 +1,27 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { ContextNote, DataState, PageHead, Pager } from './ui'
+import { ContextNote, DataState, PageHead, Pager, ScopeSummary } from './ui'
 
 afterEach(cleanup)
 
 describe('data loading presentation', () => {
+  it('shows the applied response window and actual sample rather than an assumed 30 draws', () => {
+    render(
+      <ScopeSummary
+        context={{
+          game: 'lotto_535',
+          analysis_window: { kind: 'last_draws', count: 20 },
+          actual_draw_count: 7,
+          as_of_draw_id: '00985',
+          data_version: 4,
+        }}
+      />,
+    )
+    expect(screen.getByText(/20 kỳ gần nhất/)).toBeVisible()
+    expect(screen.getByText(/Thực tế: 7 kỳ/)).toBeVisible()
+    expect(screen.getByText(/Đến kỳ 00985/)).toBeVisible()
+  })
   it('shows saved data without a redundant refresh action', () => {
     render(
       <DataState loading={false} error={null} hasData retry={vi.fn()}>

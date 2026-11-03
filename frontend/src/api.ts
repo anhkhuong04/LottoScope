@@ -70,8 +70,13 @@ export type PairMetric = {
   average_gap: number | null
   max_gap: number | null
   last_seen_draw_id: string | null
+  frequency_rank: number
 }
-export type NumbersResponse = { context: Context; items: NumberMetric[] }
+export type NumbersResponse = {
+  context: Context
+  items: NumberMetric[]
+  number_kind: 'main' | 'special'
+}
 export type PairsResponse = Page<PairMetric> & { context: Context }
 export type NumberDetail = {
   context: Context
@@ -79,6 +84,7 @@ export type NumberDetail = {
   appearance_draws: Page<Draw>
   timeline_draw_ids: string[]
   pair_partners: PairMetric[]
+  number_kind: 'main' | 'special'
 }
 export type PairDetail = {
   context: Context

@@ -47,7 +47,12 @@ Database local và online **độc lập**, không tự đồng bộ dữ liệu
 
 Lotto 5/35 có 5 số chính (1–35) và special (1–12); Mega 6/45 có 6 số chính
 (1–45); Power 6/55 có 6 số chính (1–55) và special khác các số chính.
-Analytics và checker chỉ xét **số chính**. Lồng cầu Lotto mô phỏng thêm special
+Checker và phân tích cặp chỉ xét **số chính**. Bản code hiện tại bổ sung thống kê
+riêng số đặc biệt Lotto 01–12: trong trang **Số**, chọn **Nhóm số → Số đặc biệt**
+để xem tần suất, tỷ lệ, khoảng cách và lịch sử từng số. Phạm vi thực tế và hạng
+đồng hạng hiển thị cùng dữ liệu. Xem [nghiệm thu Data Experience](docs/DATA_EXPERIENCE_ACCEPTANCE.md)
+để phân biệt bản local đã kiểm chứng với website đang triển khai.
+Lồng cầu Lotto mô phỏng thêm special
 từ lồng riêng 1–12; lồng Mega/Power hiện chỉ quay số chính. Kết quả mô phỏng
 không phải kết quả quay chính thức hoặc dự đoán.
 

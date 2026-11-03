@@ -20,6 +20,7 @@ import {
   FrequencyTile,
   PageHead,
   PairLink,
+  ScopeSummary,
   WindowSelector,
   formatVietnamTime,
 } from '../ui'
@@ -36,6 +37,11 @@ export function Dashboard() {
   const numbers = useQuery(`${base}/analytics/numbers?${query}`, (signal) =>
     api<NumbersResponse>(`${base}/analytics/numbers?${query}`, signal),
   )
+  const special = useQuery(`${base}/analytics/numbers?${query}&number_kind=special`, (signal) =>
+    game!.id === 'lotto_535'
+      ? api<NumbersResponse>(`${base}/analytics/numbers?${query}&number_kind=special`, signal)
+      : Promise.resolve(null),
+  )
   const pairs = useQuery(`${base}/analytics/pairs?${query}&page_size=5`, (signal) =>
     api<PairsResponse>(`${base}/analytics/pairs?${query}&page_size=5`, signal),
   )
@@ -43,6 +49,7 @@ export function Dashboard() {
     api<Page<Draw>>(`${base}/draws?page_size=3`, signal),
   )
   const max = Math.max(0, ...(numbers.data?.items.map((item) => item.frequency) ?? []))
+  const specialMax = Math.max(0, ...(special.data?.items.map((item) => item.frequency) ?? []))
   const frequent = [...(numbers.data?.items ?? [])]
     .sort((a, b) => b.frequency - a.frequency || a.number - b.number)
     .slice(0, 6)
@@ -59,11 +66,9 @@ export function Dashboard() {
       <PageHead
         title={`Tổng quan ${game!.label}`}
         description="Các thống kê từ những kỳ quay đã được lưu."
-      >
-        <div className="dashboard-actions">
-          <WindowSelector />
-        </div>
-      </PageHead>
+      />
+      <WindowSelector />
+      {numbers.data && <ScopeSummary context={numbers.data.context} subject="Thống kê số chính" />}
       <div className="dashboard-hero">
         <Card
           className="latest-card"
@@ -174,11 +179,15 @@ export function Dashboard() {
                       number={item.number}
                       frequency={item.frequency}
                       maximum={max}
+                      rank={
+                        numbers.data?.context.actual_draw_count ? item.frequency_rank : undefined
+                      }
                     />
                   ))}
                 </div>
                 <p className="chart-caption">
-                  Thanh dài hơn: xuất hiện nhiều hơn trong phạm vi. Cao nhất {max} kỳ.
+                  Thanh dài hơn: xuất hiện nhiều hơn trong phạm vi. Cao nhất {max} kỳ. Cùng tần suất
+                  cùng hạng; danh sách rút gọn tối đa 6 số, đồng hạng xếp theo số tăng dần.
                 </p>
               </>
             )}
@@ -196,15 +205,23 @@ export function Dashboard() {
           <DataState {...pairs} hasData={!!pairs.data} empty="Chưa có cặp số trong phạm vi.">
             {pairs.data && (
               <div className="stack">
+                <ScopeSummary context={pairs.data.context} subject="Cặp số chính" />
                 {pairs.data.items.map((pair) => (
                   <div className="draw-row" key={pair.numbers.join('-')}>
                     <PairLink pair={pair} />
                     <strong>{pair.frequency} kỳ</strong>
+                    <span className="rank-label">
+                      {pairs.data?.context.actual_draw_count ? `Hạng ${pair.frequency_rank}` : '—'}
+                    </span>
                   </div>
                 ))}
                 {pairs.data.items.length === 0 && (
                   <p className="muted">Chưa có cặp số trong phạm vi.</p>
                 )}
+                <p className="chart-caption">
+                  Tối đa 5 cặp. Cùng tần suất cùng hạng; đồng hạng xếp theo cặp tăng dần. Xem cặp số
+                  để mở danh sách đầy đủ.
+                </p>
               </div>
             )}
           </DataState>
@@ -245,6 +262,7 @@ export function Dashboard() {
         </Card>
         <Card
           title="Các kỳ gần đây"
+          subtitle="3 kỳ mới nhất toàn lịch sử, không theo phạm vi phân tích"
           action={
             <Link className="link-arrow" to={`/history${search}`}>
               Toàn bộ lịch sử <ArrowRight size={14} />
@@ -256,6 +274,38 @@ export function Dashboard() {
           </DataState>
         </Card>
       </div>
+      {game!.id === 'lotto_535' && (
+        <Card
+          title="Thống kê số đặc biệt Lotto 5/35"
+          subtitle="Miền 01–12, tính riêng với số chính."
+        >
+          <DataState {...special} hasData={!!special.data}>
+            {special.data && (
+              <>
+                <ScopeSummary context={special.data.context} subject="Số đặc biệt" />
+                <div className="number-grid special-grid">
+                  {special.data.items.map((item) => (
+                    <FrequencyTile
+                      key={item.number}
+                      number={item.number}
+                      frequency={item.frequency}
+                      rank={
+                        special.data?.context.actual_draw_count ? item.frequency_rank : undefined
+                      }
+                      maximum={specialMax}
+                      special
+                      to={`/numbers/${item.number}${search}&number_kind=special`}
+                    />
+                  ))}
+                </div>
+                <Link className="link-arrow" to={`/numbers${search}&number_kind=special`}>
+                  Phân tích số đặc biệt <ArrowRight size={14} aria-hidden="true" />
+                </Link>
+              </>
+            )}
+          </DataState>
+        </Card>
+      )}
     </>
   )
 }

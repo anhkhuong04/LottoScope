@@ -9,6 +9,7 @@ import {
   DataTable,
   DrawRows,
   PageHead,
+  ScopeSummary,
   Pager,
   PairLink,
   WindowSelector,
@@ -52,10 +53,15 @@ export function Pairs() {
         <DataState {...result} hasData={!!result.data} empty="Không có cặp nào khớp bộ lọc.">
           {result.data && (
             <>
+              <ScopeSummary context={result.data.context} subject="Cặp số chính" />
+              <p className="chart-caption">
+                Cùng tần suất cùng hạng; cặp số tăng dần khi đồng hạng.
+              </p>
               <DataTable>
                 <thead>
                   <tr>
                     <th>Cặp</th>
+                    <th>Hạng tần suất</th>
                     <th>Số kỳ</th>
                     <th>Tỷ lệ</th>
                     <th>Gap hiện tại</th>
@@ -68,10 +74,21 @@ export function Pairs() {
                       <td>
                         <PairLink pair={pair} />
                       </td>
+                      <td>{result.data?.context.actual_draw_count ? pair.frequency_rank : '—'}</td>
                       <td>{pair.frequency}</td>
                       <td>{formatPercent(pair.percent_of_draws)}</td>
                       <td>{pair.current_gap ?? '—'}</td>
-                      <td>{pair.last_seen_draw_id ?? '—'}</td>
+                      <td>
+                        {pair.last_seen_draw_id ? (
+                          <Link
+                            to={`/history/${pair.last_seen_draw_id}${globalSearch(game!.id, window)}`}
+                          >
+                            {pair.last_seen_draw_id}
+                          </Link>
+                        ) : (
+                          '—'
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -128,6 +145,9 @@ export function PairDetailPage() {
       <DataState {...result} hasData={!!result.data}>
         {result.data && (
           <div className="grid cols-2">
+            <div className="span-2">
+              <ScopeSummary context={result.data.context} subject="Cặp số chính" />
+            </div>
             <Card title="Chỉ số">
               <div className="stack">
                 <div>

@@ -212,11 +212,13 @@ class PairOut(Out):
     average_gap: float | None
     max_gap: int | None
     last_seen_draw_id: str | None
+    frequency_rank: int
 
 
 class NumbersOut(Out):
     context: ContextOut
     items: tuple[NumberOut, ...]
+    number_kind: Literal["main", "special"] = "main"
 
 
 class PairPageOut(Out):
@@ -240,6 +242,7 @@ class NumberDetailOut(Out):
     appearance_draws: DrawPageOut
     timeline_draw_ids: tuple[str, ...]
     pair_partners: tuple[PairOut, ...]
+    number_kind: Literal["main", "special"] = "main"
 
 
 class PairDetailOut(Out):

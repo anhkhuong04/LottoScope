@@ -206,8 +206,9 @@ function Shell() {
                   định.
                 </p>
                 <p>
-                  Phân tích và kiểm tra bộ số chỉ dùng số chính. Số đặc biệt được hiển thị riêng. Số
-                  kỳ thực tế có thể ít hơn phạm vi yêu cầu nếu lịch sử chưa đủ.
+                  Phân tích cặp số và kiểm tra bộ số chỉ dùng số chính. Thống kê số đặc biệt Lotto
+                  5/35 được tính riêng trên miền 01–12. Số kỳ thực tế có thể ít hơn phạm vi yêu cầu
+                  nếu lịch sử chưa đủ.
                 </p>
               </div>
             </details>

@@ -5,6 +5,7 @@ import {
   ApiError,
   globalSearch,
   type AnalysisWindow,
+  type Context,
   type Draw,
   type Game,
   type PairMetric,
@@ -97,18 +98,23 @@ export function FrequencyTile({
   frequency,
   maximum,
   to,
+  special = false,
+  rank,
 }: {
   number: number
   frequency: number
   maximum: number
   to: string
+  special?: boolean
+  rank?: number
 }) {
   return (
     <Link className="number-tile frequency-tile" to={to}>
-      <Ball value={number} />
+      <Ball value={number} special={special} />
       <span className="frequency-value">
         {frequency} <small>kỳ</small>
       </span>
+      {rank !== undefined && <span className="rank-label">Hạng {rank}</span>}
       <span className="frequency-meter" aria-hidden="true">
         <span style={{ width: `${(100 * frequency) / Math.max(1, maximum)}%` }} />
       </span>
@@ -257,7 +263,7 @@ function WindowSelectorForm({
   const [draftMode, setDraftMode] = useState<string | null>(null)
   const value = draftMode ?? (window.kind === 'last_draws' ? String(window.count) : window.kind)
   return (
-    <div className="toolbar window-toolbar">
+    <FilterBar>
       <label className="field">
         Phạm vi phân tích
         <select
@@ -309,7 +315,24 @@ function WindowSelectorForm({
         </>
       )}
       {children}
+    </FilterBar>
+  )
+}
+export function FilterBar({ children }: { children: ReactNode }) {
+  return (
+    <div className="toolbar window-toolbar filter-bar" role="region" aria-label="Bộ lọc">
+      {children}
     </div>
+  )
+}
+export function ScopeSummary({ context, subject }: { context: Context; subject?: string }) {
+  return (
+    <p className="scope-summary">
+      {subject && <strong>{subject}</strong>}
+      <span>Phạm vi: {formatWindow(context.analysis_window)}</span>
+      <span>Thực tế: {context.actual_draw_count} kỳ</span>
+      <span>{context.as_of_draw_id ? `Đến kỳ ${context.as_of_draw_id}` : 'Chưa có kỳ quay'}</span>
+    </p>
   )
 }
 export function DrawRows({ draws, game }: { draws: Draw[]; game: Game }) {
