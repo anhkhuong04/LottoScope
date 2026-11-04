@@ -1,11 +1,35 @@
-# Cloud deployment — 29/10/2026
+# Cloud deployment — biên bản nghiệm thu
 
 Website công khai: **https://lottoscope-sable.vercel.app**. Frontend, backend
 và database chạy trên cloud, không phụ thuộc máy cá nhân đang bật.
 Runbook: [DEPLOYMENT_FREE.md](DEPLOYMENT_FREE.md), quyết định:
 [ADR 0011](DECISIONS/0011-free-cloud-deployment.md).
 
-## Resources và phiên bản đã kiểm chứng
+## Cập nhật public — 04/11/2026
+
+- Release ứng dụng **`b5646f8862e414a58bdb41a34b777d694b847893`**, đã push lên
+  `origin/deploy/free-cloud`: nguồn dự phòng mới, UI cleanup, thống kê special
+  Lotto/Data Experience và mô hình 3D đã duyệt.
+- Render `lottoscope-api`: deploy **`dep-dbl8ddfb9u1s73ds4qr0` live**; giữ Free,
+  region, database, environment và auto-deploy tắt. Liveness/readiness có token
+  trả 200; direct API/readiness thiếu token vẫn 401.
+- Vercel: **`dpl_7icYqkJS9PWdKw7mzkvzXgQ11PTU` READY**, production alias
+  `lottoscope-sable.vercel.app` đã gán. Source SHA khớp Render; bundle public
+  `index-DClKgHq1.js` khớp bản Docker đã kiểm chứng.
+- Build Vercel chạy lint/format/typecheck, **97 unit tests pass** và build thành
+  công. HTTP cloud smoke sau release đạt cho ba game, gateway, deep links và
+  no-store/401/404; 10 lượt đọc đồng thời hoàn tất trong 951 ms (không phải SLA).
+- Browser public: **18 E2E pass** (14 UI + 4 phiên quay thật). Desktop/mobile
+  kiểm special list/detail, scope/filter/rank, stale/late response, phối cảnh
+  cố định, thiếu WebGL, Axe/overflow. Desktop quay đủ Lotto 5+1 và Mega/Power
+  6 main; mobile quay đủ Lotto 5+1. Copy/handoff checker đạt, không gọi generator
+  API để chọn số. Truy vấn Render error logs từ mốc deploy không trả mục lỗi.
+- Không thay schema, migration/import/sync hoặc chuyển dữ liệu local sang Neon.
+  Latest cloud trước/sau HTTP smoke giữ Lotto `00985`, Mega `01581`, Power `01418`.
+  Chưa kiểm live-source sync, cold start tự nhiên hoặc FPS thiết bị thật trong
+  lần release này. Giới hạn nguồn và Free ở phần dưới tiếp tục áp dụng.
+
+## Resources và lịch sử go-live 29–30/10/2026
 
 | Dịch vụ | Resource | Cấu hình thực tế |
 | --- | --- | --- |

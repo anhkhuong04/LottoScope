@@ -25,9 +25,11 @@ contract POST/cooldown ở API, vận hành mặc định không scheduler ở R
 ## Phạm vi
 
 - Thiết kế lồng cầu 03/11/2026: người dùng đã duyệt mô hình và yêu cầu chỉ giữ
-  phối cảnh 3D, tích hợp Rapier rồi cập nhật Docker local; chưa deploy cloud.
+  phối cảnh 3D, tích hợp Rapier; mốc đầu cập nhật Docker local.
   [DRAW_MACHINE_REDESIGN](../docs/DRAW_MACHINE_REDESIGN.md) ghi kiến trúc visual/
   collider; contract kết quả tiếp tục ở DRAW_SIMULATION.
+  Ngày 04/11/2026 người dùng cho phép push và cập nhật public Render/Vercel;
+  phiên bản và kiểm chứng ở [biên bản cloud](../docs/DEPLOYMENT_ACCEPTANCE.md).
 
 - Data Experience và special Lotto 03/11/2026: [ADR 0014](../docs/DECISIONS/0014-special-number-data-experience.md)
   chốt thống kê riêng 01–12, filter/scope/rank nhất quán và màu cầu xanh/đỏ,

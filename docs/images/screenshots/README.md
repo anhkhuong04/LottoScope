@@ -31,4 +31,6 @@ của bản đang triển khai. Phân tích và phạm vi ở [DRAW_MACHINE_REDE
 1365 × 900, chụp toàn trang Power 6/55 hoàn tất 6 số chính. Phối cảnh cố định,
 khung trắng/acrylic và bóng teal; kết quả do phiên mô phỏng thật trong browser,
 không phải kỳ quay chính thức. Mẫu đã được duyệt; ảnh tĩnh phía trên giữ làm
-mốc lịch sử. Chưa cập nhật website online hoặc các ảnh online cũ.
+mốc lịch sử. Public cùng phiên bản được cập nhật ngày 04/11/2026 theo
+[biên bản cloud](../../DEPLOYMENT_ACCEPTANCE.md); ảnh này vẫn có nguồn từ Docker
+local, không thay các ảnh online cũ.

@@ -42,4 +42,5 @@ Không sửa DB ứng dụng, rebuild Docker, push hoặc deploy website online.
 
 Sau khi người dùng duyệt mô hình, Docker local được cập nhật cả backend/frontend
 trong [DRAW-VIS-02](superpowers/plans/2026-11-03-draw-machine-integration.md).
-Bằng chứng vận hành mới nằm tại checklist đó; website online chưa cập nhật.
+Bằng chứng vận hành local nằm tại checklist đó. Public được cập nhật ngày
+04/11/2026, ghi nhận tại [biên bản cloud](DEPLOYMENT_ACCEPTANCE.md).

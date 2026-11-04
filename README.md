@@ -38,8 +38,8 @@ Database local và online **độc lập**, không tự đồng bộ dữ liệu
 
 | Chức năng | Cách sử dụng |
 | --- | --- |
-| **Tổng quan** | Xem kỳ gần nhất, nguồn dữ liệu, các số/cặp xuất hiện nhiều và khoảng cách hiện tại |
-| **Lịch sử** | Lọc theo kỳ/ngày, mở chi tiết để xem main/special, nguồn và bảng giải thưởng nếu có |
+| **Tổng quan** | Xem kỳ gần nhất, các số/cặp xuất hiện nhiều và khoảng cách hiện tại |
+| **Lịch sử** | Lọc theo kỳ/ngày, mở chi tiết để xem main/special và bảng giải thưởng nếu có |
 | **Số** | Xem tần suất và gap dạng lưới, bảng hoặc biểu đồ; chọn một số để xem lịch sử xuất hiện |
 | **Cặp số** | Xem tần suất hai số chính cùng xuất hiện và các kỳ chứa cặp đó |
 | **Kiểm tra** | Chọn đúng 5 hoặc 6 số chính theo game, bấm **Kiểm tra lịch sử** để xem trùng chính xác và các kỳ tương đồng |
@@ -51,14 +51,14 @@ Checker và phân tích cặp chỉ xét **số chính**. Bản code hiện tạ
 riêng số đặc biệt Lotto 01–12: trong trang **Số**, chọn **Nhóm số → Số đặc biệt**
 để xem tần suất, tỷ lệ, khoảng cách và lịch sử từng số. Phạm vi thực tế và hạng
 đồng hạng hiển thị cùng dữ liệu. Xem [nghiệm thu Data Experience](docs/DATA_EXPERIENCE_ACCEPTANCE.md)
-để phân biệt bản local đã kiểm chứng với website đang triển khai.
+để xem phạm vi và bằng chứng kiểm chứng tính năng.
 Lồng cầu Lotto mô phỏng thêm special
 từ lồng riêng 1–12; lồng Mega/Power hiện chỉ quay số chính. Kết quả mô phỏng
 không phải kết quả quay chính thức hoặc dự đoán.
 
-Bản local dùng mô hình đã duyệt: khung trắng, acrylic, bóng teal và góc phối
+Ứng dụng dùng mô hình đã duyệt: khung trắng, acrylic, bóng teal và góc phối
 cảnh cố định trong **Tạo bộ số**. [Thiết kế và kiểm chứng](docs/DRAW_MACHINE_REDESIGN.md).
-Thay đổi này chưa deploy lên website online.
+Bản public được cập nhật ngày 04/11/2026; xem [biên bản triển khai](docs/DEPLOYMENT_ACCEPTANCE.md).
 
 ### Cập nhật dữ liệu và thời gian chờ
 

@@ -1,7 +1,8 @@
 # Thiết kế lại lồng cầu
 
 Ngày 03/11/2026: người dùng duyệt mẫu từ `lc1.png`/`lc2.png`, yêu cầu **chỉ giữ
-phối cảnh 3D**, tích hợp Rapier và cập nhật Docker local. Không deploy cloud.
+phối cảnh 3D**, tích hợp Rapier và cập nhật Docker local. Ngày 04/11/2026 người
+dùng cho phép cập nhật public; phiên bản ở [biên bản cloud](DEPLOYMENT_ACCEPTANCE.md).
 Quy tắc kết quả và chi tiết vật lý ở [DRAW_SIMULATION](DRAW_SIMULATION.md).
 
 ## Phân tích và lựa chọn
@@ -53,4 +54,5 @@ Không đổi count/game, checker/API/schema hoặc ghi kết quả mô phỏng 
 
 Tiến độ và kết quả thực chạy ở
 [DRAW-VIS-02](superpowers/plans/2026-11-03-draw-machine-integration.md).
-Chỉ bản Docker local được cập nhật trong mốc này; bản online độc lập.
+Docker local và website public dùng database độc lập; cập nhật ứng dụng không
+tự chuyển dữ liệu giữa hai môi trường.
