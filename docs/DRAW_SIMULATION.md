@@ -39,9 +39,24 @@ thay phạm vi main-only Lotto của SIM-04; Mega/Power tiếp tục main-only.
 - Logic vật lý tách khỏi React để cùng chạy trong cảnh và test không WebGL.
   Bước vật lý cố định 1/60 giây; geometry/material dùng chung, không setState
   vị trí bóng mỗi khung hình. Lazy-load cảnh khi vào trang Tạo bộ số của cả ba game.
-- Lồng có thành rỗng và một cửa đáy hẹp; gate vật lý đóng sau lấy bóng,
-  trộn lại trước lần mở tiếp. Kiểm nhận dựa trên vị trí trước/sau physics step,
-  không dựa trên timer; lỗi bóng thoát thành phải dừng, không bốc bổ sung.
+- Theo mẫu đã duyệt 03/11/2026, lồng có thành rỗng và cửa trước thấp theo
+  pháp tuyến `(0, -0.64, sqrt(1-0.64²))`. Phễu trong và cổ rỗng dẫn bóng qua
+  gate; mặt phẳng kiểm nhận cách tâm 2.65 đơn vị ở bán kính mặc định 2.5,
+  cùng co giãn theo bán kính. Chỉ nhận crossing hướng ra khi gate mở, trong
+  khẩu độ kiểm nhận; gate đóng sau lấy bóng, trộn lại trước lần mở tiếp.
+  Lỗi bóng thoát thành phải dừng, không bốc bổ sung.
+- Vỏ và cửa đứng yên để giữ đường thoát; trục ngang có rotor kinematic và
+  collider cánh khuấy riêng. Lực khuấy tuần hoàn theo vị trí/thời gian tác
+  động giống nhau cho mọi bóng, xen giai đoạn nhả để tránh giữ bóng ở mép
+  cửa. Phễu trong giải quyết việc cửa trước cao hơn đáy; không hút/chọn bóng
+  theo số. Kết quả vẫn do crossing thực tế, không do timer.
+- Sau crossing, body bóng được vô hiệu hóa; mesh nội suy ra cuối máng rồi
+  ẩn. Phần trình diễn này không chọn kết quả và không phải mô phỏng vật lý
+  đầy đủ của bóng lăn trên máng ngoài.
+- `config.ts` quản lý radius, ballRadius, mass, rotationSpeed (rad/s),
+  gravity, friction, restitution, damping và tốc độ tối đa; cấu hình sai bị
+  từ chối trước cấp tài nguyên. Vật liệu/chất lượng ở `visual/design.ts`.
+  Các giá trị khác mặc định cần chạy lại test va chạm/throughput trước dùng.
 - Thời gian hoạt động của phiên không bao gồm lúc tạm dừng. Giới hạn mỗi lượt
   30 giây chưa ra bóng; người dùng được tiếp tục trộn, không chọn số hộ.
 - Pool main dùng `main_max`/`main_count` từ API. Riêng Lotto dùng `special_max`

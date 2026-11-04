@@ -1,7 +1,9 @@
 # Analytics và generator contract
 
 Game/identity/time do [DOMAIN.md](DOMAIN.md) định nghĩa. Các công thức dưới
-đây áp dụng cho main numbers; special được loại khỏi toàn bộ phép tính.
+đây mặc định áp dụng cho main numbers. Ngoại lệ Lotto 5/35 theo
+[ADR 0014](DECISIONS/0014-special-number-data-experience.md): thống kê special
+được tính riêng, không nhập special vào main hoặc pair.
 `W` là danh sách draw cùng game, theo thứ tự thời gian từ cũ đến mới, sau
 cutoff. Cùng `W` và tham số phải cho cùng kết quả, kể cả thứ tự khi hòa.
 
@@ -25,6 +27,16 @@ cutoff. Cùng `W` và tham số phải cho cùng kết quả, kể cả thứ t�
   count tăng, number tăng. Rank cùng count là cùng rank theo dense ranking;
   API trả count và rank. UI `Most/Least frequent` lấy số đầu theo sort này.
   MVP không tạo ngưỡng Hot/Cold riêng hoặc score dự đoán.
+
+## Nhóm số đặc biệt Lotto 5/35
+
+Lotto `number_kind=special` chọn miền 01–12 theo game definition. Positions
+chỉ lấy các draw có `special_number=n`; dùng nguyên frequency/percent/dense
+rank và gap/recency, tổng frequency bằng `|W|`. Special trùng main vẫn tính
+riêng một lần. Detail/history lọc cột special trong window/cutoff, phân trang;
+không pair partners. Mega/Power chưa hỗ trợ mode này. Checker/generator/pair
+giữ main-only. Pair API thêm dense frequency rank để UI thể hiện đồng hạng;
+sort cặp tăng dần chỉ là tie-break, không tạo hạng khác.
 
 ## Gap/recency
 

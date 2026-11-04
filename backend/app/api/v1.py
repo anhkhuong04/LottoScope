@@ -150,11 +150,14 @@ def numbers(
     window: Window,
     as_of_draw_id: str | None = None,
     sort: Literal["number", "frequency_desc", "frequency_asc", "gap_desc"] = "number",
+    number_kind: Literal["main", "special"] = "main",
 ) -> NumbersOut:
     context, items = AnalyticsService(engine).numbers(
-        game, window, as_of_draw_id=as_of_draw_id, sort=sort
+        game, window, as_of_draw_id=as_of_draw_id, sort=sort, number_kind=number_kind
     )
-    return NumbersOut.model_validate({"context": context, "items": items})
+    return NumbersOut.model_validate(
+        {"context": context, "items": items, "number_kind": number_kind}
+    )
 
 
 @router.get("/games/{game}/analytics/numbers/{number}", response_model=NumberDetailOut)
@@ -166,6 +169,7 @@ def number_detail(
     as_of_draw_id: str | None = None,
     page: int = 1,
     page_size: int = 25,
+    number_kind: Literal["main", "special"] = "main",
 ) -> NumberDetailOut:
     return NumberDetailOut.model_validate(
         AnalyticsService(engine).number_detail(
@@ -175,6 +179,7 @@ def number_detail(
             as_of_draw_id=as_of_draw_id,
             page=page,
             page_size=page_size,
+            number_kind=number_kind,
         )
     )
 

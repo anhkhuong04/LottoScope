@@ -20,18 +20,18 @@ test('reduced motion keeps frequency values readable and disables decorative mot
   await expect(page.locator('.frequency-value').first()).toHaveText(value!)
 })
 
-test('dashboard shows latest results before compact metrics and links to complete analysis', async ({
+test('dashboard keeps latest results before analysis without duplicate metrics', async ({
   page,
 }) => {
   await page.goto('/dashboard?game=power_655&window=last_draws&count=20')
   await expect(page.locator('.latest-card .balls > .ball')).toHaveCount(6)
   const latest = await page.locator('.latest-card').boundingBox()
-  const metrics = await page.locator('.dashboard-metrics').boundingBox()
+  const analysis = await page.locator('.dashboard-sections').boundingBox()
   expect(latest).not.toBeNull()
-  expect(metrics).not.toBeNull()
+  expect(analysis).not.toBeNull()
   expect(latest!.y).toBeLessThan(page.viewportSize()!.height)
-  if (page.viewportSize()!.width < 1101) expect(latest!.y).toBeLessThan(metrics!.y)
-  await expect(page.locator('.dashboard-metrics .metric')).toHaveCount(4)
+  expect(latest!.y).toBeLessThan(analysis!.y)
+  await expect(page.locator('.dashboard-metrics')).toHaveCount(0)
   await expect(page.locator('.number-tile')).toHaveCount(6)
   await expect(page.locator('.dashboard-sections .draw-meta')).toHaveCount(3)
   await page.getByRole('link', { name: 'Xem tất cả' }).click()

@@ -5,6 +5,7 @@ import {
   ApiError,
   globalSearch,
   type AnalysisWindow,
+  type Context,
   type Draw,
   type Game,
   type PairMetric,
@@ -12,12 +13,10 @@ import {
 import { useApp } from './state'
 
 export function PageHead({
-  kicker,
   title,
   description,
   children,
 }: {
-  kicker: string
   title: string
   description: string
   children?: ReactNode
@@ -25,7 +24,6 @@ export function PageHead({
   return (
     <div className="page-head">
       <div>
-        <p className="eyebrow">{kicker}</p>
         <h1>{title}</h1>
         <p className="page-intro">{description}</p>
       </div>
@@ -100,18 +98,23 @@ export function FrequencyTile({
   frequency,
   maximum,
   to,
+  special = false,
+  rank,
 }: {
   number: number
   frequency: number
   maximum: number
   to: string
+  special?: boolean
+  rank?: number
 }) {
   return (
     <Link className="number-tile frequency-tile" to={to}>
-      <Ball value={number} />
+      <Ball value={number} special={special} />
       <span className="frequency-value">
         {frequency} <small>kỳ</small>
       </span>
+      {rank !== undefined && <span className="rank-label">Hạng {rank}</span>}
       <span className="frequency-meter" aria-hidden="true">
         <span style={{ width: `${(100 * frequency) / Math.max(1, maximum)}%` }} />
       </span>
@@ -141,22 +144,12 @@ export function Balls({
     </div>
   )
 }
-export function Metric({ label, value, foot }: { label: string; value: ReactNode; foot?: string }) {
-  return (
-    <div className="card metric">
-      <div className="metric-label">{label}</div>
-      <div className="metric-value">{value ?? '—'}</div>
-      {foot && <div className="metric-foot">{foot}</div>}
-    </div>
-  )
-}
 export function DataState({
   loading,
   error,
   hasData,
   empty = 'Chưa có dữ liệu trong phạm vi này.',
   retry,
-  showRefresh = true,
   children,
 }: {
   loading: boolean
@@ -164,7 +157,6 @@ export function DataState({
   hasData: boolean
   empty?: string
   retry: () => void
-  showRefresh?: boolean
   children: ReactNode
 }) {
   if (!hasData && loading) return <LoadingSkeleton />
@@ -199,13 +191,6 @@ export function DataState({
         </div>
       )}
       <div className="data-content">{children}</div>
-      {showRefresh && (
-        <div className="refresh-row">
-          <button className="btn ghost" disabled={loading} onClick={retry}>
-            <RefreshCw size={15} /> Làm mới hiển thị
-          </button>
-        </div>
-      )}
     </>
   )
 }
@@ -278,7 +263,7 @@ function WindowSelectorForm({
   const [draftMode, setDraftMode] = useState<string | null>(null)
   const value = draftMode ?? (window.kind === 'last_draws' ? String(window.count) : window.kind)
   return (
-    <div className="toolbar window-toolbar">
+    <FilterBar>
       <label className="field">
         Phạm vi phân tích
         <select
@@ -330,7 +315,24 @@ function WindowSelectorForm({
         </>
       )}
       {children}
+    </FilterBar>
+  )
+}
+export function FilterBar({ children }: { children: ReactNode }) {
+  return (
+    <div className="toolbar window-toolbar filter-bar" role="region" aria-label="Bộ lọc">
+      {children}
     </div>
+  )
+}
+export function ScopeSummary({ context, subject }: { context: Context; subject?: string }) {
+  return (
+    <p className="scope-summary">
+      {subject && <strong>{subject}</strong>}
+      <span>Phạm vi: {formatWindow(context.analysis_window)}</span>
+      <span>Thực tế: {context.actual_draw_count} kỳ</span>
+      <span>{context.as_of_draw_id ? `Đến kỳ ${context.as_of_draw_id}` : 'Chưa có kỳ quay'}</span>
+    </p>
   )
 }
 export function DrawRows({ draws, game }: { draws: Draw[]; game: Game }) {
@@ -477,9 +479,22 @@ function PageJump({
 }
 export function ContextNote({ count, version }: { count: number; version: number }) {
   return (
-    <span className="pill">
-      <Clock3 size={13} /> {count} kỳ trong phạm vi · bản dữ liệu {version}
-    </span>
+    <details className="data-details context-details">
+      <summary>
+        <Clock3 size={16} aria-hidden="true" />
+        Thông tin dữ liệu
+      </summary>
+      <dl className="data-facts">
+        <div>
+          <dt>Số kỳ trong phạm vi</dt>
+          <dd>{count}</dd>
+        </div>
+        <div>
+          <dt>Phiên bản dữ liệu</dt>
+          <dd>{version}</dd>
+        </div>
+      </dl>
+    </details>
   )
 }
 export function BackLink({ to, label }: { to: string; label: string }) {

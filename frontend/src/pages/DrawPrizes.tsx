@@ -5,7 +5,7 @@ import { Card, DataState, formatVietnamTime } from '../ui'
 
 const integerFormat = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 })
 const prizeErrorMessages: Record<string, string> = {
-  prize_source_unavailable: 'Chưa lấy được bảng giải thưởng từ Vietlott. Vui lòng thử lại.',
+  prize_source_unavailable: 'Chưa lấy được bảng giải thưởng. Vui lòng thử lại.',
   ingestion_busy: 'Dữ liệu đang được thu thập. Vui lòng thử lại sau ít phút.',
   prize_review_pending: 'Dữ liệu nguồn thay đổi và đang chờ đối chiếu.',
 }
@@ -43,7 +43,7 @@ export function DrawPrizes({ gameId, drawId }: { gameId: string; drawId: string 
   return (
     <Card
       title="Giải thưởng kỳ quay"
-      subtitle="Số lượng và giá trị giải theo công bố của Vietlott."
+      subtitle="Số lượng và giá trị giải thưởng theo kỳ quay."
       className="prize-card"
     >
       <DataState
@@ -105,11 +105,8 @@ export function DrawPrizes({ gameId, drawId }: { gameId: string; drawId: string 
                 </tbody>
               </table>
               <p className="muted prize-source">
-                <a href={result.data.source_url} target="_blank" rel="noreferrer">
-                  Bảng giải thưởng gốc
-                </a>
                 {result.data.source_retrieved_at &&
-                  ` · Thu thập ${formatVietnamTime(result.data.source_retrieved_at)}`}
+                  `Thu thập ${formatVietnamTime(result.data.source_retrieved_at)}`}
               </p>
             </>
           ) : (

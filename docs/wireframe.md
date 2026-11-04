@@ -378,14 +378,6 @@ Dashboard trả lời nhanh:
 │ Draw #XXXX | 01/10/2026                                     │
 │                                                            │
 │   07   19   25   29   33     | Special 04                  │
-├───────────────────────┬──────────────────────────────────────┤
-│ Summary Card          │ Summary Card                         │
-│ Total Draws           │ Analysis Window                      │
-│ 1,245                 │ 30 draws                             │
-├───────────────────────┼──────────────────────────────────────┤
-│ Summary Card          │ Summary Card                         │
-│ Most Frequent         │ Highest Current Gap                  │
-│ 19                    │ 31                                   │
 ├──────────────────────────────────────────────────────────────┤
 │ Number Frequency                                             │
 │ [ Bar Chart / Grid ]                                         │
@@ -421,18 +413,13 @@ Không dùng animation roulette hoặc slot-machine style.
 
 ---
 
-### Summary Cards
+### Trạng thái dữ liệu
 
-MVP nên có tối đa 4 cards:
-
-```text
-Total stored draws
-Current analysis window
-Most frequent number
-Highest current gap
-```
-
-Không nên hiển thị quá nhiều cards.
+Cleanup 03/11/2026 bỏ summary cards trùng lặp. Kết quả kỳ mới nhất nằm trong
+Latest Draw; tần suất/cặp/khoảng cách đọc trực tiếp tại các phần tương ứng.
+Thời gian đồng bộ nằm trong details trạng thái. Số kỳ thực tế và phiên bản
+thống kê lấy từ đúng analytics context đang hiển thị, kể cả khi tải trạng
+thái đồng bộ thất bại; không lấy phiên bản mới để gán cho kết quả cũ.
 
 ---
 
@@ -563,8 +550,10 @@ Prize tiers / match conditions / winner count / published VND amount
 Bổ sung theo yêu cầu 07/10/2026: bảng giải thưởng nằm dưới kết quả quay,
 loading/error/retry độc lập. Desktop/tablet dùng bảng, mobile hiển thị từng
 hạng thành card; nhấn mạnh Jackpot/Độc Đắc, phân biệt main và special trong
-điều kiện. Nguồn/thu thập của bảng riêng với kết quả quay; thiếu dữ liệu không
+điều kiện. Thời điểm thu thập của bảng riêng với kết quả quay; thiếu dữ liệu không
 thay bằng 0. Contract ở [API.md](API.md).
+Yêu cầu 03/11/2026: không hiển thị tên/link nhà cung cấp trên các màn hình;
+provenance vẫn lưu DB/API/audit theo ADR 0013.
 
 Optional:
 
@@ -1131,12 +1120,19 @@ Không đưa ROI hoặc profit tracking vào MVP/Phase 2 nếu chưa có specifi
 
 Visual refresh được người dùng yêu cầu ngày 29/10/2026 theo
 [UI/UX audit](UI_UX_AUDIT.md): ưu tiên dashboard/mobile → loading/menu →
-biểu đồ/typography → micro-interactions. Dashboard đưa kết quả gần nhất lên
-trước KPI, KPI mobile 2 cột khi đủ chỗ; card theo chiều cao nội dung, tóm tắt
+biểu đồ/typography → micro-interactions. Cleanup 03/11/2026 bỏ slogan, nhãn
+trang trí và bốn KPI trùng; dashboard đưa kết quả gần nhất lên trước phân tích.
+Card theo chiều cao nội dung, tóm tắt
 6 số có tần suất cao và 3 kỳ gần đây, dẫn tới các màn hình đầy đủ. Chọn số
 đồng hạng theo thứ tự số tăng dần để trình bày; không đổi metric/backend.
 Thông tin đồng bộ có chi tiết mở rộng, không dùng trạng thái “Live” giả.
+Nút ghi **Đồng bộ**; thông báo đóng bằng icon × góc trên phải, có accessible
+label và touch target tối thiểu 44px.
 Các URL/game/window, quy tắc dữ liệu và main/special giữ nguyên.
+Không có refresh ở trạng thái thành công; bộ lọc và đồng bộ tự cập nhật,
+giữ retry cho lỗi. Metadata phiên bản/số kỳ thực tế nằm trong details dữ liệu.
+Giải thích phương pháp và cảnh báo không dự đoán chuyển khỏi sidebar sang
+details dễ truy cập trong nội dung. Quy ước spacing/type/card ở DESIGN_SYSTEM.
 
 Mỗi data section phải có loading state riêng.
 

@@ -21,12 +21,14 @@ không là API ổn định; access, cấu trúc HTML và quyền sử dụng c�
 khi triển khai P3. Không sử dụng một nguồn bên thứ ba im lặng khi nguồn chính
 không truy cập được.
 
-### Fallback cộng đồng được duyệt — 30/10/2026
+### Nguồn dự phòng — cập nhật 03/11/2026
 
-Ngoại lệ official-only được người dùng cho phép tại [ADR 0012](DECISIONS/0012-community-source-fallback.md):
-manual sync opt-in `LOTTO_COMMUNITY_FALLBACK_ENABLED=true`, chỉ sau official
-Cloudflare challenge, dùng JSONL `vietvudanh/vietlott-data` trên GitHub raw.
-Nguồn được ghi rõ trong DB/audit/API/UI. Không vượt challenge.
+Manual sync opt-in `LOTTO_COMMUNITY_FALLBACK_ENABLED=true`, chỉ sau official
+Cloudflare challenge. [ADR 0013](DECISIONS/0013-publisher-source-fallback.md)
+chọn Minh Chính cho Lotto, Minh Ngọc cho Mega/Power và bỏ GitHub fallback.
+Adapter đọc HTML, tối đa 12 trang × 2 MB theo dated links đúng host/game.
+Provenance giữ trong DB/audit/API; UI ẩn tên/link nguồn theo yêu cầu người dùng.
+Không vượt challenge.
 
 Chỉ thêm tối đa 20 kỳ mới liên tiếp sau latest đã lưu, sau khi 20 kỳ gần nhất
 khớp ngày/main/special. Validate identity, strict integer, count/range/duplicate,
@@ -117,7 +119,7 @@ Với scheduler trong Docker, ngoài cron còn kiểm tra latest mỗi 5 phút
 (`LOTTO_LATEST_POLL_MINUTES`, 5–60). Ba game chạy tuần tự, chung fetcher/throttle; poll nhanh không recheck
 lịch sử cũ. Cron/startup/lệnh `collect` vẫn đối chiếu recent và retry backlog.
 
-Cấu hình mặc định từ 20/10/2026 dùng nút **Tải dữ liệu**, đồng bộ latest-only
+Cấu hình mặc định từ 20/10/2026 dùng nút **Đồng bộ**, đồng bộ latest-only
 cho game đang chọn rồi làm mới số liệu. Docker scheduler và hai task Windows
 đều tắt; lịch 18:30/21:15 cũ chỉ còn là tùy chọn. API/cooldown ở
 [API](API.md#đồng-bộ-thủ-công), quyết định ở [ADR 0008](DECISIONS/0008-manual-sync.md),

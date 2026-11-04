@@ -6,6 +6,10 @@
 - Sources: người dùng cho phép fallback cộng đồng có ghi nguồn và validation;
   [Data Pipeline](../DATA_PIPELINE.md), [cloud runbook](../DEPLOYMENT_FREE.md).
 
+> Lựa chọn publisher GitHub và hiển thị nguồn trên UI bên dưới đã được thay bởi
+> [ADR 0013](0013-publisher-source-fallback.md) ngày 03/11/2026. Các invariants
+> append-only/validation/challenge gate tiếp tục áp dụng.
+
 ## Context
 
 Cùng collector chạy local thành công nhưng Render nhận Cloudflare challenge từ

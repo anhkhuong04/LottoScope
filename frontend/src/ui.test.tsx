@@ -1,11 +1,51 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { DataState, Pager } from './ui'
+import { ContextNote, DataState, PageHead, Pager, ScopeSummary } from './ui'
 
 afterEach(cleanup)
 
 describe('data loading presentation', () => {
+  it('shows the applied response window and actual sample rather than an assumed 30 draws', () => {
+    render(
+      <ScopeSummary
+        context={{
+          game: 'lotto_535',
+          analysis_window: { kind: 'last_draws', count: 20 },
+          actual_draw_count: 7,
+          as_of_draw_id: '00985',
+          data_version: 4,
+        }}
+      />,
+    )
+    expect(screen.getByText(/20 kỳ gần nhất/)).toBeVisible()
+    expect(screen.getByText(/Thực tế: 7 kỳ/)).toBeVisible()
+    expect(screen.getByText(/Đến kỳ 00985/)).toBeVisible()
+  })
+  it('shows saved data without a redundant refresh action', () => {
+    render(
+      <DataState loading={false} error={null} hasData retry={vi.fn()}>
+        <p>Saved result</p>
+      </DataState>,
+    )
+    expect(screen.getByText('Saved result')).toBeVisible()
+    expect(screen.queryByRole('button', { name: 'Làm mới hiển thị' })).toBeNull()
+  })
+
+  it('keeps the page title and useful description without decorative labels', () => {
+    render(<PageHead title="Tổng quan" description="Lịch sử đã lưu" />)
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Tổng quan')
+    expect(screen.getByText('Lịch sử đã lưu')).toBeVisible()
+    expect(screen.queryByText('Khám phá dữ liệu')).toBeNull()
+  })
+
+  it('discloses actual sample size and data version in data status', () => {
+    const { container } = render(<ContextNote count={12} version={995} />)
+    expect(screen.getByText('Thông tin dữ liệu')).toBeVisible()
+    expect(container.querySelector('details')).not.toHaveAttribute('open')
+    expect(screen.queryByText(/bản dữ liệu 995/)).toBeNull()
+    expect(screen.getByText('995')).not.toBeVisible()
+  })
   it('shows an accessible skeleton without inventing values before data arrives', () => {
     render(
       <DataState loading error={null} hasData={false} retry={vi.fn()}>

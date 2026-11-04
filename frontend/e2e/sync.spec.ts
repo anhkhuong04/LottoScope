@@ -15,8 +15,7 @@ test('manual sync posts once and reloads stored dashboard data after completion'
         ? {
             ...data,
             draw_id: '99999',
-            source_url:
-              'https://raw.githubusercontent.com/vietvudanh/vietlott-data/main/data/power535.jsonl#draw=99999',
+            source_url: 'https://www.minhchinh.com/xo-so-dien-toan-lotto-535.html#draw=99999',
           }
         : data,
     })
@@ -38,22 +37,30 @@ test('manual sync posts once and reloads stored dashboard data after completion'
     })
   })
   await page.goto('/dashboard?game=lotto_535')
-  await expect(page.locator('.number-tile')).toHaveCount(6)
+  await expect(page.locator('.latest-card .balls .ball')).toHaveCount(6)
   expect(requests).toBe(0)
-  await page.getByRole('button', { name: 'Tải dữ liệu', exact: true }).click()
+  await page.getByRole('button', { name: 'Đồng bộ', exact: true }).click()
   await expect(page.getByRole('button', { name: 'Đang đồng bộ…' })).toBeDisabled()
   expect(requests).toBe(1)
   release()
   await expect(
     page.getByRole('status').filter({ hasText: 'Lotto 5/35: đã thêm 2 kỳ mới' }),
   ).toBeVisible()
-  await expect(page.locator('.metric-value').first()).toHaveText('99999')
+  await expect(page.locator('.latest-meta span').first()).toHaveText('Kỳ 99999')
+  await expect(page.locator('.sync-feedback')).not.toContainText(/Minh Chính|Minh Ngọc|vietvudanh/)
   await expect(
-    page.getByRole('status').filter({ hasText: 'Nguồn dự phòng cộng đồng' }),
-  ).toBeVisible()
-  await expect(
-    page.getByRole('link', { name: 'Cộng đồng · vietvudanh/vietlott-data' }),
-  ).toBeVisible()
+    page.getByRole('link', { name: /Minh Chính|Minh Ngọc|Vietlott|vietvudanh/ }),
+  ).toHaveCount(0)
+  const close = page.getByRole('button', { name: 'Đóng thông báo đồng bộ' })
+  const box = await close.boundingBox()
+  expect(box!.width).toBeGreaterThanOrEqual(44)
+  expect(box!.height).toBeGreaterThanOrEqual(44)
+  const feedback = await page.locator('.sync-feedback').boundingBox()
+  expect(box!.x).toBeGreaterThan(feedback!.x + feedback!.width / 2)
+  expect(box!.y).toBeLessThan(feedback!.y + 12)
+  await page.screenshot({ path: test.info().outputPath('sync-notice.png') })
+  await close.click()
+  await expect(page.locator('.sync-feedback')).toHaveCount(0)
   expect(requests).toBe(1)
 })
 
@@ -75,18 +82,18 @@ test('a late sync keeps the selected game and reports source errors without losi
     }),
   )
   await page.goto('/dashboard?game=lotto_535')
-  await page.getByRole('button', { name: 'Tải dữ liệu', exact: true }).click()
+  await page.getByRole('button', { name: 'Đồng bộ', exact: true }).click()
   await page.getByLabel('Chọn game').selectOption('mega_645')
-  await expect(page.locator('.number-tile')).toHaveCount(6)
+  await expect(page.locator('.latest-card .balls .ball')).toHaveCount(6)
   release()
   await expect(
     page.getByRole('status').filter({ hasText: 'Lotto 5/35: đã kiểm tra nguồn' }),
   ).toBeVisible()
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Tổng quan Mega 6/45')
-  await expect(page.locator('.metric-value').first()).toHaveText(/^\d{5}$/)
-  const saved = await page.locator('.metric-value').first().textContent()
-  await page.getByRole('button', { name: 'Tải dữ liệu', exact: true }).click()
+  await expect(page.locator('.latest-meta span').first()).toHaveText(/^Kỳ \d{5}$/)
+  const saved = await page.locator('.latest-meta span').first().textContent()
+  await page.getByRole('button', { name: 'Đồng bộ', exact: true }).click()
   await expect(page.getByRole('alert')).toContainText('Mega 6/45: Chưa thể hoàn tất')
   await expect(page.getByRole('alert')).toContainText('Dữ liệu đã lưu vẫn được giữ')
-  await expect(page.locator('.metric-value').first()).toHaveText(saved!)
+  await expect(page.locator('.latest-meta span').first()).toHaveText(saved!)
 })

@@ -20,7 +20,7 @@ describe('manual collection control', () => {
     let finish!: (value: unknown) => void
     vi.mocked(api).mockReturnValue(new Promise((resolve) => (finish = resolve)))
     render(<SyncControls />)
-    fireEvent.click(screen.getByRole('button', { name: 'Tải dữ liệu' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Đồng bộ' }))
     expect(screen.getByRole('button', { name: 'Đang đồng bộ…' })).toBeDisabled()
     expect(api).toHaveBeenCalledWith('/games/lotto_535/sync', undefined, {})
     expect(api).toHaveBeenCalledTimes(1)
@@ -33,15 +33,17 @@ describe('manual collection control', () => {
   it('keeps the stored view and reports failure without claiming success', async () => {
     vi.mocked(api).mockRejectedValue(new Error('source unavailable'))
     render(<SyncControls />)
-    fireEvent.click(screen.getByRole('button', { name: 'Tải dữ liệu' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Đồng bộ' }))
     await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('source unavailable'))
     expect(screen.getByRole('alert')).toHaveTextContent('Dữ liệu đã lưu vẫn được giữ')
     expect(refreshData).toHaveBeenCalledTimes(1)
     expect(screen.queryByText(/đã thêm/)).toBeNull()
-    expect(screen.getByRole('button', { name: 'Tải dữ liệu' })).toBeEnabled()
+    expect(screen.getByRole('button', { name: 'Đồng bộ' })).toBeEnabled()
+    fireEvent.click(screen.getByRole('button', { name: 'Đóng thông báo đồng bộ' }))
+    expect(screen.queryByRole('alert')).toBeNull()
   })
 
-  it('identifies a successful community fallback explicitly', async () => {
+  it('reports the result without publisher names and closes with an icon', async () => {
     vi.mocked(api).mockResolvedValue({
       created: 2,
       enriched: 0,
@@ -49,10 +51,15 @@ describe('manual collection control', () => {
       source: 'community',
     })
     render(<SyncControls />)
-    fireEvent.click(screen.getByRole('button', { name: 'Tải dữ liệu' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Đồng bộ' }))
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('đã thêm 2 kỳ mới'))
-    expect(screen.getByRole('status')).toHaveTextContent(
-      'Nguồn dự phòng cộng đồng: vietvudanh/vietlott-data',
+    expect(screen.getByRole('status')).not.toHaveTextContent(
+      /vietvudanh|Minh Chính|Minh Ngọc|Vietlott/,
     )
+    const close = screen.getByRole('button', { name: 'Đóng thông báo đồng bộ' })
+    expect(close.textContent).toBe('')
+    expect(close.querySelector('svg')).not.toBeNull()
+    fireEvent.click(close)
+    expect(screen.queryByRole('status')).toBeNull()
   })
 })

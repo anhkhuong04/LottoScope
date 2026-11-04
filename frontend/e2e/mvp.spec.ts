@@ -101,7 +101,12 @@ test('network error, retry and same-context stale data', async ({ page }) => {
   await page.getByRole('button', { name: 'Thử lại' }).click()
   await expect(page.locator('.number-tile')).toHaveCount(35)
   fail = true
-  await page.getByRole('button', { name: 'Làm mới hiển thị' }).click()
+  await page.route('**/api/v1/games/lotto_535/sync', (route) =>
+    route.fulfill({
+      json: { created: 0, enriched: 0, remaining_unresolved: 0 },
+    }),
+  )
+  await page.getByRole('button', { name: 'Đồng bộ', exact: true }).click()
   await expect(page.getByText(/Dữ liệu cũ trong cùng phạm vi/)).toBeVisible()
   await expect(page.locator('.number-tile')).toHaveCount(35)
 })
@@ -149,6 +154,9 @@ test('empty and invalid-input responses remain distinct', async ({ page }) => {
     }),
   )
   await page.goto('/dashboard?game=lotto_535')
+  const status = page.locator('.latest-card .data-details summary')
+  await expect(status).toHaveText('Chưa kiểm tra được trạng thái đồng bộ')
+  await status.click()
   await expect(page.getByRole('alert').getByText('Dịch vụ tạm gián đoạn.')).toBeVisible()
 })
 
@@ -189,6 +197,11 @@ test('key screens have no automated WCAG A/AA violations', async ({ page }) => {
   ]) {
     await page.goto(`${path}?game=lotto_535`)
     await page.getByLabel('Chọn game').waitFor()
+    await expect(page.locator('.skeleton-content')).toHaveCount(0)
+    // Scan resolved, opaque content instead of an entrance-animation frame.
+    await expect(page.locator('.page-head')).toHaveCSS('opacity', '1')
+    if (path === '/dashboard')
+      await expect(page.locator('.latest-result .data-content')).toHaveCSS('opacity', '1')
     const report = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
       .analyze()

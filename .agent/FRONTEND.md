@@ -35,6 +35,10 @@
   thiết. Hủy hoặc bỏ response đến muộn khi context đổi.
 - Filter quan trọng nên deep-link; refresh và browser back/forward phải giữ
   đúng context. Thống nhất URL values với API contract.
+- Dashboard/history/numbers/pairs đặt bộ lọc dưới heading. Phạm vi thống kê
+  lấy từ context của response từng widget, gồm số kỳ thực tế và cutoff;
+  không suy từ lựa chọn đang chờ tải. Rank dense, danh sách rút gọn ghi giới
+  hạn và cách xử lý đồng hạng theo ADR 0014.
 - Không tải toàn lịch sử hay render hàng nghìn rows; dùng paging phía backend.
 - Data thật đến từ API. Fixture/demo có nhãn rõ; không dùng mock làm fallback
   cho API lỗi hoặc suy ra source freshness từ thời điểm browser fetch.
@@ -45,6 +49,11 @@
   thiếu/thừa số theo game definition chung. Backend vẫn validate độc lập.
 - Main và special hiển thị tách biệt; `docs/DOMAIN.md` chốt checker MVP
   main-only. Không thêm full-ticket mode hoặc chèn special vào main tokens.
+- Lotto có chế độ phân tích special 01–12 riêng theo ADR 0014; key/URL phải
+  chứa `number_kind`, không tạo cặp special. Ball chính xanh lá, ball special
+  đỏ, cả hai dùng số trắng theo `docs/DESIGN_SYSTEM.md`, kể cả khay mô phỏng.
+  Riêng bóng 3D bên trong máy dùng teal/chữ trắng theo thiết kế đã duyệt;
+  góc phối cảnh cố định, không đưa editor vật liệu/vật lý vào luồng quay.
 - Kết quả checker theo thứ tự: exact match → overlap summary → similar draws
   → per-number analytics → pairs; không bắt đầu bằng score tổng hợp.
 - `/generator` dùng chung DrawMachine cho cả ba game; lấy số bóng và số kết quả

@@ -6,6 +6,7 @@ from collections.abc import Callable
 from datetime import UTC, datetime
 from email.utils import parsedate_to_datetime
 from threading import Lock
+from urllib.parse import urlsplit
 
 import httpx
 
@@ -72,7 +73,14 @@ class VietlottFetcher:
             self._throttle()
             response: httpx.Response | None = None
             try:
-                response = self.client.get(url, timeout=httpx.Timeout(10.0))
+                # Publisher provenance and the pagination allowlist must not be
+                # bypassed by a redirect, even if the shared client follows them.
+                publisher = urlsplit(url).hostname in ("www.minhchinh.com", "www.minhngoc.net.vn")
+                response = self.client.get(
+                    url,
+                    timeout=httpx.Timeout(10.0),
+                    follow_redirects=False if publisher else self.client.follow_redirects,
+                )
             except (httpx.TimeoutException, httpx.NetworkError) as exc:
                 if attempt == 3:
                     raise SourceFetchError(url, type(exc).__name__) from exc

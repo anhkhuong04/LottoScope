@@ -5,11 +5,11 @@
   align-items: start;
 }
 .draw-stage {
-  color: #eef5fa;
-  background: radial-gradient(ellipse at 50% 35%, #244257 0, #102331 65%, #0b1925 100%);
+  color: #173b47;
+  background: #e7ecef;
   border-radius: 18px;
   overflow: hidden;
-  border: 1px solid #304b60;
+  border: 1px solid #cbd8df;
   min-width: 0;
 }
 .draw-stage-head,
@@ -29,15 +29,15 @@
 }
 .draw-stage-brand span {
   display: block;
-  color: #a0bbcf;
+  color: #466674;
   font-size: 0.64rem;
   letter-spacing: 0.22em;
   margin-top: 4px;
 }
 .draw-stage-badge {
-  color: #ffe0a0;
-  border: 1px solid #92743c;
-  background: #3a3425;
+  color: #ffffff;
+  border: 1px solid #006e66;
+  background: #006e66;
   padding: 6px 9px;
   border-radius: 6px;
   font-weight: 700;
@@ -67,11 +67,15 @@
   text-align: center;
 }
 .draw-failure {
-  color: #ffe3cc;
+  color: #8c351a;
+}
+.draw-failure .machine-fallback {
+  width: min(100%, 260px);
+  max-height: 220px;
 }
 .draw-stage-foot {
-  border-top: 1px solid #304b60;
-  color: #c5d7e3;
+  border-top: 1px solid #cbd8df;
+  color: #355466;
 }
 .draw-stage-count {
   margin-left: auto;
@@ -143,9 +147,9 @@
   font-variant-numeric: tabular-nums;
 }
 .draw-slot.filled {
-  color: #173b47;
-  border: 1px solid #7fa6b0;
-  background: radial-gradient(circle at 35% 25%, #ffffff, #d4e9ec);
+  color: var(--ball-text);
+  border: 1px solid var(--ball-main);
+  background: var(--ball-main);
   box-shadow: 0 3px 5px #213d4312;
 }
 .draw-special-result {
@@ -160,6 +164,11 @@
   border-color: #ad7b26;
   background: #fff4d8;
   color: #6d4200;
+}
+.draw-special-result .draw-slot.filled {
+  border-color: var(--ball-special);
+  background: var(--ball-special);
+  color: var(--ball-text);
 }
 .draw-special-result strong,
 .draw-special-result small {

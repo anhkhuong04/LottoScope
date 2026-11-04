@@ -7,27 +7,44 @@ hiện tại; domain/API và [wireframe](wireframe.md) vẫn giữ thẩm quyề
 ## Nhận diện và typography
 
 - Navy `#102b36`, teal `#006d67`, mint `#57d5bd`; nền sáng và card trắng.
-- Main/special có label riêng; amber hỗ trợ nhận diện special. Màu tần suất
+- Main/special có label riêng; cầu main xanh lá `#15803d`, special đỏ `#b91c1c`,
+  chữ số trắng `#ffffff` theo yêu cầu 03/11/2026. Áp dụng badges và khay kết quả.
+  Riêng bóng bên trong máy 3D dùng teal/số trắng theo mẫu đã duyệt tại
+  [DRAW_MACHINE_REDESIGN](DRAW_MACHINE_REDESIGN.md). Màu tần suất
   chỉ biểu diễn số kỳ đã xuất hiện, không diễn giải khả năng thắng.
 - Brand mark dùng chung `/lottoscope.svg` trong sidebar/mobile/favicon.
 - Outfit cho heading/số nổi bật, DM Sans cho nội dung, system fallback;
   số liệu dùng tabular numerals. Heading ngắn, mô tả và metadata phân cấp rõ.
 - Card radius 16 px, viền nhẹ; chỉ card kết quả mới nhất có tint/gradient nhẹ.
   Card tĩnh không có hiệu ứng nâng lên khi hover để tránh gợi ý có thể bấm.
+- Cleanup 03/11/2026: spacing scale 4/8/12/16/24/32px, card padding 24px
+  (mobile 16px); heading 1.5–1.875rem, section title 1.125rem, body 1rem và
+  metadata 0.875rem. Tokens và override presentation tại `theme.css`.
 
 ## Bố cục và controls
 
-- Header giữ game selector và thao tác Tải dữ liệu; mobile dùng icon kèm
+- Header giữ game selector và thao tác Đồng bộ; mobile dùng icon kèm
   accessible name. Thông báo đồng bộ giữ tên game đã yêu cầu và cho phép đóng.
-- Dashboard: kết quả mới nhất trước KPI; mobile KPI 2 × 2. Card không bị ép
-  cùng chiều cao với nội dung dài bên cạnh. Có tóm tắt 6 số tần suất cao,
+- Bỏ slogan, caption trang trí và kicker; h1 và mô tả có ý nghĩa giữ lại.
+- Dashboard: kết quả mới nhất trước phân tích; bỏ bốn KPI trùng thông tin.
+  Card không bị ép cùng chiều cao với nội dung dài bên cạnh. Có tóm tắt 6 số tần suất cao,
   5 cặp, 5 gap, 3 kỳ gần đây; đường dẫn tới phân tích/lịch sử đầy đủ.
-- Chi tiết thời gian đồng bộ/data version mở rộng bằng details; không có
-  badge “Live” khi nguồn đang lỗi. Dashboard dùng một nút refresh chỉ đọc;
-  retry riêng vẫn có ở từng phần lỗi.
+- Thời gian đồng bộ, data version và số kỳ thực tế nằm trong details trạng
+  thái dữ liệu, không lặp pill ở cuối trang. Bỏ refresh khi đang hiển thị dữ
+  liệu thành công; bộ lọc tự tải và Đồng bộ tự refresh. Giữ retry ở phần lỗi.
+- Giải thích thống kê/main-only/cảnh báo không dự đoán nằm trong details
+  Phương pháp thống kê cuối nội dung; sidebar có link mở trực tiếp. Mobile
+  có link trong menu Thêm và summary trong nội dung; tablet giữ icon trợ giúp.
+- Game selector chỉ có ba game frontend hỗ trợ: Lotto/Mega/Power. Không hiển
+  thị game tương lai chưa có giao diện; giữ API game definitions độc lập.
 - Toolbar phạm vi/sort/view dùng một nhóm có label; date-range giữ validation
   và URL như trước. Bảng desktop có vùng scroll/header sticky và keyboard
   focus; mobile bỏ giới hạn chiều cao, bảng phụ có thể cuộn ngang.
+- Data Experience theo ADR 0014: bộ lọc đặt dưới page heading, dùng FilterBar
+  chung. Phạm vi áp dụng/số kỳ thực tế/cutoff luôn đọc từ response context;
+  metadata version vẫn nằm trong details. History nêu bộ lọc lịch sử riêng.
+  Cùng tần suất cùng dense rank, tie xếp số/cặp tăng dần; dashboard ghi rõ
+  danh sách rút gọn. Lotto special có nhóm riêng, không trộn cặp hoặc main.
 - Number tile có số, tần suất và thanh tỷ lệ theo maximum trong cùng phạm vi;
   legend ghi rõ cách đọc. Có table view để đọc đầy đủ chỉ số.
 - Checker có slot minh họa và số lượng đã chọn; kết quả không bị giả lập.
@@ -56,4 +73,5 @@ Base styles ở `frontend/src/index.css`, lớp presentation mới ở
 `frontend/src/theme.css`; controls dùng lại trong `ui.tsx`. Không thêm
 dependency animation/chart. Kiểm chứng trước release gồm frontend gates,
 E2E desktop/tablet/mobile, breakpoint edges, axe và kiểm hình ảnh thật.
-Nguồn trạng thái triển khai/giới hạn ở `task.md` và biên bản deployment.
+Nghiệm thu cleanup ở [UI_REFRESH_ACCEPTANCE](UI_REFRESH_ACCEPTANCE.md);
+trạng thái triển khai ở biên bản deployment.

@@ -11,6 +11,8 @@ quy tắc; mỗi lần sửa behavior phải cập nhật nguồn chuẩn và te
   persist. Không dùng set/clamp/truncate để âm thầm sửa input sai.
 - Main, special, pair và draw ID là các identity khác nhau. Canonical main/pair
   trước compare; special không tham gia main metrics/checker/generator MVP.
+  Lotto có analytics special riêng theo ADR 0014; công thức/window tại
+  ANALYTICS.md, không trộn special vào main hoặc pair metrics.
 - Cùng game/window/cutoff/data phải cho kết quả và thứ tự output deterministic.
   Không hard-code UI default 30 draws trong core.
   Mô phỏng vật lý cục bộ là use case riêng, không phải analytics/generator

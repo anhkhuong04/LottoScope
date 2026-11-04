@@ -49,7 +49,12 @@ function Shell() {
   const moreButton = useRef<HTMLButtonElement>(null)
   const moreMenu = useRef<HTMLDivElement>(null)
   const main = useRef<HTMLElement>(null)
+  const method = useRef<HTMLDetailsElement>(null)
   const previousPath = useRef(location.pathname)
+  const openMethod = () => {
+    if (method.current) method.current.open = true
+    setMore(false)
+  }
   useEffect(() => {
     if (!more) return
     moreMenu.current?.querySelector('a')?.focus()
@@ -98,7 +103,6 @@ function Shell() {
             <small>Phân tích lịch sử</small>
           </span>
         </Link>
-        <p className="sidebar-caption">KHÁM PHÁ DỮ LIỆU</p>
         <nav aria-label="Điều hướng chính">
           {links.map(({ to, label, icon: Icon }) => (
             <NavLink
@@ -112,10 +116,15 @@ function Shell() {
             </NavLink>
           ))}
         </nav>
-        <div className="sidebar-note">
-          <CircleHelp size={18} />
-          <span>Số liệu mô tả kết quả đã công bố; không dự đoán kỳ tiếp theo.</span>
-        </div>
+        <a
+          className="method-link"
+          aria-label="Phương pháp thống kê"
+          href="#analysis-method"
+          onClick={openMethod}
+        >
+          <CircleHelp size={18} aria-hidden="true" />
+          <span>Phương pháp thống kê</span>
+        </a>
       </aside>
       <div className="main-column">
         <header className="topbar">
@@ -123,7 +132,6 @@ function Shell() {
             <img src="/lottoscope.svg" width="28" height="28" alt="" />
             <strong>LottoScope</strong>
           </div>
-          <div className="topbar-title">Lịch sử rõ ràng. Quyết định của bạn.</div>
           <div className="topbar-actions">
             <label className="game-select">
               Game{' '}
@@ -170,6 +178,10 @@ function Shell() {
               <Route path="/checker" element={<Checker key={game.id} />} />
               <Route path="/generator" element={<Generator key={game.id} />} />
               <Route
+                path="/generator/preview"
+                element={<Navigate to={`/generator${search}`} replace />}
+              />
+              <Route
                 path="*"
                 element={
                   <div className="card">
@@ -183,6 +195,27 @@ function Shell() {
             <div className="card">Chưa có danh sách game.</div>
           ) : (
             <LoadingSkeleton page />
+          )}
+          {game && (
+            <details className="method-details data-details" id="analysis-method" ref={method}>
+              <summary>
+                <CircleHelp size={18} aria-hidden="true" />
+                Phương pháp thống kê
+              </summary>
+              <div className="method-copy">
+                <p>Thống kê mô tả các kỳ quay đã lưu, không dự đoán kết quả kỳ tiếp theo.</p>
+                <p>
+                  Tần suất là số kỳ có xuất hiện số hoặc cặp số trong phạm vi đã chọn. Khoảng cách
+                  tính theo số kỳ kể từ lần xuất hiện gần nhất; dấu — thể hiện chưa có giá trị xác
+                  định.
+                </p>
+                <p>
+                  Phân tích cặp số và kiểm tra bộ số chỉ dùng số chính. Thống kê số đặc biệt Lotto
+                  5/35 được tính riêng trên miền 01–12. Số kỳ thực tế có thể ít hơn phạm vi yêu cầu
+                  nếu lịch sử chưa đủ.
+                </p>
+              </div>
+            </details>
           )}
         </main>
       </div>
@@ -223,6 +256,10 @@ function Shell() {
               {label}
             </Link>
           ))}
+          <a href="#analysis-method" onClick={openMethod}>
+            <CircleHelp size={20} aria-hidden="true" />
+            Phương pháp thống kê
+          </a>
         </div>
       )}
     </div>

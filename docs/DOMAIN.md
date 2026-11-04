@@ -49,14 +49,18 @@ thêm bảng giải nếu biết, không bao gồm thời điểm fetch. Quyết
   theo trang nguồn (ví dụ `00830`); không bỏ số 0 đầu. `draw_seq` là integer
   suy ra từ ID để hỗ trợ thứ tự và kiểm tra. Nếu nguồn đổi format, parser dừng
   và yêu cầu cập nhật contract thay vì ép ID không hợp lệ.
+  Ngoại lệ adapter được duyệt tại ADR 0013: Minh Chính công bố ID không padding,
+  ví dụ `#985`; thêm zero thành `00985`, không suy ID từ ngày hay vị trí.
 - Draw payload: `draw_date`, `draw_time` tùy chọn, main numbers canonical
   tăng dần, special (theo game), source/provenance. Kết quả cùng combination
   ở hai kỳ vẫn là hai draw khác nhau.
 - Main combination: `(game, sorted_main_numbers)`. Thứ tự nhập không tạo
   combination mới. Pair là hai main khác nhau, canonical `(smaller, larger)`.
-- Checker/generator dùng **main-only** cho cả ba game. Lotto/Power `special_number` chỉ hiển thị
-  trong draw; mode full ticket chưa thuộc MVP. Exact match của checker vì thế
+- Checker/generator backend dùng **main-only** cho cả ba game. Lotto/Power
+  `special_number` hiển thị riêng; mode full ticket chưa thuộc MVP. Exact match của checker vì thế
   so main và game, không so special.
+  Mở rộng theo ADR 0014: Lotto có analytics special 01–12 và lịch sử xuất
+  hiện riêng; không cộng vào main metrics hoặc pair/checker/generator.
 - Lồng cầu là mô phỏng cục bộ, không tạo draw chính thức. Theo yêu cầu bổ sung
   ngày 25/10/2026, Lotto quay năm main từ 1–35 rồi một special từ lồng riêng
   1–12; special được phép trùng giá trị main, luôn giữ field/hiển thị riêng.

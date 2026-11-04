@@ -15,6 +15,7 @@ import { Balls, PageHead } from '../../ui'
 import type { Snapshot } from './session'
 export type { Snapshot } from './session'
 import './draw-machine.css'
+import { MachineFallback } from './visual/MachineFallback'
 
 const DrawScene = lazy(() => import('./DrawScene'))
 export type Action = { type: 'start' | 'pause' | 'resume'; id: number }
@@ -154,7 +155,6 @@ export default function DrawMachine({
   return (
     <>
       <PageHead
-        kicker="Tạo bộ số"
         title="Lồng cầu mô phỏng"
         description={`${game.label} · Bóng qua cửa quyết định kết quả. ${countWordCap} số chính${hasSpecial ? ` và 1 số đặc biệt (${game.special_min}–${specialMax})` : ''}, không áp dụng bộ lọc lịch sử.`}
       />
@@ -236,6 +236,7 @@ export default function DrawMachine({
             {supported === null && <p className="draw-loading">Đang kiểm tra đồ họa…</p>}
             {failure && (
               <div className="draw-failure" role="alert">
+                <MachineFallback />
                 {failure}
                 <button className="btn" onClick={reset}>
                   Thử lại cảnh 3D

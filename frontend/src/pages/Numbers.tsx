@@ -18,6 +18,7 @@ import {
   DrawRows,
   FrequencyTile,
   PageHead,
+  ScopeSummary,
   Pager,
   PairLink,
   WindowSelector,
@@ -29,17 +30,34 @@ export function Numbers() {
   const location = useLocation()
   const [sort, setSort] = useUrlField('sort', 'number')
   const [view, setView] = useUrlField('view', 'grid')
-  const path = `/games/${game!.id}/analytics/numbers?${params({ ...windowQuery(window), sort })}`
+  const [kind, setKind] = useUrlField('number_kind', 'main')
+  const special = game!.id === 'lotto_535' && kind === 'special'
+  const path = `/games/${game!.id}/analytics/numbers?${params({ ...windowQuery(window), sort, number_kind: special ? 'special' : 'main' })}`
   const result = useQuery(path, (signal) => api<NumbersResponse>(path, signal))
   const max = Math.max(0, ...(result.data?.items.map((item) => item.frequency) ?? []))
   return (
     <>
       <PageHead
-        kicker="Phân tích số"
         title="Tần suất & khoảng cách"
-        description="Mỗi số chính được thống kê độc lập trong phạm vi đã chọn."
+        description={
+          special
+            ? 'Các số đặc biệt 01–12 được thống kê riêng trong phạm vi đã chọn.'
+            : 'Mỗi số chính được thống kê độc lập trong phạm vi đã chọn.'
+        }
       />
       <WindowSelector>
+        {game!.id === 'lotto_535' && (
+          <label className="field">
+            Nhóm số
+            <select
+              value={special ? 'special' : 'main'}
+              onChange={(event) => setKind(event.target.value)}
+            >
+              <option value="main">Số chính 01–35</option>
+              <option value="special">Số đặc biệt 01–12</option>
+            </select>
+          </label>
+        )}
         <label className="field">
           Sắp xếp
           <select value={sort} onChange={(event) => setSort(event.target.value)}>
@@ -62,6 +80,10 @@ export function Numbers() {
         <DataState {...result} hasData={!!result.data} empty="Chưa có thống kê số.">
           {result.data && (
             <>
+              <ScopeSummary
+                context={result.data.context}
+                subject={special ? 'Số đặc biệt' : 'Số chính'}
+              />
               {view === 'grid' && (
                 <div className="number-grid">
                   {result.data.items.map((item) => (
@@ -71,6 +93,10 @@ export function Numbers() {
                       number={item.number}
                       frequency={item.frequency}
                       maximum={max}
+                      special={special}
+                      rank={
+                        result.data?.context.actual_draw_count ? item.frequency_rank : undefined
+                      }
                     />
                   ))}
                 </div>
@@ -80,6 +106,7 @@ export function Numbers() {
                   <thead>
                     <tr>
                       <th>Số</th>
+                      <th>Hạng tần suất</th>
                       <th>Tần suất</th>
                       <th>Tỷ lệ</th>
                       <th>Gap hiện tại</th>
@@ -92,14 +119,27 @@ export function Numbers() {
                       <tr key={item.number}>
                         <td>
                           <Link to={`/numbers/${item.number}${location.search}`}>
-                            <Ball value={item.number} />
+                            <Ball value={item.number} special={special} />
                           </Link>
+                        </td>
+                        <td>
+                          {result.data?.context.actual_draw_count ? item.frequency_rank : '—'}
                         </td>
                         <td>{item.frequency}</td>
                         <td>{formatPercent(item.frequency_percent)}</td>
                         <td>{item.current_gap ?? '—'}</td>
                         <td>{item.average_gap?.toFixed(1) ?? '—'}</td>
-                        <td>{item.last_seen_draw_id ?? '—'}</td>
+                        <td>
+                          {item.last_seen_draw_id ? (
+                            <Link
+                              to={`/history/${item.last_seen_draw_id}${globalSearch(game!.id, window)}`}
+                            >
+                              {item.last_seen_draw_id}
+                            </Link>
+                          ) : (
+                            '—'
+                          )}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -131,7 +171,7 @@ export function Numbers() {
               {view === 'grid' && (
                 <p className="chart-caption">
                   Thanh dài hơn: xuất hiện nhiều hơn trong phạm vi. Cao nhất {max} kỳ. Chọn Bảng để
-                  xem đầy đủ chỉ số.
+                  xem đầy đủ chỉ số. Cùng tần suất cùng hạng; số tăng dần khi đồng hạng.
                 </p>
               )}
               <div style={{ marginTop: 16 }}>
@@ -150,14 +190,18 @@ export function Numbers() {
 
 export function NumberDetailPage() {
   const { game, window } = useApp()
+  const location = useLocation()
+  const special =
+    game!.id === 'lotto_535' &&
+    new URLSearchParams(location.search).get('number_kind') === 'special'
   const { number } = useParams()
   const [pageValue, setPage] = useUrlField('page', '1')
   const page = Math.max(1, Number(pageValue) || 1)
   const valid =
     Number.isInteger(Number(number)) &&
     Number(number) >= game!.main_min &&
-    Number(number) <= game!.main_max
-  const path = `/games/${game!.id}/analytics/numbers/${number}?${params({ ...windowQuery(window), page, page_size: 10 })}`
+    Number(number) <= (special ? game!.special_max! : game!.main_max)
+  const path = `/games/${game!.id}/analytics/numbers/${number}?${params({ ...windowQuery(window), page, page_size: 10, number_kind: special ? 'special' : 'main' })}`
   const result = useQuery(path, (signal) =>
     valid
       ? api<NumberDetail>(path, signal)
@@ -167,14 +211,19 @@ export function NumberDetailPage() {
     <>
       <BackLink to="/numbers" label="Về phân tích số" />
       <PageHead
-        kicker="Chi tiết số"
-        title={`Số ${String(number).padStart(2, '0')}`}
+        title={`Số ${special ? 'đặc biệt ' : ''}${String(number).padStart(2, '0')}`}
         description={`Thống kê từ các kỳ ${game!.label} trong phạm vi đã chọn.`}
       />
       <WindowSelector />
       <DataState {...result} hasData={!!result.data}>
         {result.data && (
           <div className="grid cols-2">
+            <div className="span-2">
+              <ScopeSummary
+                context={result.data.context}
+                subject={special ? 'Số đặc biệt' : 'Số chính'}
+              />
+            </div>
             <Card title="Chỉ số">
               <div className="stack">
                 <div>
@@ -185,7 +234,12 @@ export function NumberDetailPage() {
                   </strong>
                 </div>
                 <div>
-                  Thứ hạng: <strong>{result.data.metrics.frequency_rank}</strong>
+                  Hạng tần suất:{' '}
+                  <strong>
+                    {result.data.context.actual_draw_count
+                      ? result.data.metrics.frequency_rank
+                      : '—'}
+                  </strong>
                 </div>
                 <div>
                   Gap hiện tại: <strong>{result.data.metrics.current_gap ?? '—'}</strong>
@@ -199,24 +253,38 @@ export function NumberDetailPage() {
                 </div>
                 <div>
                   Lần gần nhất:{' '}
-                  <strong>{result.data.metrics.last_seen_draw_id ?? 'Chưa xuất hiện'}</strong>
+                  {result.data.metrics.last_seen_draw_id ? (
+                    <Link
+                      className="inline-link"
+                      to={`/history/${result.data.metrics.last_seen_draw_id}${globalSearch(game!.id, window)}`}
+                    >
+                      Kỳ {result.data.metrics.last_seen_draw_id}
+                    </Link>
+                  ) : (
+                    <strong>Chưa xuất hiện trong phạm vi</strong>
+                  )}
                 </div>
               </div>
             </Card>
-            <Card title="Các cặp đi cùng" subtitle="Theo số kỳ xuất hiện chung">
-              {result.data.pair_partners.length ? (
-                <div className="stack">
-                  {result.data.pair_partners.map((pair) => (
-                    <div className="draw-row" key={pair.numbers.join('-')}>
-                      <PairLink pair={pair} />
-                      <strong>{pair.frequency} kỳ</strong>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="muted">Chưa có cặp trong phạm vi.</p>
-              )}
-            </Card>
+            {!special && (
+              <Card
+                title="Các cặp đi cùng"
+                subtitle="Tối đa 10 cặp theo tần suất; đồng hạng xếp theo số tăng dần"
+              >
+                {result.data.pair_partners.length ? (
+                  <div className="stack">
+                    {result.data.pair_partners.map((pair) => (
+                      <div className="draw-row" key={pair.numbers.join('-')}>
+                        <PairLink pair={pair} />
+                        <strong>{pair.frequency} kỳ</strong>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="muted">Chưa có cặp trong phạm vi.</p>
+                )}
+              </Card>
+            )}
             <Card title="Dòng thời gian">
               <div className="timeline">
                 {result.data.timeline_draw_ids.length ? (

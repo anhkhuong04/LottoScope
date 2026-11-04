@@ -1,4 +1,39 @@
-# Modern clean UI — nghiệm thu 29/10/2026
+# UI refresh và cleanup — nghiệm thu
+
+## UI-06 — Cleanup 03/11/2026
+
+Theo bảng quyết định của người dùng: bỏ slogan/kicker/caption và 4 KPI trùng;
+giữ các danh sách phân tích, kết quả mới nhất và điều hướng. Bỏ refresh ở
+trạng thái thành công, giữ retry lỗi và tự refresh sau đồng bộ/bộ lọc.
+Metadata phiên bản và số kỳ thực tế nằm trong details dữ liệu; giải thích
+phương pháp/cảnh báo không dự đoán nằm trong details truy cập được trên mọi
+trang và từ link sidebar. Mobile mở từ menu Thêm, tablet giữ icon trợ giúp;
+menu đóng sau khi mở phần giải thích. Selector ẩn game chưa được frontend hỗ trợ.
+
+Spacing/type/card theo [DESIGN_SYSTEM](DESIGN_SYSTEM.md). Không đổi backend,
+API, routes tính năng, query keys, metric, main/special hoặc vật lý lồng cầu.
+Frontend lint/format/typecheck/build và 63 unit tests đạt. Build giữ cảnh báo
+bundle DrawScene lớn có sẵn. Review độc lập đã phát hiện và kiểm lại ba ca:
+metadata vẫn lấy từ analytics context khi /status lỗi, kết quả không lệch cột
+khi loading/stale, và summary báo trạng thái lỗi/tải ngay khi details đóng.
+Regression E2E bổ sung cho các ca này ở `cleanup-metadata.spec.ts`.
+
+Một lượt Playwright chạy song song đã va chạm thư mục trace/artifacts; lượt
+nghiệm thu cuối chạy tuần tự. Các suite UI liên quan có 93 ca đạt và 6 skip
+theo điều kiện thiết bị có sẵn. Lượt comprehensive đạt 90 ca; 3 ca assertion
+lỗi /status còn chờ alert ngoài details được sửa để kiểm summary trước rồi
+mở details và kiểm thông báo/retry; chạy lại 3/3 đạt. Không có failure còn lại
+trong các ca đã chạy. Không chạy lại E2E quay vật lý đầy đủ cho thay đổi này;
+smoke generator và unit physics vẫn nằm trong các suite đã chạy.
+
+Axe key screens, breakpoint 320/390/768/820/1024/1365 và các luồng bộ lọc,
+pagination, deep links, stale/late-response, game switch, sync, keyboard và
+reduced motion đạt. Đã xem screenshot dashboard desktop/mobile, trang số
+Power và checker; không có tràn ngang trong trạng thái đã kiểm tra.
+Không chạy backend suite vì backend/domain không thay đổi. Chưa deploy cloud
+hoặc rebuild các container Docker đang chạy.
+
+## Visual refresh trước — 29/10/2026
 
 Yêu cầu: thực hiện hướng [UI/UX audit](UI_UX_AUDIT.md), lần lượt bố cục
 dashboard/mobile → loading/menu → biểu đồ/typography → micro-interactions.

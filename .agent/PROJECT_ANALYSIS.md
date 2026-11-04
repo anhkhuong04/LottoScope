@@ -24,6 +24,25 @@ contract POST/cooldown ở API, vận hành mặc định không scheduler ở R
 
 ## Phạm vi
 
+- Thiết kế lồng cầu 03/11/2026: người dùng đã duyệt mô hình và yêu cầu chỉ giữ
+  phối cảnh 3D, tích hợp Rapier; mốc đầu cập nhật Docker local.
+  [DRAW_MACHINE_REDESIGN](../docs/DRAW_MACHINE_REDESIGN.md) ghi kiến trúc visual/
+  collider; contract kết quả tiếp tục ở DRAW_SIMULATION.
+  Ngày 04/11/2026 người dùng cho phép push và cập nhật public Render/Vercel;
+  phiên bản và kiểm chứng ở [biên bản cloud](../docs/DEPLOYMENT_ACCEPTANCE.md).
+
+- Data Experience và special Lotto 03/11/2026: [ADR 0014](../docs/DECISIONS/0014-special-number-data-experience.md)
+  chốt thống kê riêng 01–12, filter/scope/rank nhất quán và màu cầu xanh/đỏ,
+  chữ trắng. Main/checker/pair/generator và physics giữ invariants cũ.
+
+- UI cleanup 03/11/2026: người dùng yêu cầu bỏ slogan/caption/KPI trùng và
+  refresh dư thừa, gom metadata và giải thích phương pháp; quy ước ở
+  [Design system](../docs/DESIGN_SYSTEM.md). Giữ routes, query và logic thống kê.
+
+- Nguồn dự phòng 03/11/2026: [ADR 0013](../docs/DECISIONS/0013-publisher-source-fallback.md)
+  thay GitHub bằng Minh Chính (Lotto)/Minh Ngọc (Mega/Power). User yêu cầu ẩn
+  tên nguồn trên UI; provenance DB/API/audit và invariants ADR 0012 vẫn giữ.
+
 - Nguồn dự phòng cloud (30/10/2026): người dùng duyệt community fallback có
   provenance/validation tại [ADR 0012](../docs/DECISIONS/0012-community-source-fallback.md).
   Chỉ append kỳ mới khi official Cloudflare challenge; không thay lịch sử hoặc domain.
@@ -72,7 +91,7 @@ contract POST/cooldown ở API, vận hành mặc định không scheduler ở R
 | Q03 — Draw/time/ordering | Đã chốt trong [DOMAIN.md](../docs/DOMAIN.md) |
 | Q04 — Window/freshness | Đã chốt trong [ANALYTICS.md](../docs/ANALYTICS.md) và [API.md](../docs/API.md) |
 | Q05 — Frequency/gap/pair formula | Đã chốt trong [ANALYTICS.md](../docs/ANALYTICS.md); MVP không có Hot/Cold threshold riêng |
-| Q06 — Exact/overlap/special | Đã chốt main-only trong [DOMAIN.md](../docs/DOMAIN.md) và [ANALYTICS.md](../docs/ANALYTICS.md) |
+| Q06 — Exact/overlap/special | Checker/cặp main-only; thống kê Lotto special riêng theo [ADR 0014](../docs/DECISIONS/0014-special-number-data-experience.md). Công thức ở [ANALYTICS.md](../docs/ANALYTICS.md) |
 | Q07 — Generator rules | Đã chốt trong [ANALYTICS.md](../docs/ANALYTICS.md) |
 | Q08 — API contract | Đã chốt trong [API.md](../docs/API.md) |
 | Q09 — Versions/frontend stack | Backend chọn trong [ARCHITECTURE.md](../docs/ARCHITECTURE.md); frontend stack chốt trong [ADR 0002](../docs/DECISIONS/0002-frontend-stack.md) |

@@ -85,6 +85,7 @@ class NumberDetail:
     appearance_draws: DrawPage
     timeline_draw_ids: tuple[str, ...]
     pair_partners: tuple[PairMetrics, ...]
+    number_kind: Literal["main", "special"] = "main"
 
 
 @dataclass(frozen=True, slots=True)
@@ -159,9 +160,10 @@ class AnalyticsService:
         *,
         as_of_draw_id: str | None = None,
         sort: Literal["number", "frequency_desc", "frequency_asc", "gap_desc"] = "number",
+        number_kind: Literal["main", "special"] = "main",
     ) -> tuple[AnalysisContext, tuple[NumberMetrics, ...]]:
         snapshot = self.snapshot(game, window, as_of_draw_id=as_of_draw_id)
-        values = number_metrics(game, snapshot.draws)
+        values = number_metrics(game, snapshot.draws, number_kind=number_kind)
         if sort == "frequency_desc":
             values = tuple(sorted(values, key=lambda item: (-item.frequency, item.number)))
         elif sort == "frequency_asc":
@@ -219,6 +221,7 @@ class AnalyticsService:
         as_of_draw_id: str | None = None,
         page: int = 1,
         page_size: int = 25,
+        number_kind: Literal["main", "special"] = "main",
     ) -> NumberDetail:
         _validate_page(page, page_size)
         with self.engine.connect().execution_options(
@@ -227,12 +230,16 @@ class AnalyticsService:
             with Session(connection) as session:
                 repo = DrawRepository(session)
                 snapshot = self.select_snapshot(repo, game, window, as_of_draw_id)
-                metric = select_number(number_metrics(game, snapshot.draws), number)
+                metric = select_number(
+                    number_metrics(game, snapshot.draws, number_kind=number_kind), number
+                )
                 partners = tuple(
                     sorted(
                         (
                             item
-                            for item in pair_metrics(game, snapshot.draws)
+                            for item in (
+                                pair_metrics(game, snapshot.draws) if number_kind == "main" else ()
+                            )
                             if number in item.numbers and item.frequency > 0
                         ),
                         key=lambda item: (
@@ -241,13 +248,31 @@ class AnalyticsService:
                         ),
                     )[:10]
                 )
-                appearances = self._appearances(repo, snapshot.draws, (number,), page, page_size)
+                if number_kind == "special":
+                    partners = ()
+                    appearances = (
+                        repo.list_draws(
+                            game,
+                            special_number=number,
+                            first=snapshot.draws[0] if snapshot.draws else None,
+                            last=snapshot.draws[-1] if snapshot.draws else None,
+                            page=page,
+                            page_size=page_size,
+                        )
+                        if snapshot.draws
+                        else DrawPage((), page, page_size, 0)
+                    )
+                else:
+                    appearances = self._appearances(
+                        repo, snapshot.draws, (number,), page, page_size
+                    )
                 return NumberDetail(
                     snapshot.context,
                     metric,
                     appearances,
                     tuple(draw.draw_id for draw in appearances.items),
                     partners,
+                    number_kind,
                 )
 
     def pair_detail(

@@ -1,5 +1,5 @@
 import { Link, useLocation, useParams } from 'react-router'
-import { api, drawSourceLabel, globalSearch, params, type Draw, type Page } from '../api'
+import { api, globalSearch, params, type Draw, type Page } from '../api'
 import { useApp, useQuery, useUrlField } from '../state'
 import { DrawPrizes } from './DrawPrizes'
 import {
@@ -8,6 +8,7 @@ import {
   Card,
   DataState,
   DataTable,
+  FilterBar,
   DrawRows,
   PageHead,
   Pager,
@@ -28,11 +29,10 @@ export function History() {
   return (
     <>
       <PageHead
-        kicker="Lịch sử"
         title="Kết quả các kỳ quay"
         description="Tìm theo ngày hoặc mã kỳ; số đặc biệt được hiển thị riêng."
       />
-      <div className="toolbar">
+      <FilterBar>
         <label className="field">
           Từ ngày
           <input
@@ -66,7 +66,7 @@ export function History() {
             <option value="asc">Cũ trước</option>
           </select>
         </label>
-      </div>
+      </FilterBar>
       {from && to && from > to ? (
         <div className="notice error">Ngày bắt đầu phải trước hoặc bằng ngày kết thúc.</div>
       ) : (
@@ -74,6 +74,16 @@ export function History() {
           <DataState {...result} hasData={!!result.data} empty="Không có kỳ quay khớp bộ lọc.">
             {result.data && (
               <>
+                <p className="scope-summary">
+                  <span>{result.data.total} kỳ phù hợp</span>
+                  <span>
+                    {from || to
+                      ? `${from || 'Từ đầu lịch sử'} → ${to || 'Hiện tại'}`
+                      : 'Toàn bộ lịch sử'}
+                  </span>
+                  {drawId && <span>Mã kỳ: {drawId}</span>}
+                  <span>{sort === 'asc' ? 'Cũ trước' : 'Mới trước'}</span>
+                </p>
                 <DataTable mobileHidden>
                   <thead>
                     <tr>
@@ -146,7 +156,7 @@ export function DrawDetail() {
   return (
     <>
       <BackLink to="/history" label="Về lịch sử" />
-      <PageHead kicker="Chi tiết kỳ quay" title={`Kỳ ${drawId}`} description={game!.label} />
+      <PageHead title={`Kỳ ${drawId}`} description={game!.label} />
       <Card>
         <DataState {...result} hasData={!!result.data} empty="Không tìm thấy kỳ quay.">
           {result.data && (
@@ -161,12 +171,6 @@ export function DrawDetail() {
               </div>
               <div>
                 <strong>Giờ quay:</strong> {result.data.draw_time ?? 'Không có dữ liệu'}
-              </div>
-              <div>
-                <strong>Nguồn:</strong>{' '}
-                <a href={result.data.source_url} target="_blank" rel="noreferrer">
-                  {drawSourceLabel(result.data.source_url)}
-                </a>
               </div>
               <div>
                 <strong>Thu thập lúc:</strong> {formatVietnamTime(result.data.source_retrieved_at)}

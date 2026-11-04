@@ -1,89 +1,27 @@
 """Opt-in, append-only community fallback; never repairs official history."""
 
-import json
-from datetime import UTC, date, datetime
+from datetime import UTC, datetime
 from typing import Literal
-from zoneinfo import ZoneInfo
 
-from pydantic import BaseModel, StrictInt, StrictStr
 from sqlalchemy import Engine, func, select, text
 from sqlalchemy.orm import Session
 
-from app.domain.draw import Draw, validate_draw_id
 from app.games.definitions import get_game
 from app.ingestion.fetcher import SourceFetchError
+from app.ingestion.publishers import feed_url as feed_url
+from app.ingestion.publishers import load_draws
+from app.ingestion.publishers import parse_feed as parse_feed
 from app.ingestion.service import JobOverlapError, PageFetcher, RunSummary
 from app.models.draw import DrawRow
 from app.models.ingestion import IngestionCheckpointRow, IngestionItemRow, IngestionRunRow
 from app.repositories.draws import DrawRepository
 
-FEEDS = {
-    "lotto_535": "power535",
-    "mega_645": "power645",
-    "power_655": "power655",
-}
 ANCHORS = 20
 MAX_NEW = 20
 
 
 class CommunityFeedError(ValueError):
-    """Untrusted feed cannot safely extend the stored history."""
-
-
-class FeedIdentity(BaseModel):
-    id: StrictStr
-
-
-class FeedRow(FeedIdentity):
-    date: StrictStr
-    result: list[StrictInt]
-
-
-def feed_url(game: str) -> str:
-    get_game(game)
-    return (
-        f"https://raw.githubusercontent.com/vietvudanh/vietlott-data/main/data/{FEEDS[game]}.jsonl"
-    )
-
-
-def parse_feed(body: str, game: str, lower: int, retrieved: datetime) -> dict[int, Draw]:
-    """Validate the recent overlap and new tail; historical defects cannot overwrite DB."""
-    if len(body.encode("utf-8")) > 2_000_000 or len(body.splitlines()) > 20_000:
-        raise CommunityFeedError("community feed exceeds bounds")
-    definition = get_game(game)
-    today = retrieved.astimezone(ZoneInfo("Asia/Ho_Chi_Minh")).date()
-    draws: dict[int, Draw] = {}
-    seen: set[int] = set()
-    for line in body.splitlines():
-        if not line.strip():
-            continue
-        value: object = json.loads(line)
-        identity = FeedIdentity.model_validate(value)
-        sequence = validate_draw_id(identity.id)
-        if sequence in seen:
-            raise CommunityFeedError("duplicate community identity")
-        seen.add(sequence)
-        if sequence < lower:
-            continue
-        record = FeedRow.model_validate(value)
-        day = date.fromisoformat(record.date)
-        if day > today or len(record.result) != definition.main_count + int(
-            definition.special_max is not None
-        ):
-            raise CommunityFeedError("invalid community date or number count")
-        draws[sequence] = Draw(
-            game=game,
-            draw_id=record.id,
-            draw_date=day,
-            draw_time=None,
-            main_numbers=tuple(record.result[: definition.main_count]),
-            special_number=record.result[-1] if definition.special_max is not None else None,
-            source_url=feed_url(game) + f"#draw={record.id}",
-            source_retrieved_at=retrieved,
-        )
-    if not draws:
-        raise CommunityFeedError("empty or stale community tail")
-    return draws
+    """Untrusted publisher cannot safely extend stored history."""
 
 
 class CommunityFallbackService:
@@ -135,8 +73,7 @@ class CommunityFallbackService:
                 if len(anchors) != ANCHORS:
                     raise CommunityFeedError("fallback requires 20 stored reference draws")
                 latest = anchors[0].draw_seq
-                body, retrieved = self.fetcher.fetch(feed_url(game))
-                draws = parse_feed(body, game, anchors[-1].draw_seq, retrieved)
+                draws = load_draws(self.fetcher, game, anchors[-1].draw_seq)
                 for stored in anchors:
                     incoming = draws.get(stored.draw_seq)
                     if incoming is None or (

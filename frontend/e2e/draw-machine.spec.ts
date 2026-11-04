@@ -55,12 +55,28 @@ for (const [game, max, count] of [
     expect(drawn).toHaveLength(count)
     expect(new Set(drawn).size).toBe(count)
     expect(drawn.every((n) => n >= 1 && n <= max)).toBe(true)
+    await expect(page.locator('.draw-result-slots .draw-slot.filled').first()).toHaveCSS(
+      'background-color',
+      'rgb(21, 128, 61)',
+    )
+    await expect(page.locator('.draw-result-slots .draw-slot.filled').first()).toHaveCSS(
+      'color',
+      'rgb(255, 255, 255)',
+    )
     expect(generated).toEqual([])
     const special =
       game === 'lotto_535'
         ? Number(await page.locator('.draw-special-result .filled').textContent())
         : null
     if (special !== null) {
+      await expect(page.locator('.draw-special-result .filled')).toHaveCSS(
+        'background-color',
+        'rgb(185, 28, 28)',
+      )
+      await expect(page.locator('.draw-special-result .filled')).toHaveCSS(
+        'color',
+        'rgb(255, 255, 255)',
+      )
       expect(special).toBeGreaterThanOrEqual(1)
       expect(special).toBeLessThanOrEqual(12)
       await expect(page.locator('.draw-stage-badge')).toHaveText('12 BÓNG')

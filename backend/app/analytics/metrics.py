@@ -1,8 +1,9 @@
-"""Pure main-number metrics over one chronological analysis window."""
+"""Pure metrics over one chronological window, with main and special pools separate."""
 
 from collections import defaultdict
 from dataclasses import dataclass
 from itertools import combinations
+from typing import Literal
 
 from app.domain.draw import Draw, normalize_pair
 from app.games.definitions import DomainValidationError, get_game
@@ -29,6 +30,7 @@ class PairMetrics:
     average_gap: float | None
     max_gap: int | None
     last_seen_draw_id: str | None
+    frequency_rank: int
 
 
 def _recency(
@@ -45,16 +47,32 @@ def _recency(
     )
 
 
-def number_metrics(game: str, draws: tuple[Draw, ...]) -> tuple[NumberMetrics, ...]:
+def number_metrics(
+    game: str, draws: tuple[Draw, ...], *, number_kind: Literal["main", "special"] = "main"
+) -> tuple[NumberMetrics, ...]:
     """Include zero-frequency numbers and dense ranks for descending frequency."""
     definition = get_game(game)
+    if number_kind not in ("main", "special") or (
+        number_kind == "special" and definition.id.value != "lotto_535"
+    ):
+        raise DomainValidationError("number_kind", "special analytics supports Lotto 5/35 only")
+    maximum = definition.main_max
+    if number_kind == "special":
+        if definition.special_max is None:
+            raise DomainValidationError("number_kind", "game has no special pool")
+        maximum = definition.special_max
     positions: dict[int, list[int]] = defaultdict(list)
     for index, draw in enumerate(draws):
         if draw.game != definition.id.value:
             raise DomainValidationError("draws", "mixed games in analytics window")
-        for number in draw.main_numbers:
-            positions[number].append(index)
-    counts = {number: len(positions[number]) for number in range(1, definition.main_max + 1)}
+        if number_kind == "special":
+            if draw.special_number is None:
+                raise DomainValidationError("special_number", "missing special value")
+            positions[draw.special_number].append(index)
+        else:
+            for number in draw.main_numbers:
+                positions[number].append(index)
+    counts = {number: len(positions[number]) for number in range(1, maximum + 1)}
     ranks = {
         count: rank for rank, count in enumerate(sorted(set(counts.values()), reverse=True), 1)
     }
@@ -86,6 +104,19 @@ def pair_metrics(game: str, draws: tuple[Draw, ...]) -> tuple[PairMetrics, ...]:
         for pair in combinations(draw.main_numbers, 2):
             positions[pair].append(index)
     results: list[PairMetrics] = []
+    ranks = {
+        count: rank
+        for rank, count in enumerate(
+            sorted(
+                {
+                    len(positions[pair])
+                    for pair in combinations(range(1, definition.main_max + 1), 2)
+                },
+                reverse=True,
+            ),
+            1,
+        )
+    }
     for pair in combinations(range(1, definition.main_max + 1), 2):
         occurrence = positions[pair]
         current, average, maximum, last_seen = _recency(occurrence, draws)
@@ -98,6 +129,7 @@ def pair_metrics(game: str, draws: tuple[Draw, ...]) -> tuple[PairMetrics, ...]:
                 average,
                 maximum,
                 last_seen,
+                ranks[len(occurrence)],
             )
         )
     return tuple(results)
@@ -105,7 +137,7 @@ def pair_metrics(game: str, draws: tuple[Draw, ...]) -> tuple[PairMetrics, ...]:
 
 def select_number(metrics: tuple[NumberMetrics, ...], number: int) -> NumberMetrics:
     if type(number) is not int or not 1 <= number <= len(metrics):
-        raise DomainValidationError("number", "outside the game's main range")
+        raise DomainValidationError("number", "outside the selected number pool")
     return metrics[number - 1]
 
 

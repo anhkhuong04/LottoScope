@@ -6,6 +6,15 @@ lại analytics. Tất cả number trong JSON là integer; UI tự hiển thị 
 
 ## Quy ước chung
 
+Mở rộng analytics theo [ADR 0014](DECISIONS/0014-special-number-data-experience.md):
+`GET /games/{game}/analytics/numbers` và `.../numbers/{number}` nhận
+`number_kind=main|special`, mặc định main. Special chỉ hợp lệ với Lotto 5/35,
+miền 01–12; game/number/kind không hợp lệ trả 422. Cùng window/cutoff/sort/
+paging hiện có. List/detail trả thêm `number_kind`; special detail trả
+`pair_partners=[]`, appearance history chỉ lọc cột special. `PairOut` thêm
+`frequency_rank` (dense), count/sort/paging cũ giữ nguyên. Không thay request
+checker/generator hoặc định nghĩa cặp main-only.
+
 - Cloud opt-in theo [ADR 0011](DECISIONS/0011-free-cloud-deployment.md): browser
   vẫn dùng `/api/v1` cùng origin Vercel. Render yêu cầu server token ở header
   `X-Lotto-Origin-Token` cho mọi path trừ GET `/health/live`; không token/sai
@@ -53,7 +62,8 @@ form hoặc field lạ → 422; GET không kích hoạt đồng bộ.
 
 Response 200: `{game,run_id,status,created,enriched,unchanged,remaining_unresolved,source}`.
 `source` là `official|community` (mặc định official), cho biết nguồn của lượt
-thành công. Fallback opt-in/challenge theo ADR 0012, UI phải nêu nguồn cộng đồng.
+thành công. Fallback opt-in/challenge theo ADR 0012/0013; `community` giữ để
+tương thích và chỉ nguồn bên thứ ba. UI không hiển thị tên/link nhà cung cấp.
 Nguồn từng draw tiếp tục ở `source_url`/`source_retrieved_at`.
 `status` giữ nguyên `success|partial` của run trong DB. Partial chỉ vì backlog
 cũ, latest đã xử lý và không có lỗi hiện tại vẫn trả 200; client phải nêu
