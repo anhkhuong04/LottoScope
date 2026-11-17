@@ -29,12 +29,12 @@ export function History() {
   return (
     <>
       <PageHead
-        title="Kết quả các kỳ quay"
-        description="Tìm theo ngày hoặc mã kỳ; số đặc biệt được hiển thị riêng."
+        title="Draw History"
+        description="Search by date or draw ID; special numbers displayed separately."
       />
       <FilterBar>
         <label className="field">
-          Từ ngày
+          From date
           <input
             type="date"
             value={from}
@@ -43,7 +43,7 @@ export function History() {
           />
         </label>
         <label className="field">
-          Đến ngày
+          To date
           <input
             type="date"
             value={to}
@@ -52,46 +52,46 @@ export function History() {
           />
         </label>
         <label className="field">
-          Mã kỳ
+          Draw ID
           <input
             value={drawId}
             onChange={(event) => setDrawId(event.target.value)}
-            placeholder="Ví dụ 00830"
+            placeholder="e.g. 00830"
           />
         </label>
         <label className="field">
-          Thứ tự
+          Order
           <select value={sort} onChange={(event) => setSort(event.target.value)}>
-            <option value="desc">Mới trước</option>
-            <option value="asc">Cũ trước</option>
+            <option value="desc">Newest first</option>
+            <option value="asc">Oldest first</option>
           </select>
         </label>
       </FilterBar>
       {from && to && from > to ? (
-        <div className="notice error">Ngày bắt đầu phải trước hoặc bằng ngày kết thúc.</div>
+        <div className="notice error">Start date must be on or before end date.</div>
       ) : (
         <Card>
-          <DataState {...result} hasData={!!result.data} empty="Không có kỳ quay khớp bộ lọc.">
+          <DataState {...result} hasData={!!result.data} empty="No draws match the filter.">
             {result.data && (
               <>
                 <p className="scope-summary">
-                  <span>{result.data.total} kỳ phù hợp</span>
+                  <span>{result.data.total} draws matched</span>
                   <span>
                     {from || to
-                      ? `${from || 'Từ đầu lịch sử'} → ${to || 'Hiện tại'}`
-                      : 'Toàn bộ lịch sử'}
+                      ? `${from || 'All-time start'} → ${to || 'Present'}`
+                      : 'All-time history'}
                   </span>
-                  {drawId && <span>Mã kỳ: {drawId}</span>}
-                  <span>{sort === 'asc' ? 'Cũ trước' : 'Mới trước'}</span>
+                  {drawId && <span>Draw ID: {drawId}</span>}
+                  <span>{sort === 'asc' ? 'Oldest first' : 'Newest first'}</span>
                 </p>
                 <DataTable mobileHidden>
                   <thead>
                     <tr>
-                      <th>Kỳ</th>
-                      <th>Ngày / giờ</th>
-                      <th>Số chính</th>
-                      {game!.special_min !== null && <th>Đặc biệt</th>}
-                      <th>Chi tiết</th>
+                      <th>Draw</th>
+                      <th>Date / Time</th>
+                      <th>Main Numbers</th>
+                      {game!.special_min !== null && <th>Special</th>}
+                      <th>Details</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -120,7 +120,7 @@ export function History() {
                           <Link
                             to={`/history/${encodeURIComponent(draw.draw_id)}${location.search}`}
                           >
-                            Xem kỳ
+                            View draw
                           </Link>
                         </td>
                       </tr>
@@ -131,7 +131,7 @@ export function History() {
                   <DrawRows draws={result.data.items} game={game!} />
                 </div>
                 {result.data.items.length === 0 && (
-                  <p className="muted">Không có kỳ quay khớp bộ lọc.</p>
+                  <p className="muted">No draws match the filter.</p>
                 )}
                 <Pager
                   page={result.data.page}
@@ -155,10 +155,10 @@ export function DrawDetail() {
   const result = useQuery(path, (signal) => api<Draw>(path, signal))
   return (
     <>
-      <BackLink to="/history" label="Về lịch sử" />
-      <PageHead title={`Kỳ ${drawId}`} description={game!.label} />
+      <BackLink to="/history" label="Back to history" />
+      <PageHead title={`Draw ${drawId}`} description={game!.label} />
       <Card>
-        <DataState {...result} hasData={!!result.data} empty="Không tìm thấy kỳ quay.">
+        <DataState {...result} hasData={!!result.data} empty="Draw not found.">
           {result.data && (
             <div className="stack">
               <Balls
@@ -167,16 +167,18 @@ export function DrawDetail() {
                 large
               />
               <div>
-                <strong>Ngày quay:</strong> {result.data.draw_date}
+                <strong>Draw date:</strong> {result.data.draw_date}
               </div>
               <div>
-                <strong>Giờ quay:</strong> {result.data.draw_time ?? 'Không có dữ liệu'}
+                <strong>Draw time:</strong> {result.data.draw_time ?? 'Not available'}
               </div>
               <div>
-                <strong>Thu thập lúc:</strong> {formatVietnamTime(result.data.source_retrieved_at)}
+                <strong>Retrieved at:</strong> {formatVietnamTime(result.data.source_retrieved_at)}
               </div>
               <div>
-                <Link to={`/checker${globalSearch(game!.id, window)}`}>Kiểm tra một bộ số</Link>
+                <Link to={`/checker${globalSearch(game!.id, window)}`}>
+                  Check a number combination
+                </Link>
               </div>
             </div>
           )}

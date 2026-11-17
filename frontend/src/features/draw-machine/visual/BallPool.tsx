@@ -29,7 +29,7 @@ export function BallPool({
     canvas.width = tileWidth * 8
     canvas.height = tileHeight * 8
     const context = canvas.getContext('2d')
-    if (!context) throw new Error('Không tạo được texture số bóng.')
+    if (!context) throw new Error('Failed to create ball number texture.')
     context.fillStyle = design.ballColor
     context.fillRect(0, 0, canvas.width, canvas.height)
     context.fillStyle = design.digitColor

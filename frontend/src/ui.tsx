@@ -70,7 +70,7 @@ export function DataTable({
   return (
     <div
       role="region"
-      aria-label="Bảng dữ liệu"
+      aria-label="Data table"
       tabIndex={0}
       className={`${mobileHidden ? 'desktop-only ' : ''}table-wrap`}
     >
@@ -112,9 +112,9 @@ export function FrequencyTile({
     <Link className="number-tile frequency-tile" to={to}>
       <Ball value={number} special={special} />
       <span className="frequency-value">
-        {frequency} <small>kỳ</small>
+        {frequency} <small>draws</small>
       </span>
-      {rank !== undefined && <span className="rank-label">Hạng {rank}</span>}
+      {rank !== undefined && <span className="rank-label">Rank {rank}</span>}
       <span className="frequency-meter" aria-hidden="true">
         <span style={{ width: `${(100 * frequency) / Math.max(1, maximum)}%` }} />
       </span>
@@ -138,7 +138,7 @@ export function Balls({
       ))}
       {special !== null && special !== undefined && (
         <span className="draw-special">
-          Đặc biệt <Ball value={special} special large={large} />
+          Special <Ball value={special} special large={large} />
         </span>
       )}
     </div>
@@ -148,7 +148,7 @@ export function DataState({
   loading,
   error,
   hasData,
-  empty = 'Chưa có dữ liệu trong phạm vi này.',
+  empty = 'No data available in this range.',
   retry,
   children,
 }: {
@@ -166,7 +166,7 @@ export function DataState({
         <AlertCircle size={26} />
         <h3>{error.message}</h3>
         <button className="btn" onClick={retry}>
-          <RefreshCw size={16} /> Thử lại
+          <RefreshCw size={16} /> Retry
         </button>
       </div>
     )
@@ -181,13 +181,13 @@ export function DataState({
     <>
       {error && (
         <div className="notice error" role="alert">
-          Dữ liệu cũ trong cùng phạm vi; cập nhật thất bại: {error.message}{' '}
-          <button onClick={retry}>Thử lại</button>
+          Stale data in same window; update failed: {error.message}{' '}
+          <button onClick={retry}>Retry</button>
         </div>
       )}
       {loading && (
         <div className="notice" role="status">
-          Đang cập nhật dữ liệu…
+          Updating data…
         </div>
       )}
       <div className="data-content">{children}</div>
@@ -207,9 +207,7 @@ export function LoadingSkeleton({ page = false }: { page?: boolean }) {
       role="status"
       aria-busy="true"
     >
-      <span className="sr-only">
-        {page ? 'Đang tải danh sách game và dữ liệu…' : 'Đang tải dữ liệu…'}
-      </span>
+      <span className="sr-only">{page ? 'Loading game list and data…' : 'Loading data…'}</span>
       <div className="skeleton-content" aria-hidden="true">
         <div className="skeleton-line short" />
         <div className="skeleton-line title" />
@@ -233,8 +231,7 @@ export function LoadingSkeleton({ page = false }: { page?: boolean }) {
       )}
       {waiting && (
         <p className="loading-hint">
-          Dịch vụ đang kết nối. Lần mở đầu có thể cần thêm thời gian; bạn có thể giữ trang này để
-          chờ.
+          Connecting to service. Initial load may take extra time; please wait.
         </p>
       )}
     </div>
@@ -265,7 +262,7 @@ function WindowSelectorForm({
   return (
     <FilterBar>
       <label className="field">
-        Phạm vi phân tích
+        Analysis window
         <select
           value={value}
           onChange={(event) => {
@@ -278,23 +275,23 @@ function WindowSelectorForm({
             }
           }}
         >
-          <option value="10">10 kỳ gần nhất</option>
-          <option value="20">20 kỳ gần nhất</option>
-          <option value="30">30 kỳ gần nhất</option>
-          <option value="50">50 kỳ gần nhất</option>
-          <option value="100">100 kỳ gần nhất</option>
-          <option value="date_range">Khoảng ngày</option>
-          <option value="all_time">Toàn bộ lịch sử</option>
+          <option value="10">Last 10 draws</option>
+          <option value="20">Last 20 draws</option>
+          <option value="30">Last 30 draws</option>
+          <option value="50">Last 50 draws</option>
+          <option value="100">Last 100 draws</option>
+          <option value="date_range">Date range</option>
+          <option value="all_time">All-time history</option>
         </select>
       </label>
       {value === 'date_range' && (
         <>
           <label className="field">
-            Từ ngày
+            From date
             <input type="date" value={from} onChange={(event) => setFrom(event.target.value)} />
           </label>
           <label className="field">
-            Đến ngày
+            To date
             <input type="date" value={to} onChange={(event) => setTo(event.target.value)} />
           </label>
           <button
@@ -310,7 +307,7 @@ function WindowSelectorForm({
               setDraftMode(null)
             }}
           >
-            Áp dụng
+            Apply
           </button>
         </>
       )}
@@ -320,7 +317,7 @@ function WindowSelectorForm({
 }
 export function FilterBar({ children }: { children: ReactNode }) {
   return (
-    <div className="toolbar window-toolbar filter-bar" role="region" aria-label="Bộ lọc">
+    <div className="toolbar window-toolbar filter-bar" role="region" aria-label="Filters">
       {children}
     </div>
   )
@@ -329,9 +326,11 @@ export function ScopeSummary({ context, subject }: { context: Context; subject?:
   return (
     <p className="scope-summary">
       {subject && <strong>{subject}</strong>}
-      <span>Phạm vi: {formatWindow(context.analysis_window)}</span>
-      <span>Thực tế: {context.actual_draw_count} kỳ</span>
-      <span>{context.as_of_draw_id ? `Đến kỳ ${context.as_of_draw_id}` : 'Chưa có kỳ quay'}</span>
+      <span>Window: {formatWindow(context.analysis_window)}</span>
+      <span>Actual: {context.actual_draw_count} draws</span>
+      <span>
+        {context.as_of_draw_id ? `Through draw ${context.as_of_draw_id}` : 'No draws recorded'}
+      </span>
     </p>
   )
 }
@@ -349,7 +348,7 @@ export function DrawRows({ draws, game }: { draws: Draw[]; game: Game }) {
               className="draw-id"
               to={`/history/${encodeURIComponent(draw.draw_id)}${detailSearch}`}
             >
-              Kỳ {draw.draw_id}
+              Draw {draw.draw_id}
             </Link>
             <div className="draw-date">
               {draw.draw_date}
@@ -364,7 +363,7 @@ export function DrawRows({ draws, game }: { draws: Draw[]; game: Game }) {
             className="link-arrow"
             to={`/history/${encodeURIComponent(draw.draw_id)}${detailSearch}`}
           >
-            Chi tiết <ArrowRight size={13} />
+            Details <ArrowRight size={13} />
           </Link>
         </div>
       ))}
@@ -384,14 +383,14 @@ export function Pager({
 }) {
   const pages = Math.max(1, Math.ceil(total / pageSize))
   return (
-    <nav className="pagination" aria-label="Phân trang">
+    <nav className="pagination" aria-label="Pagination">
       <span className="pagination-summary" aria-live="polite">
-        Trang {page}/{pages} · {total} mục
+        Page {page}/{pages} · {total} items
       </span>
       <PageJump key={`${page}:${pages}:${total}`} page={page} pages={pages} setPage={setPage} />
       <div className="pagination-arrows">
         <button
-          aria-label="Trang trước"
+          aria-label="Previous page"
           className="btn"
           disabled={page <= 1}
           onClick={() => setPage(page - 1)}
@@ -399,7 +398,7 @@ export function Pager({
           <ArrowLeft size={16} />
         </button>
         <button
-          aria-label="Trang sau"
+          aria-label="Next page"
           className="btn"
           disabled={page >= pages}
           onClick={() => setPage(page + 1)}
@@ -432,7 +431,7 @@ function PageJump({
         const value = draft.trim()
         const target = Number(value)
         if (!/^\d+$/.test(value) || !Number.isSafeInteger(target) || target < 1 || target > pages) {
-          setError(`Nhập số trang từ 1 đến ${pages}.`)
+          setError(`Enter page number from 1 to ${pages}.`)
           return
         }
         setError(null)
@@ -441,7 +440,7 @@ function PageJump({
       }}
     >
       <div className="page-jump-controls">
-        <label htmlFor={id}>Đến trang</label>
+        <label htmlFor={id}>Go to page</label>
         <input
           id={id}
           className="text-input"
@@ -466,7 +465,7 @@ function PageJump({
           / {pages}
         </span>
         <button className="btn" type="submit" disabled={pages <= 1}>
-          Đi
+          Go
         </button>
       </div>
       {error && (
@@ -482,15 +481,15 @@ export function ContextNote({ count, version }: { count: number; version: number
     <details className="data-details context-details">
       <summary>
         <Clock3 size={16} aria-hidden="true" />
-        Thông tin dữ liệu
+        Data details
       </summary>
       <dl className="data-facts">
         <div>
-          <dt>Số kỳ trong phạm vi</dt>
+          <dt>Draws in window</dt>
           <dd>{count}</dd>
         </div>
         <div>
-          <dt>Phiên bản dữ liệu</dt>
+          <dt>Data version</dt>
           <dd>{version}</dd>
         </div>
       </dl>
@@ -521,12 +520,12 @@ export function formatPercent(value: number | null) {
   return value === null ? '—' : `${value.toFixed(1)}%`
 }
 export function formatVietnamTime(value: string) {
-  return `${new Intl.DateTimeFormat('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', dateStyle: 'short', timeStyle: 'medium' }).format(new Date(value))} (giờ VN)`
+  return `${new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Ho_Chi_Minh', dateStyle: 'short', timeStyle: 'medium' }).format(new Date(value))} (VN Time)`
 }
 export function formatWindow(window: AnalysisWindow) {
   return window.kind === 'last_draws'
-    ? `${window.count} kỳ gần nhất`
+    ? `Last ${window.count} draws`
     : window.kind === 'all_time'
-      ? 'toàn bộ lịch sử'
+      ? 'all-time history'
       : `${window.from_date} – ${window.to_date}`
 }

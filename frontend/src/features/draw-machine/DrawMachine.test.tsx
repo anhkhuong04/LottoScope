@@ -88,37 +88,37 @@ function setup(supported = true) {
 describe('draw controls', () => {
   it('does not autostart, reveals only physical results and sends a sorted combination to checker', async () => {
     setup()
-    const start = await screen.findByRole('button', { name: 'Bắt đầu quay' })
+    const start = await screen.findByRole('button', { name: 'Start Draw' })
     await waitFor(() => expect(start).toBeEnabled())
-    expect(screen.getByRole('status')).toHaveTextContent('Sẵn sàng')
-    expect(screen.queryByRole('link', { name: 'Kiểm tra lịch sử' })).not.toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent('Ready')
+    expect(screen.queryByRole('link', { name: 'Check history' })).not.toBeInTheDocument()
     fireEvent.click(start)
-    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Đang lấy bóng'))
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Drawing ball'))
     fireEvent.click(screen.getByText('Physical exit fixture'))
     await waitFor(() =>
-      expect(screen.getByRole('status')).toHaveTextContent('Hoàn tất · 6 số chính'),
+      expect(screen.getByRole('status')).toHaveTextContent('Complete · 6 main numbers'),
     )
-    expect(screen.getByRole('link', { name: 'Kiểm tra lịch sử' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Check history' })).toHaveAttribute(
       'href',
       '/checker?game=mega_645&window=last_draws&count=30&numbers=1%2C6%2C9%2C20%2C30%2C45',
     )
-    fireEvent.click(screen.getByRole('button', { name: 'Phiên mới' }))
-    expect(screen.queryByRole('link', { name: 'Kiểm tra lịch sử' })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'New session' }))
+    expect(screen.queryByRole('link', { name: 'Check history' })).not.toBeInTheDocument()
   })
   it('reports unavailable WebGL without inventing numbers', async () => {
     setup(false)
     expect(await screen.findByRole('alert')).toHaveTextContent('WebGL 2')
-    expect(screen.getByRole('button', { name: 'Bắt đầu quay' })).toBeDisabled()
-    expect(screen.queryByRole('link', { name: 'Kiểm tra lịch sử' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Start Draw' })).toBeDisabled()
+    expect(screen.queryByRole('link', { name: 'Check history' })).not.toBeInTheDocument()
   })
   it('pauses the active session when the document becomes hidden', async () => {
     setup()
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Bắt đầu quay' })).toBeEnabled())
-    fireEvent.click(screen.getByRole('button', { name: 'Bắt đầu quay' }))
-    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Đang lấy bóng'))
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Start Draw' })).toBeEnabled())
+    fireEvent.click(screen.getByRole('button', { name: 'Start Draw' }))
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Drawing ball'))
     vi.spyOn(document, 'hidden', 'get').mockReturnValue(true)
     act(() => document.dispatchEvent(new Event('visibilitychange')))
-    expect(await screen.findByText(/Tab đang ẩn/)).toBeVisible()
+    expect(await screen.findByText(/Tab is hidden/)).toBeVisible()
   })
   it('supports Lotto 5/35 with 5 balls and correct labels', async () => {
     const lotto: Game = {
@@ -141,37 +141,39 @@ describe('draw controls', () => {
         />
       </MemoryRouter>,
     )
-    expect(screen.getByText('35 BÓNG')).toBeInTheDocument()
+    expect(screen.getByText('35 BALLS')).toBeInTheDocument()
     expect(
-      screen.getByRole('heading', { name: 'Năm số chính + một số đặc biệt.' }),
+      screen.getByRole('heading', { name: 'Five main numbers + one special number.' }),
     ).toBeInTheDocument()
-    expect(screen.getByText('0 / 5 · ĐB 0 / 1')).toBeInTheDocument()
-    expect(screen.getAllByText(/Bóng \d/)).toHaveLength(5)
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Bắt đầu quay' })).toBeEnabled())
-    expect(screen.queryByRole('link', { name: 'Kiểm tra lịch sử' })).not.toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'Bắt đầu quay' }))
+    expect(screen.getByText('0 / 5 · SP 0 / 1')).toBeInTheDocument()
+    expect(screen.getAllByText(/Ball \d/)).toHaveLength(5)
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Start Draw' })).toBeEnabled())
+    expect(screen.queryByRole('link', { name: 'Check history' })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Start Draw' }))
     fireEvent.click(screen.getByText('Physical exit fixture'))
-    expect(screen.getByRole('status')).toHaveTextContent('Đang trộn bóng đặc biệt')
-    expect(screen.getByText('12 BÓNG')).toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: 'Kiểm tra lịch sử' })).not.toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent('Mixing special balls')
+    expect(screen.getByText('12 BALLS')).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Check history' })).not.toBeInTheDocument()
     fireEvent.click(screen.getByText('Special exit fixture'))
-    expect(screen.getByRole('status')).toHaveTextContent('Hoàn tất · 5 số chính + 1 số đặc biệt')
-    expect(screen.getByLabelText('Số đặc biệt')).toHaveTextContent('09')
-    expect(screen.getByRole('link', { name: 'Kiểm tra lịch sử' })).toHaveAttribute(
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Complete · 5 main numbers + 1 special number',
+    )
+    expect(screen.getByLabelText('Special Number')).toHaveTextContent('09')
+    expect(screen.getByRole('link', { name: 'Check history' })).toHaveAttribute(
       'href',
       '/checker?game=lotto_535&window=date_range&from_date=2026-10-01&to_date=2026-10-25&numbers=1%2C9%2C20%2C30%2C35',
     )
     const writeText = vi.fn().mockResolvedValue(undefined)
     vi.stubGlobal('navigator', { clipboard: { writeText } })
     try {
-      fireEvent.click(screen.getByRole('button', { name: 'Sao chép' }))
-      expect(await screen.findByText('Đã sao chép năm số chính và số đặc biệt.')).toBeVisible()
-      expect(writeText).toHaveBeenCalledWith('01 09 20 30 35 | ĐB: 09')
+      fireEvent.click(screen.getByRole('button', { name: 'Copy' }))
+      expect(await screen.findByText('Copied five main numbers and special number.')).toBeVisible()
+      expect(writeText).toHaveBeenCalledWith('01 09 20 30 35 | SP: 09')
     } finally {
       vi.unstubAllGlobals()
     }
-    fireEvent.click(screen.getByRole('button', { name: 'Phiên mới' }))
-    expect(screen.queryByRole('link', { name: 'Kiểm tra lịch sử' })).not.toBeInTheDocument()
-    expect(screen.getByText('0 / 5 · ĐB 0 / 1')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'New session' }))
+    expect(screen.queryByRole('link', { name: 'Check history' })).not.toBeInTheDocument()
+    expect(screen.getByText('0 / 5 · SP 0 / 1')).toBeInTheDocument()
   })
 })

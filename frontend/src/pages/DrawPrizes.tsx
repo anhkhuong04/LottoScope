@@ -3,17 +3,17 @@ import { api, ApiError, type PrizeMatch, type PrizeDetails } from '../api'
 import { useQuery } from '../state'
 import { Card, DataState, formatVietnamTime } from '../ui'
 
-const integerFormat = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 })
+const integerFormat = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 })
 const prizeErrorMessages: Record<string, string> = {
-  prize_source_unavailable: 'Chưa lấy được bảng giải thưởng. Vui lòng thử lại.',
-  ingestion_busy: 'Dữ liệu đang được thu thập. Vui lòng thử lại sau ít phút.',
-  prize_review_pending: 'Dữ liệu nguồn thay đổi và đang chờ đối chiếu.',
+  prize_source_unavailable: 'Prize breakdown unavailable. Please try again.',
+  ingestion_busy: 'Data is currently being collected. Please try again shortly.',
+  prize_review_pending: 'Source data changed and is pending verification.',
 }
 
 function PrizeCondition({ match }: { match: PrizeMatch }) {
   const description = match.main_count
-    ? `Trùng ${match.main_count} số chính${match.special ? ' và số đặc biệt' : ''}`
-    : 'Trùng số đặc biệt'
+    ? `Match ${match.main_count} main number(s)${match.special ? ' and special number' : ''}`
+    : 'Match special number'
   return (
     <span className="prize-match" role="img" aria-label={description}>
       <span aria-hidden="true" className="prize-main-symbols">
@@ -42,15 +42,15 @@ export function DrawPrizes({ gameId, drawId }: { gameId: string; drawId: string 
   )
   return (
     <Card
-      title="Giải thưởng kỳ quay"
-      subtitle="Số lượng và giá trị giải thưởng theo kỳ quay."
+      title="Prize Breakdown"
+      subtitle="Number of winners and prize amounts for this draw."
       className="prize-card"
     >
       <DataState
         {...result}
         error={prizeError ? new Error(prizeError) : result.error}
         hasData={!!result.data}
-        empty="Chưa có dữ liệu giải thưởng cho kỳ này."
+        empty="No prize data available for this draw."
       >
         {result.data &&
           (firstPrize ? (
@@ -65,13 +65,13 @@ export function DrawPrizes({ gameId, drawId }: { gameId: string; drawId: string 
                   </div>
                 ))}
               </div>
-              <table className="prize-table" aria-label="Bảng giải thưởng">
+              <table className="prize-table" aria-label="Prize table">
                 <thead>
                   <tr>
-                    <th scope="col">Giải thưởng</th>
-                    <th scope="col">Kết quả</th>
-                    <th scope="col">Số lượng giải</th>
-                    <th scope="col">Giá trị giải (đồng)</th>
+                    <th scope="col">Prize</th>
+                    <th scope="col">Match Condition</th>
+                    <th scope="col">Winners</th>
+                    <th scope="col">Prize Amount (VND)</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -90,13 +90,13 @@ export function DrawPrizes({ gameId, drawId }: { gameId: string; drawId: string 
                       </td>
                       <td className="prize-count">
                         <span className="prize-mobile-label" aria-hidden="true">
-                          Số lượng giải
+                          Winners
                         </span>
                         <span>{integerFormat.format(prize.winner_count)}</span>
                       </td>
                       <td className="prize-amount">
                         <span className="prize-mobile-label" aria-hidden="true">
-                          Giá trị giải (đồng)
+                          Prize Amount (VND)
                         </span>
                         <span>{integerFormat.format(BigInt(prize.amount_vnd))}</span>
                       </td>
@@ -106,11 +106,11 @@ export function DrawPrizes({ gameId, drawId }: { gameId: string; drawId: string 
               </table>
               <p className="muted prize-source">
                 {result.data.source_retrieved_at &&
-                  `Thu thập ${formatVietnamTime(result.data.source_retrieved_at)}`}
+                  `Retrieved ${formatVietnamTime(result.data.source_retrieved_at)}`}
               </p>
             </>
           ) : (
-            <p className="muted">Chưa có dữ liệu giải thưởng cho kỳ này.</p>
+            <p className="muted">No prize data available for this draw.</p>
           ))}
       </DataState>
     </Card>

@@ -75,7 +75,7 @@ function Housing({ materials }: { materials: Materials }) {
     canvas.width = 512
     canvas.height = 100
     const context = canvas.getContext('2d')
-    if (!context) throw new Error('Không tạo được nhãn lồng cầu.')
+    if (!context) throw new Error('Failed to create draw machine label.')
     context.fillStyle = '#00877f'
     context.font = 'italic bold 70px Arial'
     context.textAlign = 'center'

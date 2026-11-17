@@ -21,6 +21,7 @@ build/
 htmlcov/
 node_modules/
 frontend/.vite/
+frontend/public/references/
 playwright-report/
 test-results/
 *.log

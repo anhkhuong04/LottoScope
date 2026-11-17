@@ -49,11 +49,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       .then((result) => {
         const available = result.items.filter((item) => supportedGames.has(item.id))
         setGames(available)
-        setGameError(available.length ? null : 'Chưa có game được hỗ trợ.')
+        setGameError(available.length ? null : 'No supported games found.')
       })
       .catch((error) => {
         if (!controller.signal.aborted)
-          setGameError(error instanceof Error ? error.message : 'Không tải được danh sách game.')
+          setGameError(error instanceof Error ? error.message : 'Failed to load games list.')
       })
     return () => controller.abort()
   }, [gamesAttempt])
@@ -147,7 +147,7 @@ export function useQuery<T>(key: string, load: (signal: AbortSignal) => Promise<
           setState((previous) => ({
             key,
             data: previous.key === key ? previous.data : null,
-            error: error instanceof Error ? error : new Error('Lỗi không xác định'),
+            error: error instanceof Error ? error : new Error('Unknown error'),
             loading: false,
           }))
       })

@@ -5,6 +5,33 @@ và database chạy trên cloud, không phụ thuộc máy cá nhân đang bật
 Runbook: [DEPLOYMENT_FREE.md](DEPLOYMENT_FREE.md), quyết định:
 [ADR 0011](DECISIONS/0011-free-cloud-deployment.md).
 
+## Cập nhật UI & Vercel — 17/11/2026 (English UI & Mobile Button Scale)
+
+- Release frontend: commit **`f6d3c8d`**, branch **`deploy/free-cloud`**.
+- Vercel: **`dpl_BRpyHDY6mXks67T196QmBi9RkHMz` READY**, production URL `https://lottoscope-sable.vercel.app` đã gán alias.
+- Public bundle: `index-CEVyxfPf.js` và `index-DLp_Ny_s.css` trả HTTP 200.
+- Nội dung cập nhật:
+  - Chỉ giữ 1 nút "Clear" duy nhất ở cạnh nút "Add", loại bỏ nút Clear trùng lặp ở thanh công cụ phía dưới màn hình Checker.
+  - Thu nhỏ và cân đối kích thước của hai nút "Add" và "Clear" trên màn hình di động/mobile (áp dụng `.btn-sm`, height 34px, padding gọn gàng, không bị kéo dãn toàn chiều rộng).
+  - Chuyển đổi toàn bộ ngôn ngữ ứng dụng từ tiếng Việt sang tiếng Anh (bỏ tiếng Việt trên toàn bộ giao diện: navigation, dashboard, history, numbers, pairs, checker, generator, sync controls, error boundary, modal/tooltips, API proxy messages).
+  - Kiểm thử 97 unit tests frontend đạt 100% pass, format/typecheck/lint sạch sẽ.
+- Local Docker: Image `vietlottanalytics-frontend:latest` đã build lại và chạy trên container `vietlottanalytics-frontend-1` (`http://127.0.0.1:8088`), đã xác thực HTTP 200 OK.
+- Public Cloud: Vercel production URL `https://lottoscope-sable.vercel.app` trả HTTP 200 OK và API proxy `/api/v1/games` hoạt động ổn định.
+
+## Cập nhật UI & Vercel — 17/11/2026
+
+- Release frontend: commit **`0f8a690`**, branch **`deploy/free-cloud`** (bao gồm `5969a93` và fixes cho build/oxlint).
+- Vercel: **`dpl_J4QQXPC1yzDNDQjvni4ZPSg2RAxb` READY**, production URL `https://lottoscope-sable.vercel.app` đã gán alias.
+- Public bundle: `index-PyBJhjnT.js` và `index-DyjntYcM.css` trả HTTP 200.
+- Nội dung cập nhật:
+  - Main layout nền trắng thuần, các thành phần đặt trực tiếp trên canvas không bọc card viền ô.
+  - Lược bỏ hoàn toàn 2 mục "thông tin dữ liệu" (data freshness) và "phương pháp thống kê" (methodology accordion & navigation links).
+  - Đổi màu các nút thao tác và ô số picker sang tone xám nhạt (`#eef2f5`).
+  - Thêm nút "Clear" (xóa nhanh dãy số) ở màn hình kiểm tra vé (Checker).
+  - Cập nhật phạm vi `oxlint`, bổ sung `frontend/.gitignore`, và mở rộng timeout kiểm thử mô phỏng vật lý 3D.
+- Local Docker: Image `vietlottanalytics-frontend:latest` đã build lại và chạy trên container `vietlottanalytics-frontend-1` (`http://127.0.0.1:8088`).
+
+
 ## Cập nhật public — 04/11/2026
 
 - Release ứng dụng **`b5646f8862e414a58bdb41a34b777d694b847893`**, đã push lên

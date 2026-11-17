@@ -163,7 +163,7 @@ export async function api<T>(path: string, signal?: AbortSignal, body?: unknown)
     })
   } catch (error) {
     if (signal?.aborted) throw error
-    throw new ApiError('network', 'Không kết nối được API. Kiểm tra mạng hoặc backend.')
+    throw new ApiError('network', 'Unable to connect to API. Please check your network or backend.')
   }
   if (!response.ok) {
     let payload: { error?: { message?: string; code?: string } } = {}
@@ -176,7 +176,7 @@ export async function api<T>(path: string, signal?: AbortSignal, body?: unknown)
       response.status === 422 ? 'invalid' : response.status === 404 ? 'missing' : 'server'
     throw new ApiError(
       kind,
-      payload.error?.message ?? `API trả về HTTP ${response.status}.`,
+      payload.error?.message ?? `API returned HTTP ${response.status}.`,
       response.status,
       payload.error?.code,
     )

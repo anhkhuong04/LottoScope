@@ -27,19 +27,19 @@ const initial: Snapshot = {
   error: null,
 }
 const labels: Record<Snapshot['status'], string> = {
-  ready: 'Sẵn sàng',
-  mixing: 'Đang trộn bóng',
-  drawing: 'Đang lấy bóng',
-  paused: 'Đã tạm dừng',
-  stalled: 'Chưa có bóng đi qua cửa',
-  complete: 'Hoàn tất',
-  error: 'Phiên quay đã dừng',
+  ready: 'Ready',
+  mixing: 'Mixing balls',
+  drawing: 'Drawing ball',
+  paused: 'Paused',
+  stalled: 'No ball passed exit gate',
+  complete: 'Complete',
+  error: 'Draw session stopped',
 }
 function statusLabel(snapshot: Snapshot, count: number, hasSpecial: boolean): string {
   if (snapshot.status === 'complete')
-    return `Hoàn tất · ${count} số chính${hasSpecial ? ' + 1 số đặc biệt' : ''}`
-  if (snapshot.phase === 'special' && snapshot.status === 'mixing') return 'Đang trộn bóng đặc biệt'
-  if (snapshot.phase === 'special' && snapshot.status === 'drawing') return 'Đang lấy số đặc biệt'
+    return `Complete · ${count} main numbers${hasSpecial ? ' + 1 special number' : ''}`
+  if (snapshot.phase === 'special' && snapshot.status === 'mixing') return 'Mixing special balls'
+  if (snapshot.phase === 'special' && snapshot.status === 'drawing') return 'Drawing special ball'
   return labels[snapshot.status]
 }
 function supportsWebGL() {
@@ -106,14 +106,14 @@ export default function DrawMachine({
   )
   const sceneError = useCallback(() => {
     if (currentSession.current !== session) return
-    setFatal('Không tải được cảnh 3D hoặc bộ máy vật lý. Hãy thử phiên mới hoặc tải lại trang.')
+    setFatal('Failed to load 3D scene or physics engine. Try a new session or refresh the page.')
     setSnapshot((value) => ({ ...value, status: 'error' }))
   }, [session])
   useEffect(() => {
     const onVisibility = () => {
       if (document.hidden && running) {
         send('pause')
-        setMessage('Tab đang ẩn nên phiên quay đã tạm dừng. Bấm Tiếp tục khi quay lại.')
+        setMessage('Tab is hidden so draw session was paused. Click Resume when you return.')
       }
     }
     document.addEventListener('visibilitychange', onVisibility)
@@ -131,41 +131,41 @@ export default function DrawMachine({
     setMessage('')
   }
   const canonical = [...snapshot.drawn].sort((a, b) => a - b)
-  const countWord = game.main_count === 5 ? 'năm' : 'sáu'
+  const countWord = game.main_count === 5 ? 'five' : 'six'
   const countWordCap = countWord.charAt(0).toUpperCase() + countWord.slice(1)
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(
         canonical.map((n) => String(n).padStart(2, '0')).join(' ') +
-          (hasSpecial ? ` | ĐB: ${String(snapshot.specialNumber).padStart(2, '0')}` : ''),
+          (hasSpecial ? ` | SP: ${String(snapshot.specialNumber).padStart(2, '0')}` : ''),
       )
       if (currentSession.current !== session) return
-      setMessage(`Đã sao chép ${countWord} số chính${hasSpecial ? ' và số đặc biệt' : ''}.`)
+      setMessage(`Copied ${countWord} main numbers${hasSpecial ? ' and special number' : ''}.`)
     } catch {
       if (currentSession.current !== session) return
-      setMessage('Không sao chép tự động được. Bạn có thể chọn bộ số bên dưới để sao chép.')
+      setMessage('Automatic copy failed. You can select the numbers below to copy.')
     }
   }
   const failure =
     fatal ??
     snapshot.error ??
     (supported === false
-      ? 'Trình duyệt chưa hỗ trợ WebGL 2. Hãy bật tăng tốc đồ họa hoặc dùng trình duyệt khác.'
+      ? 'Browser does not support WebGL 2. Please enable hardware acceleration or use a supported browser.'
       : null)
   return (
     <>
       <PageHead
-        title="Lồng cầu mô phỏng"
-        description={`${game.label} · Bóng qua cửa quyết định kết quả. ${countWordCap} số chính${hasSpecial ? ` và 1 số đặc biệt (${game.special_min}–${specialMax})` : ''}, không áp dụng bộ lọc lịch sử.`}
+        title="Draw Simulator"
+        description={`${game.label} · Physical exit determines result. ${countWordCap} main numbers${hasSpecial ? ` and 1 special number (${game.special_min}–${specialMax})` : ''}, without applying historical filters.`}
       />
       <div className="draw-machine-layout">
-        <section className="draw-stage" aria-label={`Lồng cầu ${game.label}`}>
+        <section className="draw-stage" aria-label={`${game.label} Draw Chamber`}>
           <div className="draw-stage-head">
             <span className="draw-stage-brand">
               LOTTOSCOPE <span>DRAW LAB</span>
             </span>
             <span className="draw-stage-badge">
-              {snapshot.phase === 'special' ? specialMax : game.main_max} BÓNG
+              {snapshot.phase === 'special' ? specialMax : game.main_max} BALLS
             </span>
           </div>
           <div className="draw-controls">
@@ -176,13 +176,13 @@ export default function DrawMachine({
                 onClick={() => send('start')}
               >
                 <Play size={18} />
-                Bắt đầu quay
+                Start Draw
               </button>
             )}
             {running && (
               <button className="btn primary" onClick={() => send('pause')}>
                 <Pause size={18} />
-                Tạm dừng
+                Pause
               </button>
             )}
             {(snapshot.status === 'paused' || snapshot.status === 'stalled') && !failure && (
@@ -194,12 +194,12 @@ export default function DrawMachine({
                 }}
               >
                 <Play size={18} />
-                {snapshot.status === 'stalled' ? 'Trộn tiếp' : 'Tiếp tục'}
+                {snapshot.status === 'stalled' ? 'Keep mixing' : 'Resume'}
               </button>
             )}
             <button className="btn" onClick={reset}>
               <RotateCcw size={17} />
-              Phiên mới
+              New session
             </button>
           </div>
           <div className="draw-viewport">
@@ -209,7 +209,7 @@ export default function DrawMachine({
                 aria-hidden="true"
               >
                 <SceneBoundary key={session} onError={sceneError}>
-                  <Suspense fallback={<p className="draw-loading">Đang tải lồng cầu và vật lý…</p>}>
+                  <Suspense fallback={<p className="draw-loading">Loading machine and physics…</p>}>
                     <DrawScene
                       max={game.main_max}
                       count={game.main_count}
@@ -227,23 +227,23 @@ export default function DrawMachine({
               <div className="draw-concealed-note">
                 <Pause size={30} />
                 <p>
-                  Đang ẩn hình ảnh chuyển động.
+                  3D motion rendering hidden.
                   <br />
-                  Cơ chế quay vật lý giữ nguyên.
+                  Physical simulation remains active.
                 </p>
               </div>
             )}
-            {supported === null && <p className="draw-loading">Đang kiểm tra đồ họa…</p>}
+            {supported === null && <p className="draw-loading">Checking graphics support…</p>}
             {failure && (
               <div className="draw-failure" role="alert">
                 <MachineFallback />
                 {failure}
                 <button className="btn" onClick={reset}>
-                  Thử lại cảnh 3D
+                  Retry 3D scene
                 </button>
                 {fatal && (
                   <button className="btn" onClick={() => window.location.reload()}>
-                    Tải lại trang
+                    Reload page
                   </button>
                 )}
               </div>
@@ -252,33 +252,33 @@ export default function DrawMachine({
           <div className="draw-stage-foot">
             <span className={`draw-led${running ? ' active' : ''}`} />
             {failure
-              ? 'Cảnh quay chưa sẵn sàng'
+              ? 'Scene not ready'
               : !ready
-                ? 'Đang khởi tạo'
+                ? 'Initializing'
                 : statusLabel(snapshot, game.main_count, hasSpecial)}
             <span className="draw-stage-count">
               {snapshot.drawn.length} / {game.main_count}
-              {hasSpecial && ` · ĐB ${snapshot.specialNumber === null ? 0 : 1} / 1`}
+              {hasSpecial && ` · SP ${snapshot.specialNumber === null ? 0 : 1} / 1`}
             </span>
           </div>
         </section>
-        <section className="card draw-console" aria-label="Điều khiển và kết quả quay">
-          <p className="draw-eyebrow">PHIÊN QUAY CỤC BỘ</p>
+        <section className="card draw-console" aria-label="Draw controls and results">
+          <p className="draw-eyebrow">LOCAL DRAW SESSION</p>
           <h2>
             {hasSpecial
-              ? `${countWordCap} số chính + một số đặc biệt.`
-              : `${countWordCap} bóng. Một bộ số.`}
+              ? `${countWordCap} main numbers + one special number.`
+              : `${countWordCap} balls. One combination.`}
           </h2>
           <p className="muted">
-            Mỗi bóng có cùng kích thước và khối lượng. Số chỉ được ghi nhận sau khi bóng đi qua cửa
-            lồng.
+            Each ball has identical size and mass. Numbers are recorded only after passing through
+            the outlet gate.
           </p>
           <div className="draw-status" role="status" aria-live="polite">
             {statusLabel(snapshot, game.main_count, hasSpecial)}
           </div>
           <ol
             className="draw-result-slots"
-            aria-label="Thứ tự bóng ra"
+            aria-label="Draw sequence"
             style={{ gridTemplateColumns: `repeat(${game.main_count}, minmax(0, 1fr))` }}
           >
             {Array.from({ length: game.main_count }, (_, i) => (
@@ -288,12 +288,12 @@ export default function DrawMachine({
                     ? '—'
                     : String(snapshot.drawn[i]).padStart(2, '0')}
                 </span>
-                <small>Bóng {i + 1}</small>
+                <small>Ball {i + 1}</small>
               </li>
             ))}
           </ol>
           {hasSpecial && (
-            <div className="draw-special-result" aria-label="Số đặc biệt">
+            <div className="draw-special-result" aria-label="Special Number">
               <span
                 className={`draw-slot special${snapshot.specialNumber !== null ? ' filled' : ''}`}
               >
@@ -302,9 +302,9 @@ export default function DrawMachine({
                   : String(snapshot.specialNumber).padStart(2, '0')}
               </span>
               <div>
-                <strong>Số đặc biệt</strong>
+                <strong>Special Number</strong>
                 <small>
-                  Lồng riêng · {game.special_min}–{specialMax}
+                  Separate chamber · {game.special_min}–{specialMax}
                 </small>
               </div>
             </div>
@@ -315,29 +315,31 @@ export default function DrawMachine({
               checked={hidden}
               onChange={(event) => setHidden(event.target.checked)}
             />
-            Ẩn hình ảnh chuyển động
+            Hide motion rendering
           </label>
           {snapshot.status === 'stalled' && (
             <p className="notice">
-              Đã chờ 30 giây hoạt động chưa có bóng ra. Bạn có thể trộn tiếp; các số đã ra được giữ
-              nguyên.
+              Waited 30 seconds of active simulation without an exit. You can keep mixing; already
+              drawn balls are preserved.
             </p>
           )}
           {finished && !failure && (
             <div className="draw-finished">
-              <h3>Bộ số tăng dần</h3>
+              <h3>Sorted Combination</h3>
               <Balls values={canonical} special={snapshot.specialNumber} />
-              {hasSpecial && <p className="muted">Kiểm tra lịch sử chỉ đối chiếu 5 số chính.</p>}
+              {hasSpecial && (
+                <p className="muted">History checker only compares the 5 main numbers.</p>
+              )}
               <div className="draw-result-actions">
                 <button className="btn" onClick={copy}>
                   <Copy size={16} />
-                  Sao chép
+                  Copy
                 </button>
                 <Link
                   className="btn primary"
                   to={`/checker${globalSearch(game.id, analysisWindow)}&numbers=${encodeURIComponent(canonical.join(','))}`}
                 >
-                  Kiểm tra lịch sử
+                  Check history
                 </Link>
               </div>
             </div>
@@ -350,8 +352,8 @@ export default function DrawMachine({
           <div className="draw-explainer">
             <CircleHelp size={19} />
             <p>
-              Đây là kết quả mô phỏng, không phải kỳ quay chính thức hoặc dự đoán. Cơ cấu vật lý
-              chưa được chứng nhận phân bố đồng đều.
+              This is a physical simulation, not an official draw or prediction. Physical mechanism
+              is not certified for uniform distribution.
             </p>
           </div>
         </section>

@@ -3,7 +3,7 @@ export function MachineFallback() {
     <svg
       viewBox="0 0 600 540"
       role="img"
-      aria-label="Minh họa lồng cầu tĩnh"
+      aria-label="Static draw machine illustration"
       className="machine-fallback"
     >
       <defs>

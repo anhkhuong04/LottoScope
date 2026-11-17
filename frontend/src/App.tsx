@@ -1,7 +1,6 @@
 import {
   CalendarDays,
   ChevronDown,
-  CircleHelp,
   GitCompareArrows,
   Grid2X2,
   LayoutDashboard,
@@ -33,12 +32,12 @@ import { SyncControls } from './SyncControls'
 import { LoadingSkeleton } from './ui'
 
 const links = [
-  { to: '/dashboard', label: 'Tổng quan', icon: LayoutDashboard },
-  { to: '/history', label: 'Lịch sử', icon: CalendarDays },
-  { to: '/numbers', label: 'Số', icon: Grid2X2 },
-  { to: '/pairs', label: 'Cặp số', icon: GitCompareArrows },
-  { to: '/checker', label: 'Kiểm tra', icon: SearchCheck },
-  { to: '/generator', label: 'Tạo bộ số', icon: Shuffle },
+  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/history', label: 'History', icon: CalendarDays },
+  { to: '/numbers', label: 'Numbers', icon: Grid2X2 },
+  { to: '/pairs', label: 'Pairs', icon: GitCompareArrows },
+  { to: '/checker', label: 'Checker', icon: SearchCheck },
+  { to: '/generator', label: 'Generator', icon: Shuffle },
 ]
 
 function Shell() {
@@ -49,12 +48,7 @@ function Shell() {
   const moreButton = useRef<HTMLButtonElement>(null)
   const moreMenu = useRef<HTMLDivElement>(null)
   const main = useRef<HTMLElement>(null)
-  const method = useRef<HTMLDetailsElement>(null)
   const previousPath = useRef(location.pathname)
-  const openMethod = () => {
-    if (method.current) method.current.open = true
-    setMore(false)
-  }
   useEffect(() => {
     if (!more) return
     moreMenu.current?.querySelector('a')?.focus()
@@ -91,19 +85,19 @@ function Shell() {
   return (
     <div className="app-shell">
       <a className="skip-link" href="#main-content">
-        Đến nội dung chính
+        Skip to main content
       </a>
       <aside className="sidebar">
-        <Link className="brand" aria-label="LottoScope — Tổng quan" to={`/dashboard${search}`}>
+        <Link className="brand" aria-label="LottoScope — Dashboard" to={`/dashboard${search}`}>
           <span className="brand-mark">
             <img src="/lottoscope.svg" width="42" height="42" alt="" />
           </span>
           <span>
             Lotto<span className="brand-accent">Scope</span>
-            <small>Phân tích lịch sử</small>
+            <small>Historical Analysis</small>
           </span>
         </Link>
-        <nav aria-label="Điều hướng chính">
+        <nav aria-label="Main navigation">
           {links.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
@@ -116,15 +110,6 @@ function Shell() {
             </NavLink>
           ))}
         </nav>
-        <a
-          className="method-link"
-          aria-label="Phương pháp thống kê"
-          href="#analysis-method"
-          onClick={openMethod}
-        >
-          <CircleHelp size={18} aria-hidden="true" />
-          <span>Phương pháp thống kê</span>
-        </a>
       </aside>
       <div className="main-column">
         <header className="topbar">
@@ -136,7 +121,7 @@ function Shell() {
             <label className="game-select">
               Game{' '}
               <select
-                aria-label="Chọn game"
+                aria-label="Select game"
                 value={gameId}
                 disabled={!games.length}
                 onChange={(event) => {
@@ -151,7 +136,7 @@ function Shell() {
                     </option>
                   ))
                 ) : (
-                  <option value={gameId}>Đang tải…</option>
+                  <option value={gameId}>Loading…</option>
                 )}
               </select>
               <ChevronDown size={16} aria-hidden="true" />
@@ -162,7 +147,7 @@ function Shell() {
         <main id="main-content" className="content" ref={main} tabIndex={-1}>
           {gameError && (
             <div className="notice error" role="alert">
-              {gameError} <button onClick={retryGames}>Thử lại</button>
+              {gameError} <button onClick={retryGames}>Retry</button>
             </div>
           )}
           {game ? (
@@ -185,41 +170,20 @@ function Shell() {
                 path="*"
                 element={
                   <div className="card">
-                    <h1>Không tìm thấy trang</h1>
-                    <Link to={`/dashboard${search}`}>Về tổng quan</Link>
+                    <h1>Page not found</h1>
+                    <Link to={`/dashboard${search}`}>Back to dashboard</Link>
                   </div>
                 }
               />
             </Routes>
           ) : gameError ? (
-            <div className="card">Chưa có danh sách game.</div>
+            <div className="card">No games available.</div>
           ) : (
             <LoadingSkeleton page />
           )}
-          {game && (
-            <details className="method-details data-details" id="analysis-method" ref={method}>
-              <summary>
-                <CircleHelp size={18} aria-hidden="true" />
-                Phương pháp thống kê
-              </summary>
-              <div className="method-copy">
-                <p>Thống kê mô tả các kỳ quay đã lưu, không dự đoán kết quả kỳ tiếp theo.</p>
-                <p>
-                  Tần suất là số kỳ có xuất hiện số hoặc cặp số trong phạm vi đã chọn. Khoảng cách
-                  tính theo số kỳ kể từ lần xuất hiện gần nhất; dấu — thể hiện chưa có giá trị xác
-                  định.
-                </p>
-                <p>
-                  Phân tích cặp số và kiểm tra bộ số chỉ dùng số chính. Thống kê số đặc biệt Lotto
-                  5/35 được tính riêng trên miền 01–12. Số kỳ thực tế có thể ít hơn phạm vi yêu cầu
-                  nếu lịch sử chưa đủ.
-                </p>
-              </div>
-            </details>
-          )}
         </main>
       </div>
-      <nav className="bottom-nav" aria-label="Điều hướng di động">
+      <nav className="bottom-nav" aria-label="Mobile navigation">
         {[links[0], links[1], links[4], links[5]].map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}
@@ -244,22 +208,18 @@ function Shell() {
           aria-controls="more-menu"
         >
           <Menu size={21} />
-          <span>Thêm</span>
+          <span>More</span>
         </button>
       </nav>
       {more && (
         <div id="more-menu" className="more-menu" ref={moreMenu}>
-          <p>Xem thêm</p>
+          <p>More options</p>
           {[links[2], links[3]].map(({ to, label, icon: Icon }) => (
             <Link key={to} to={`${to}${search}`} onClick={() => setMore(false)}>
               <Icon size={20} />
               {label}
             </Link>
           ))}
-          <a href="#analysis-method" onClick={openMethod}>
-            <CircleHelp size={20} aria-hidden="true" />
-            Phương pháp thống kê
-          </a>
         </div>
       )}
     </div>

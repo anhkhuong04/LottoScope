@@ -39,7 +39,9 @@ export function createSession(
     specialMax !== null &&
     (!Number.isInteger(specialMax) || specialMax < 1 || specialMax > max)
   ) {
-    throw new Error('Miền bóng đặc biệt phải là số nguyên dương không vượt quá miền bóng chính.')
+    throw new Error(
+      'Special ball pool must be a positive integer not exceeding the main ball pool.',
+    )
   }
   return {
     machine: createMachine(world, rapier, max, random, count, config),
