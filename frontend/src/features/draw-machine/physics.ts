@@ -50,7 +50,7 @@ export function createMachine(
 ): Machine {
   // Game definitions come from the API; physics must not infer their main count.
   if (!Number.isInteger(max) || !Number.isInteger(count) || count < 1 || count > max) {
-    throw new Error('Số lượng kết quả phải là số nguyên dương trong phạm vi số bóng.')
+    throw new Error('Result count must be a positive integer within ball pool range.')
   }
   validateSimulation(config)
   const scale = config.radius / RADIUS
@@ -70,7 +70,7 @@ export function createMachine(
         )
           positions.push({ x, y, z })
       }
-  if (positions.length < max) throw new Error('Không đủ không gian cho pool bóng này.')
+  if (positions.length < max) throw new Error('Insufficient space for this ball pool.')
   const geometry = new SphereGeometry(
     config.radius,
     48,
@@ -287,7 +287,7 @@ export function afterStep(m: Machine) {
         !(radial < 0.45 * scale && local.depth > 2.3 * scale && local.depth < 3.5 * scale))
     ) {
       m.status = 'error'
-      m.error = 'Bóng thoát khỏi thành lồng. Hãy tạo phiên mới.'
+      m.error = 'Ball escaped chamber wall. Please start a new session.'
       setBodiesEnabled(m, false)
       return
     }

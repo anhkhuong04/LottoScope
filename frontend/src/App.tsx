@@ -32,12 +32,12 @@ import { SyncControls } from './SyncControls'
 import { LoadingSkeleton } from './ui'
 
 const links = [
-  { to: '/dashboard', label: 'Tổng quan', icon: LayoutDashboard },
-  { to: '/history', label: 'Lịch sử', icon: CalendarDays },
-  { to: '/numbers', label: 'Số', icon: Grid2X2 },
-  { to: '/pairs', label: 'Cặp số', icon: GitCompareArrows },
-  { to: '/checker', label: 'Kiểm tra', icon: SearchCheck },
-  { to: '/generator', label: 'Tạo bộ số', icon: Shuffle },
+  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/history', label: 'History', icon: CalendarDays },
+  { to: '/numbers', label: 'Numbers', icon: Grid2X2 },
+  { to: '/pairs', label: 'Pairs', icon: GitCompareArrows },
+  { to: '/checker', label: 'Checker', icon: SearchCheck },
+  { to: '/generator', label: 'Generator', icon: Shuffle },
 ]
 
 function Shell() {
@@ -85,19 +85,19 @@ function Shell() {
   return (
     <div className="app-shell">
       <a className="skip-link" href="#main-content">
-        Đến nội dung chính
+        Skip to main content
       </a>
       <aside className="sidebar">
-        <Link className="brand" aria-label="LottoScope — Tổng quan" to={`/dashboard${search}`}>
+        <Link className="brand" aria-label="LottoScope — Dashboard" to={`/dashboard${search}`}>
           <span className="brand-mark">
             <img src="/lottoscope.svg" width="42" height="42" alt="" />
           </span>
           <span>
             Lotto<span className="brand-accent">Scope</span>
-            <small>Phân tích lịch sử</small>
+            <small>Historical Analysis</small>
           </span>
         </Link>
-        <nav aria-label="Điều hướng chính">
+        <nav aria-label="Main navigation">
           {links.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
@@ -121,7 +121,7 @@ function Shell() {
             <label className="game-select">
               Game{' '}
               <select
-                aria-label="Chọn game"
+                aria-label="Select game"
                 value={gameId}
                 disabled={!games.length}
                 onChange={(event) => {
@@ -136,7 +136,7 @@ function Shell() {
                     </option>
                   ))
                 ) : (
-                  <option value={gameId}>Đang tải…</option>
+                  <option value={gameId}>Loading…</option>
                 )}
               </select>
               <ChevronDown size={16} aria-hidden="true" />
@@ -147,7 +147,7 @@ function Shell() {
         <main id="main-content" className="content" ref={main} tabIndex={-1}>
           {gameError && (
             <div className="notice error" role="alert">
-              {gameError} <button onClick={retryGames}>Thử lại</button>
+              {gameError} <button onClick={retryGames}>Retry</button>
             </div>
           )}
           {game ? (
@@ -170,20 +170,20 @@ function Shell() {
                 path="*"
                 element={
                   <div className="card">
-                    <h1>Không tìm thấy trang</h1>
-                    <Link to={`/dashboard${search}`}>Về tổng quan</Link>
+                    <h1>Page not found</h1>
+                    <Link to={`/dashboard${search}`}>Back to dashboard</Link>
                   </div>
                 }
               />
             </Routes>
           ) : gameError ? (
-            <div className="card">Chưa có danh sách game.</div>
+            <div className="card">No games available.</div>
           ) : (
             <LoadingSkeleton page />
           )}
         </main>
       </div>
-      <nav className="bottom-nav" aria-label="Điều hướng di động">
+      <nav className="bottom-nav" aria-label="Mobile navigation">
         {[links[0], links[1], links[4], links[5]].map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}
@@ -208,12 +208,12 @@ function Shell() {
           aria-controls="more-menu"
         >
           <Menu size={21} />
-          <span>Thêm</span>
+          <span>More</span>
         </button>
       </nav>
       {more && (
         <div id="more-menu" className="more-menu" ref={moreMenu}>
-          <p>Xem thêm</p>
+          <p>More options</p>
           {[links[2], links[3]].map(({ to, label, icon: Icon }) => (
             <Link key={to} to={`${to}${search}`} onClick={() => setMore(false)}>
               <Icon size={20} />

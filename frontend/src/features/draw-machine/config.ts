@@ -63,5 +63,5 @@ export function validateSimulation(config: SimulationConfig) {
     config.angularDamping < 0 ||
     config.angularDamping > 2
   )
-    throw new Error('Cấu hình máy quay không hợp lệ.')
+    throw new Error('Invalid draw machine configuration.')
 }

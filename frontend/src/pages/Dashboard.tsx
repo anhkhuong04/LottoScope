@@ -57,28 +57,30 @@ export function Dashboard() {
   return (
     <>
       <PageHead
-        title={`Tổng quan ${game!.label}`}
-        description="Các thống kê từ những kỳ quay đã được lưu."
+        title={`${game!.label} Overview`}
+        description="Historical statistics from recorded draws."
       />
       <WindowSelector />
-      {numbers.data && <ScopeSummary context={numbers.data.context} subject="Thống kê số chính" />}
+      {numbers.data && (
+        <ScopeSummary context={numbers.data.context} subject="Main numbers statistics" />
+      )}
       <div className="dashboard-hero">
         <Card
           className="latest-card"
-          title="Kết quả gần nhất"
-          subtitle="Kết quả đã công bố và được lưu trong lịch sử"
+          title="Latest Result"
+          subtitle="Most recently published draw in recorded history"
           action={
             <Link className="link-arrow" to={`/history${search}`}>
-              Lịch sử <ArrowRight size={14} aria-hidden="true" />
+              History <ArrowRight size={14} aria-hidden="true" />
             </Link>
           }
         >
           <div className="latest-result">
-            <DataState {...latest} hasData={!!latest.data} empty="Chưa có kỳ quay được lưu.">
+            <DataState {...latest} hasData={!!latest.data} empty="No draws recorded yet.">
               {latest.data && (
                 <>
                   <p className="latest-meta">
-                    <span>Kỳ {latest.data.draw_id}</span>
+                    <span>Draw {latest.data.draw_id}</span>
                     <span>
                       {latest.data.draw_date}
                       {latest.data.draw_time ? ` · ${latest.data.draw_time.slice(0, 5)}` : ''}
@@ -97,15 +99,19 @@ export function Dashboard() {
       </div>
       <div className="dashboard-sections">
         <Card
-          title="Tần suất các số"
-          subtitle="6 số có tần suất cao nhất trong phạm vi đã chọn"
+          title="Number Frequency"
+          subtitle="Top 6 most frequent numbers in selected window"
           action={
             <Link className="link-arrow" to={`/numbers${search}`}>
-              Xem tất cả <ArrowRight size={14} />
+              View all <ArrowRight size={14} />
             </Link>
           }
         >
-          <DataState {...numbers} hasData={!!numbers.data} empty="Chưa có dữ liệu phân tích số.">
+          <DataState
+            {...numbers}
+            hasData={!!numbers.data}
+            empty="No number analysis data available."
+          >
             {numbers.data && (
               <>
                 <div className="number-grid">
@@ -123,52 +129,52 @@ export function Dashboard() {
                   ))}
                 </div>
                 <p className="chart-caption">
-                  Thanh dài hơn: xuất hiện nhiều hơn trong phạm vi. Cao nhất {max} kỳ. Cùng tần suất
-                  cùng hạng; danh sách rút gọn tối đa 6 số, đồng hạng xếp theo số tăng dần.
+                  Longer bar indicates higher frequency. Max {max} draws. Ties share rank; top 6
+                  numbers shown sorted ascending on ties.
                 </p>
               </>
             )}
           </DataState>
         </Card>
         <Card
-          title="Các cặp xuất hiện nhiều"
+          title="Frequent Pairs"
           className="pairs-summary"
           action={
             <Link className="link-arrow" to={`/pairs${search}`}>
-              Xem cặp số <ArrowRight size={14} />
+              View pairs <ArrowRight size={14} />
             </Link>
           }
         >
-          <DataState {...pairs} hasData={!!pairs.data} empty="Chưa có cặp số trong phạm vi.">
+          <DataState {...pairs} hasData={!!pairs.data} empty="No pairs found in selected window.">
             {pairs.data && (
               <div className="stack">
-                <ScopeSummary context={pairs.data.context} subject="Cặp số chính" />
+                <ScopeSummary context={pairs.data.context} subject="Main number pairs" />
                 {pairs.data.items.map((pair) => (
                   <div className="draw-row" key={pair.numbers.join('-')}>
                     <PairLink pair={pair} />
-                    <strong>{pair.frequency} kỳ</strong>
+                    <strong>{pair.frequency} draws</strong>
                     <span className="rank-label">
-                      {pairs.data?.context.actual_draw_count ? `Hạng ${pair.frequency_rank}` : '—'}
+                      {pairs.data?.context.actual_draw_count ? `Rank ${pair.frequency_rank}` : '—'}
                     </span>
                   </div>
                 ))}
                 {pairs.data.items.length === 0 && (
-                  <p className="muted">Chưa có cặp số trong phạm vi.</p>
+                  <p className="muted">No pairs found in selected window.</p>
                 )}
                 <p className="chart-caption">
-                  Tối đa 5 cặp. Cùng tần suất cùng hạng; đồng hạng xếp theo cặp tăng dần. Xem cặp số
-                  để mở danh sách đầy đủ.
+                  Top 5 pairs shown. Ties share rank; ties sorted ascending. View pairs for complete
+                  list.
                 </p>
               </div>
             )}
           </DataState>
         </Card>
         <Card
-          title="Khoảng cách hiện tại cao"
-          subtitle="Số kỳ liên tiếp chưa xuất hiện"
+          title="Longest Current Gaps"
+          subtitle="Consecutive draws without appearance"
           action={
             <Link className="link-arrow" to={`/numbers${search}`}>
-              Phân tích số <ArrowRight size={14} />
+              Number analysis <ArrowRight size={14} />
             </Link>
           }
         >
@@ -193,33 +199,33 @@ export function Dashboard() {
                 ))}
               </div>
             ) : (
-              <p className="muted">Chưa có khoảng cách để hiển thị.</p>
+              <p className="muted">No gaps to display.</p>
             )}
           </DataState>
         </Card>
         <Card
-          title="Các kỳ gần đây"
-          subtitle="3 kỳ mới nhất toàn lịch sử, không theo phạm vi phân tích"
+          title="Recent Draws"
+          subtitle="3 latest draws from all-time history, independent of analysis window"
           action={
             <Link className="link-arrow" to={`/history${search}`}>
-              Toàn bộ lịch sử <ArrowRight size={14} />
+              All-time history <ArrowRight size={14} />
             </Link>
           }
         >
-          <DataState {...recent} hasData={!!recent.data} empty="Chưa có kỳ quay được lưu.">
+          <DataState {...recent} hasData={!!recent.data} empty="No draws recorded yet.">
             {recent.data && <DrawRows draws={recent.data.items} game={game!} />}
           </DataState>
         </Card>
       </div>
       {game!.id === 'lotto_535' && (
         <Card
-          title="Thống kê số đặc biệt Lotto 5/35"
-          subtitle="Miền 01–12, tính riêng với số chính."
+          title="Lotto 5/35 Special Number Statistics"
+          subtitle="Range 01–12, tracked independently from main numbers."
         >
           <DataState {...special} hasData={!!special.data}>
             {special.data && (
               <>
-                <ScopeSummary context={special.data.context} subject="Số đặc biệt" />
+                <ScopeSummary context={special.data.context} subject="Special numbers" />
                 <div className="number-grid special-grid">
                   {special.data.items.map((item) => (
                     <FrequencyTile
@@ -236,7 +242,7 @@ export function Dashboard() {
                   ))}
                 </div>
                 <Link className="link-arrow" to={`/numbers${search}&number_kind=special`}>
-                  Phân tích số đặc biệt <ArrowRight size={14} aria-hidden="true" />
+                  Special number analysis <ArrowRight size={14} aria-hidden="true" />
                 </Link>
               </>
             )}

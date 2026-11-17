@@ -41,7 +41,7 @@ export function validateDesign(design: Design) {
     ) ||
     !['standard', 'economy'].includes(design.quality)
   )
-    throw new Error('Cấu hình hình học hoặc vật liệu không hợp lệ.')
+    throw new Error('Invalid geometry or material configuration.')
 }
 
 // A deterministic display arrangement, not a settled physics state or draw result.
@@ -55,7 +55,7 @@ export function staticBallPositions(count: number, radius: number, ballRadius: n
     ballRadius <= 0 ||
     ballRadius >= radius
   )
-    throw new Error('Không thể bố trí số bóng này trong lồng.')
+    throw new Error('Unable to arrange this ball pool in chamber.')
   const distance = 2 * ballRadius * 1.035
   const rowStep = (distance * Math.sqrt(3)) / 2
   const layerStep = distance * Math.sqrt(2 / 3)
@@ -77,5 +77,5 @@ export function staticBallPositions(count: number, radius: number, ballRadius: n
     points.push(...candidates)
     if (points.length >= count) return points.slice(0, count)
   }
-  throw new Error('Không đủ không gian để bố trí bóng không chồng lấn.')
+  throw new Error('Insufficient space to arrange non-overlapping balls.')
 }

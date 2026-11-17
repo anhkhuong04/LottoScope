@@ -38,51 +38,51 @@ export function Numbers() {
   return (
     <>
       <PageHead
-        title="Tần suất & khoảng cách"
+        title="Frequency & Gaps"
         description={
           special
-            ? 'Các số đặc biệt 01–12 được thống kê riêng trong phạm vi đã chọn.'
-            : 'Mỗi số chính được thống kê độc lập trong phạm vi đã chọn.'
+            ? 'Special numbers 01–12 tracked separately in selected window.'
+            : 'Each main number is analyzed independently in selected window.'
         }
       />
       <WindowSelector>
         {game!.id === 'lotto_535' && (
           <label className="field">
-            Nhóm số
+            Number kind
             <select
               value={special ? 'special' : 'main'}
               onChange={(event) => setKind(event.target.value)}
             >
-              <option value="main">Số chính 01–35</option>
-              <option value="special">Số đặc biệt 01–12</option>
+              <option value="main">Main numbers 01–35</option>
+              <option value="special">Special numbers 01–12</option>
             </select>
           </label>
         )}
         <label className="field">
-          Sắp xếp
+          Sort by
           <select value={sort} onChange={(event) => setSort(event.target.value)}>
-            <option value="number">Theo số</option>
-            <option value="frequency_desc">Tần suất giảm</option>
-            <option value="frequency_asc">Tần suất tăng</option>
-            <option value="gap_desc">Khoảng cách giảm</option>
+            <option value="number">Number order</option>
+            <option value="frequency_desc">Frequency (desc)</option>
+            <option value="frequency_asc">Frequency (asc)</option>
+            <option value="gap_desc">Gap (desc)</option>
           </select>
         </label>
         <label className="field">
-          Cách xem
+          View
           <select value={view} onChange={(event) => setView(event.target.value)}>
-            <option value="grid">Lưới</option>
-            <option value="table">Bảng</option>
-            <option value="chart">Biểu đồ</option>
+            <option value="grid">Grid</option>
+            <option value="table">Table</option>
+            <option value="chart">Chart</option>
           </select>
         </label>
       </WindowSelector>
       <Card>
-        <DataState {...result} hasData={!!result.data} empty="Chưa có thống kê số.">
+        <DataState {...result} hasData={!!result.data} empty="No number statistics available.">
           {result.data && (
             <>
               <ScopeSummary
                 context={result.data.context}
-                subject={special ? 'Số đặc biệt' : 'Số chính'}
+                subject={special ? 'Special numbers' : 'Main numbers'}
               />
               {view === 'grid' && (
                 <div className="number-grid">
@@ -105,13 +105,13 @@ export function Numbers() {
                 <DataTable>
                   <thead>
                     <tr>
-                      <th>Số</th>
-                      <th>Hạng tần suất</th>
-                      <th>Tần suất</th>
-                      <th>Tỷ lệ</th>
-                      <th>Gap hiện tại</th>
-                      <th>Gap TB</th>
-                      <th>Lần gần nhất</th>
+                      <th>Number</th>
+                      <th>Rank</th>
+                      <th>Frequency</th>
+                      <th>Rate</th>
+                      <th>Current gap</th>
+                      <th>Avg gap</th>
+                      <th>Last seen</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -164,14 +164,14 @@ export function Numbers() {
                     ))}
                   </div>
                   <p className="muted" style={{ marginTop: 17 }}>
-                    Tần suất cao nhất {max} kỳ; mỗi hàng ghi số kỳ tương ứng.
+                    Max frequency {max} draws; each bar indicates corresponding draw count.
                   </p>
                 </>
               )}
               {view === 'grid' && (
                 <p className="chart-caption">
-                  Thanh dài hơn: xuất hiện nhiều hơn trong phạm vi. Cao nhất {max} kỳ. Chọn Bảng để
-                  xem đầy đủ chỉ số. Cùng tần suất cùng hạng; số tăng dần khi đồng hạng.
+                  Longer bar indicates higher frequency. Max {max} draws. Choose Table for full
+                  metrics. Ties share rank; ties sorted ascending.
                 </p>
               )}
               <div style={{ marginTop: 16 }}>
@@ -205,14 +205,14 @@ export function NumberDetailPage() {
   const result = useQuery(path, (signal) =>
     valid
       ? api<NumberDetail>(path, signal)
-      : Promise.reject(new Error('Số ngoài miền của game này.')),
+      : Promise.reject(new Error('Number out of range for this game.')),
   )
   return (
     <>
-      <BackLink to="/numbers" label="Về phân tích số" />
+      <BackLink to="/numbers" label="Back to numbers" />
       <PageHead
-        title={`Số ${special ? 'đặc biệt ' : ''}${String(number).padStart(2, '0')}`}
-        description={`Thống kê từ các kỳ ${game!.label} trong phạm vi đã chọn.`}
+        title={`${special ? 'Special Number ' : 'Number '}${String(number).padStart(2, '0')}`}
+        description={`Statistics from ${game!.label} draws in selected window.`}
       />
       <WindowSelector />
       <DataState {...result} hasData={!!result.data}>
@@ -221,20 +221,20 @@ export function NumberDetailPage() {
             <div className="span-2">
               <ScopeSummary
                 context={result.data.context}
-                subject={special ? 'Số đặc biệt' : 'Số chính'}
+                subject={special ? 'Special numbers' : 'Main numbers'}
               />
             </div>
-            <Card title="Chỉ số">
+            <Card title="Metrics">
               <div className="stack">
                 <div>
-                  Tần suất:{' '}
+                  Frequency:{' '}
                   <strong>
-                    {result.data.metrics.frequency} kỳ (
+                    {result.data.metrics.frequency} draws (
                     {formatPercent(result.data.metrics.frequency_percent)})
                   </strong>
                 </div>
                 <div>
-                  Hạng tần suất:{' '}
+                  Frequency rank:{' '}
                   <strong>
                     {result.data.context.actual_draw_count
                       ? result.data.metrics.frequency_rank
@@ -242,66 +242,65 @@ export function NumberDetailPage() {
                   </strong>
                 </div>
                 <div>
-                  Gap hiện tại: <strong>{result.data.metrics.current_gap ?? '—'}</strong>
+                  Current gap: <strong>{result.data.metrics.current_gap ?? '—'}</strong>
                 </div>
                 <div>
-                  Gap trung bình:{' '}
-                  <strong>{result.data.metrics.average_gap?.toFixed(1) ?? '—'}</strong>
+                  Average gap: <strong>{result.data.metrics.average_gap?.toFixed(1) ?? '—'}</strong>
                 </div>
                 <div>
-                  Gap lớn nhất: <strong>{result.data.metrics.max_gap ?? '—'}</strong>
+                  Max gap: <strong>{result.data.metrics.max_gap ?? '—'}</strong>
                 </div>
                 <div>
-                  Lần gần nhất:{' '}
+                  Last seen:{' '}
                   {result.data.metrics.last_seen_draw_id ? (
                     <Link
                       className="inline-link"
                       to={`/history/${result.data.metrics.last_seen_draw_id}${globalSearch(game!.id, window)}`}
                     >
-                      Kỳ {result.data.metrics.last_seen_draw_id}
+                      Draw {result.data.metrics.last_seen_draw_id}
                     </Link>
                   ) : (
-                    <strong>Chưa xuất hiện trong phạm vi</strong>
+                    <strong>Not seen in selected window</strong>
                   )}
                 </div>
               </div>
             </Card>
             {!special && (
               <Card
-                title="Các cặp đi cùng"
-                subtitle="Tối đa 10 cặp theo tần suất; đồng hạng xếp theo số tăng dần"
+                title="Co-occurring Pairs"
+                subtitle="Top 10 pairs by frequency; ties sorted ascending"
               >
                 {result.data.pair_partners.length ? (
                   <div className="stack">
                     {result.data.pair_partners.map((pair) => (
                       <div className="draw-row" key={pair.numbers.join('-')}>
                         <PairLink pair={pair} />
-                        <strong>{pair.frequency} kỳ</strong>
+                        <strong>{pair.frequency} draws</strong>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="muted">Chưa có cặp trong phạm vi.</p>
+                  <p className="muted">No pairs in selected window.</p>
                 )}
               </Card>
             )}
-            <Card title="Dòng thời gian">
+            <Card title="Timeline">
               <div className="timeline">
                 {result.data.timeline_draw_ids.length ? (
                   result.data.timeline_draw_ids.map((id) => (
                     <Link key={id} to={`/history/${id}${globalSearch(game!.id, window)}`}>
-                      Kỳ {id}
+                      Draw {id}
                     </Link>
                   ))
                 ) : (
-                  <p className="muted">Chưa có lần xuất hiện.</p>
+                  <p className="muted">No appearances recorded.</p>
                 )}
               </div>
             </Card>
-            <Card title="Kỳ có số này">
+            <Card title="Draws with this number">
               <DrawRows draws={result.data.appearance_draws.items} game={game!} />
               {result.data.appearance_draws.items.length === 0 && (
-                <p className="muted">Chưa có kỳ trong phạm vi.</p>
+                <p className="muted">No draws in selected window.</p>
               )}
               <Pager
                 page={result.data.appearance_draws.page}

@@ -12,9 +12,10 @@ export function validateNumbers(
   count: number,
 ): string | null {
   if (numbers.some((number) => !Number.isInteger(number) || number < min || number > max))
-    return `Chỉ chọn số nguyên từ ${min} đến ${max}.`
-  if (new Set(numbers).size !== numbers.length) return 'Có số bị trùng.'
-  if (numbers.length !== count) return `Cần đúng ${count} số chính; hiện có ${numbers.length}.`
+    return `Only integers from ${min} to ${max} are allowed.`
+  if (new Set(numbers).size !== numbers.length) return 'Duplicate numbers found.'
+  if (numbers.length !== count)
+    return `Must select exactly ${count} main numbers; currently ${numbers.length}.`
   return null
 }
 
@@ -56,15 +57,15 @@ export function Checker() {
           parsed[i] > game!.main_max,
       )
     ) {
-      setInputError(`Chỉ nhập số nguyên từ ${game!.main_min} đến ${game!.main_max}.`)
+      setInputError(`Enter integers from ${game!.main_min} to ${game!.main_max} only.`)
       return
     }
     if (new Set([...selected, ...parsed]).size !== selected.length + parsed.length) {
-      setInputError('Có số bị trùng.')
+      setInputError('Duplicate numbers found.')
       return
     }
     if (selected.length + parsed.length > game!.main_count) {
-      setInputError(`Chỉ chọn ${game!.main_count} số chính.`)
+      setInputError(`Select up to ${game!.main_count} main numbers.`)
       return
     }
     controller.current?.abort()
@@ -122,7 +123,7 @@ export function Checker() {
       }
     } catch (cause) {
       if (!request.signal.aborted)
-        setError(cause instanceof Error ? cause.message : 'Không kiểm tra được bộ số.')
+        setError(cause instanceof Error ? cause.message : 'Failed to check combination.')
     } finally {
       if (!request.signal.aborted) setLoadingKey(null)
     }
@@ -138,14 +139,14 @@ export function Checker() {
   return (
     <>
       <PageHead
-        title="Đối chiếu với lịch sử"
-        description="So sánh số chính của bộ bạn chọn với các kỳ đã lưu; không bao gồm số đặc biệt."
+        title="Combination Checker"
+        description="Compare your selected main numbers against recorded draws; excludes special number."
       />
       <WindowSelector />
       <div className="grid cols-2">
         <Card
-          title={`Chọn ${game!.main_count} số chính`}
-          subtitle={`Miền ${game!.main_min}–${game!.main_max}; có thể nhập nhiều số cách nhau bằng dấu cách.`}
+          title={`Select ${game!.main_count} main numbers`}
+          subtitle={`Range ${game!.main_min}–${game!.main_max}; multiple numbers can be separated by spaces.`}
         >
           <div className="token-box">
             {selected.length ? (
@@ -153,19 +154,19 @@ export function Checker() {
                 <button
                   key={number}
                   className="btn ghost"
-                  aria-label={`Bỏ số ${number}`}
+                  aria-label={`Remove number ${number}`}
                   onClick={() => toggle(number)}
                 >
                   <Ball value={number} /> ×
                 </button>
               ))
             ) : (
-              <span className="muted">Chưa chọn số nào</span>
+              <span className="muted">No numbers selected</span>
             )}
           </div>
-          <div className="toolbar">
+          <div className="toolbar checker-input-toolbar">
             <label className="field">
-              Nhập số
+              Enter numbers
               <input
                 inputMode="numeric"
                 value={input}
@@ -179,24 +180,26 @@ export function Checker() {
                 placeholder="01 02 03"
               />
             </label>
-            <button className="btn" onClick={addInput}>
-              Thêm số
-            </button>
-            <button
-              className="btn"
-              disabled={selected.length === 0}
-              onClick={clear}
-              aria-label="Xóa nhanh các số"
-            >
-              Clear
-            </button>
+            <div className="checker-input-actions">
+              <button className="btn btn-sm" onClick={addInput}>
+                Add
+              </button>
+              <button
+                className="btn btn-sm"
+                disabled={selected.length === 0}
+                onClick={clear}
+                aria-label="Clear selected numbers"
+              >
+                Clear
+              </button>
+            </div>
           </div>
           {inputError && (
             <div className="notice error" role="alert">
               {inputError}
             </div>
           )}
-          <div className="picker" aria-label="Chọn số chính">
+          <div className="picker" aria-label="Select main numbers">
             {Array.from(
               { length: game!.main_max - game!.main_min + 1 },
               (_, i) => game!.main_min + i,
@@ -205,7 +208,7 @@ export function Checker() {
                 key={number}
                 className={selected.includes(number) ? 'selected' : ''}
                 aria-pressed={selected.includes(number)}
-                aria-label={`Số ${String(number).padStart(2, '0')}`}
+                aria-label={`Number ${String(number).padStart(2, '0')}`}
                 disabled={!selected.includes(number) && selected.length >= game!.main_count}
                 onClick={() => toggle(number)}
               >
@@ -214,7 +217,7 @@ export function Checker() {
             ))}
           </div>
           <p className="muted" style={{ marginTop: 15 }}>
-            {selected.length}/{game!.main_count} số đã chọn
+            {selected.length}/{game!.main_count} numbers selected
           </p>
           <div className="toolbar" style={{ marginTop: 15, marginBottom: 0 }}>
             <button
@@ -222,25 +225,12 @@ export function Checker() {
               disabled={loading || !!validation}
               onClick={() => run()}
             >
-              {loading ? 'Đang đối chiếu…' : 'Kiểm tra lịch sử'}
-            </button>
-            <button
-              className="btn"
-              disabled={selected.length === 0}
-              onClick={clear}
-              aria-label="Xóa nhanh các số"
-            >
-              Clear
+              {loading ? 'Checking…' : 'Check history'}
             </button>
           </div>
         </Card>
-        <Card title="Kết quả đối chiếu">
-          <div
-            className="result-focus"
-            ref={resultFocus}
-            tabIndex={-1}
-            aria-label="Kết quả đối chiếu"
-          >
+        <Card title="Check Results">
+          <div className="result-focus" ref={resultFocus} tabIndex={-1} aria-label="Check Results">
             <div aria-live="polite">
               {!data && !loading && !visibleError && (
                 <div className="checker-empty">
@@ -255,35 +245,37 @@ export function Checker() {
                   </div>
                   <h3>
                     {selected.length === game!.main_count
-                      ? 'Bộ số đã sẵn sàng'
-                      : 'Bắt đầu từ bộ số của bạn'}
+                      ? 'Combination ready'
+                      : 'Start with your combination'}
                   </h3>
                   <p className="muted">
-                    {selected.length}/{game!.main_count} số chính đã chọn. Chọn đủ số rồi bắt đầu
-                    kiểm tra.
+                    {selected.length}/{game!.main_count} main numbers selected. Select full set to
+                    check.
                   </p>
                   <p className="muted">
-                    Bạn sẽ thấy các kỳ trùng chính xác, mức trùng số và thống kê trong phạm vi đã
-                    chọn.
+                    View exact matches, match distribution, and statistical metrics across the
+                    selected window.
                   </p>
                 </div>
               )}
-              {loading && <p className="muted">Đang đối chiếu dữ liệu…</p>}
+              {loading && <p className="muted">Comparing with history…</p>}
               {visibleError && (
                 <div className="notice error" role="alert">
-                  {data ? 'Kết quả cũ trong cùng phạm vi. ' : ''}
-                  {visibleError} <button onClick={() => run()}>Thử lại</button>
+                  {data ? 'Previous result in same window. ' : ''}
+                  {visibleError} <button onClick={() => run()}>Retry</button>
                 </div>
               )}
             </div>
             {data && (
               <div className="stack">
                 <Balls values={data.main_numbers} large />
-                <span className="pill">Đối chiếu {data.history_draw_count} kỳ trong lịch sử</span>
-                <h2>Trùng chính xác: {data.exact_match_count} kỳ</h2>
+                <span className="pill">
+                  Checked against {data.history_draw_count} historical draws
+                </span>
+                <h2>Exact Matches: {data.exact_match_count} draw(s)</h2>
                 {data.last_exact_match ? (
                   <div>
-                    Kỳ gần nhất:{' '}
+                    Latest match:{' '}
                     <Link
                       to={`/history/${data.last_exact_match.draw_id}${globalSearch(game!.id, window)}`}
                     >
@@ -291,9 +283,7 @@ export function Checker() {
                     </Link>
                   </div>
                 ) : (
-                  <p className="muted">
-                    Không có kỳ trùng chính xác; đây là kết quả kiểm tra hợp lệ.
-                  </p>
+                  <p className="muted">No exact match found; this is a valid check result.</p>
                 )}
               </div>
             )}
@@ -302,26 +292,29 @@ export function Checker() {
       </div>
       {data && (
         <div className="stack result-group">
-          <Card title="Mức trùng số" subtitle="Số kỳ có đúng từng mức trùng số chính">
+          <Card
+            title="Match Distribution"
+            subtitle="Number of draws matching exact number of main balls"
+          >
             <div className="grid cols-3">
               {Array.from({ length: game!.main_count + 1 }, (_, count) => (
                 <div className="result-item" key={count}>
-                  <strong>{count} số trùng</strong>
-                  <div>{data.overlap_histogram[`match_${count}`] ?? 0} kỳ</div>
+                  <strong>{count} matched</strong>
+                  <div>{data.overlap_histogram[`match_${count}`] ?? 0} draws</div>
                 </div>
               ))}
             </div>
           </Card>
-          <Card title="Các kỳ trùng nhiều số">
+          <Card title="Similar Draws">
             <div className="stack">
               {data.similar_draws.items.map((item) => (
                 <div key={item.draw.draw_id}>
-                  <span className="pill">Trùng {item.overlap_count} số</span>
+                  <span className="pill">{item.overlap_count} matches</span>
                   <DrawRows draws={[item.draw]} game={game!} />
                 </div>
               ))}
               {data.similar_draws.items.length === 0 && (
-                <p className="muted">Không có kỳ tương tự.</p>
+                <p className="muted">No similar draws found.</p>
               )}
             </div>
             <Pager
@@ -331,14 +324,14 @@ export function Checker() {
               setPage={(page) => run(page)}
             />
           </Card>
-          <Card title="Thống kê từng số">
+          <Card title="Individual Number Stats">
             <div className="table-wrap">
               <table className="data-table">
                 <thead>
                   <tr>
-                    <th>Số</th>
-                    <th>Tần suất</th>
-                    <th>Tỷ lệ</th>
+                    <th>Number</th>
+                    <th>Frequency</th>
+                    <th>Rate</th>
                     <th>Gap</th>
                   </tr>
                 </thead>
@@ -359,14 +352,14 @@ export function Checker() {
               </table>
             </div>
           </Card>
-          <Card title="Các cặp trong bộ số">
+          <Card title="Pairs in Combination">
             <div className="table-wrap">
               <table className="data-table">
                 <thead>
                   <tr>
-                    <th>Cặp</th>
-                    <th>Số kỳ</th>
-                    <th>Tỷ lệ</th>
+                    <th>Pair</th>
+                    <th>Draws</th>
+                    <th>Rate</th>
                   </tr>
                 </thead>
                 <tbody>

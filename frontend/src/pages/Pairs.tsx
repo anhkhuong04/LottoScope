@@ -27,12 +27,12 @@ export function Pairs() {
   return (
     <>
       <PageHead
-        title="Cặp số trong lịch sử"
-        description="Tần suất đồng xuất hiện của hai số chính qua các kỳ."
+        title="Historical Number Pairs"
+        description="Co-occurrence frequency of two main numbers across draws."
       />
       <WindowSelector>
         <label className="field">
-          Tần suất tối thiểu
+          Min frequency
           <input
             type="number"
             min="0"
@@ -41,31 +41,29 @@ export function Pairs() {
           />
         </label>
         <label className="field">
-          Sắp xếp
+          Sort by
           <select value={sort} onChange={(event) => setSort(event.target.value)}>
-            <option value="frequency_desc">Tần suất giảm</option>
-            <option value="frequency_asc">Tần suất tăng</option>
-            <option value="pair">Theo cặp số</option>
+            <option value="frequency_desc">Frequency (desc)</option>
+            <option value="frequency_asc">Frequency (asc)</option>
+            <option value="pair">Pair order</option>
           </select>
         </label>
       </WindowSelector>
       <Card>
-        <DataState {...result} hasData={!!result.data} empty="Không có cặp nào khớp bộ lọc.">
+        <DataState {...result} hasData={!!result.data} empty="No pairs match the filter.">
           {result.data && (
             <>
-              <ScopeSummary context={result.data.context} subject="Cặp số chính" />
-              <p className="chart-caption">
-                Cùng tần suất cùng hạng; cặp số tăng dần khi đồng hạng.
-              </p>
+              <ScopeSummary context={result.data.context} subject="Main number pairs" />
+              <p className="chart-caption">Ties share rank; pairs sorted ascending on ties.</p>
               <DataTable>
                 <thead>
                   <tr>
-                    <th>Cặp</th>
-                    <th>Hạng tần suất</th>
-                    <th>Số kỳ</th>
-                    <th>Tỷ lệ</th>
-                    <th>Gap hiện tại</th>
-                    <th>Lần gần nhất</th>
+                    <th>Pair</th>
+                    <th>Rank</th>
+                    <th>Draws</th>
+                    <th>Rate</th>
+                    <th>Current gap</th>
+                    <th>Last seen</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -94,7 +92,7 @@ export function Pairs() {
                 </tbody>
               </DataTable>
               {result.data.items.length === 0 && (
-                <p className="muted">Không có cặp nào khớp bộ lọc.</p>
+                <p className="muted">No pairs match the filter.</p>
               )}
               <Pager
                 page={result.data.page}
@@ -132,63 +130,63 @@ export function PairDetailPage() {
   const result = useQuery(path, (signal) =>
     valid
       ? api<PairDetail>(path, signal)
-      : Promise.reject(new Error('Cặp số không hợp lệ cho game này.')),
+      : Promise.reject(new Error('Invalid number pair for this game.')),
   )
   return (
     <>
-      <BackLink to="/pairs" label="Về cặp số" />
+      <BackLink to="/pairs" label="Back to pairs" />
       <PageHead
-        title={`Cặp ${pair}`}
-        description="Các kỳ có cả hai số chính trong phạm vi phân tích."
+        title={`Pair ${pair}`}
+        description="Draws containing both main numbers in selected window."
       />
       <WindowSelector />
       <DataState {...result} hasData={!!result.data}>
         {result.data && (
           <div className="grid cols-2">
             <div className="span-2">
-              <ScopeSummary context={result.data.context} subject="Cặp số chính" />
+              <ScopeSummary context={result.data.context} subject="Main number pairs" />
             </div>
-            <Card title="Chỉ số">
+            <Card title="Metrics">
               <div className="stack">
                 <div>
-                  Đồng xuất hiện: <strong>{result.data.metrics.frequency} kỳ</strong>
+                  Co-occurrence: <strong>{result.data.metrics.frequency} draws</strong>
                 </div>
                 <div>
-                  Tỷ lệ kỳ: <strong>{formatPercent(result.data.metrics.percent_of_draws)}</strong>
+                  Draw percentage:{' '}
+                  <strong>{formatPercent(result.data.metrics.percent_of_draws)}</strong>
                 </div>
                 <div>
-                  Gap hiện tại: <strong>{result.data.metrics.current_gap ?? '—'}</strong>
+                  Current gap: <strong>{result.data.metrics.current_gap ?? '—'}</strong>
                 </div>
                 <div>
-                  Gap trung bình:{' '}
-                  <strong>{result.data.metrics.average_gap?.toFixed(1) ?? '—'}</strong>
+                  Average gap: <strong>{result.data.metrics.average_gap?.toFixed(1) ?? '—'}</strong>
                 </div>
                 <div>
-                  Gap lớn nhất: <strong>{result.data.metrics.max_gap ?? '—'}</strong>
+                  Max gap: <strong>{result.data.metrics.max_gap ?? '—'}</strong>
                 </div>
                 <div>
-                  Lần gần nhất:{' '}
-                  <strong>{result.data.metrics.last_seen_draw_id ?? 'Chưa xuất hiện'}</strong>
+                  Last seen:{' '}
+                  <strong>{result.data.metrics.last_seen_draw_id ?? 'Never appeared'}</strong>
                 </div>
               </div>
             </Card>
-            <Card title="Dòng thời gian">
+            <Card title="Timeline">
               <div className="timeline">
                 {result.data.timeline_draw_ids.length ? (
                   result.data.timeline_draw_ids.map((id) => (
                     <Link key={id} to={`/history/${id}${globalSearch(game!.id, window)}`}>
-                      Kỳ {id}
+                      Draw {id}
                     </Link>
                   ))
                 ) : (
-                  <p className="muted">Chưa có lần xuất hiện.</p>
+                  <p className="muted">No appearances recorded.</p>
                 )}
               </div>
             </Card>
-            <Card title="Các kỳ xuất hiện" className="span-2">
+            <Card title="Appeared Draws" className="span-2">
               <DrawRows draws={result.data.appearance_draws.items} game={game!} />
               {result.data.appearance_draws.items.length === 0 && (
-                <p className="muted">Chưa có kỳ trong phạm vi.</p>
+                <p className="muted">No draws in selected window.</p>
               )}
               <Pager
                 page={result.data.appearance_draws.page}

@@ -32,7 +32,7 @@ export function createGateway(config: Config, fetchOrigin: Fetch = fetch, timeou
       )
         throw new Error('Invalid gateway configuration')
     } catch {
-      return error(503, 'gateway_not_configured', 'Dịch vụ chưa được cấu hình hoàn tất.')
+      return error(503, 'gateway_not_configured', 'Service configuration is incomplete.')
     }
 
     let body: Uint8Array<ArrayBuffer> | undefined
@@ -89,7 +89,7 @@ export function createGateway(config: Config, fetchOrigin: Fetch = fetch, timeou
         return error(
           503,
           'backend_starting',
-          'Dịch vụ đang khởi động hoặc tạm thời chưa sẵn sàng. Vui lòng thử lại sau khoảng một phút.',
+          'Service is starting or temporarily unavailable. Please try again in about a minute.',
         )
       }
       const headers = new Headers({
@@ -105,9 +105,9 @@ export function createGateway(config: Config, fetchOrigin: Fetch = fetch, timeou
         ? error(
             504,
             'gateway_timeout',
-            'Chưa nhận được kết quả trong thời gian chờ. Đồng bộ có thể vẫn đang chạy; hãy làm mới hiển thị trước khi thử lại.',
+            'No response received within timeout. Sync may still be running; please refresh before retrying.',
           )
-        : error(502, 'backend_unavailable', 'Không kết nối được dịch vụ. Vui lòng thử lại sau.')
+        : error(502, 'backend_unavailable', 'Unable to connect to service. Please try again later.')
     }
   }
 }
