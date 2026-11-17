@@ -5,6 +5,19 @@ và database chạy trên cloud, không phụ thuộc máy cá nhân đang bật
 Runbook: [DEPLOYMENT_FREE.md](DEPLOYMENT_FREE.md), quyết định:
 [ADR 0011](DECISIONS/0011-free-cloud-deployment.md).
 
+## Cập nhật UI & Vercel — 17/11/2026 (English UI & Mobile Button Scale)
+
+- Release frontend: commit **`f6d3c8d`**, branch **`deploy/free-cloud`**.
+- Vercel: **`dpl_BRpyHDY6mXks67T196QmBi9RkHMz` READY**, production URL `https://lottoscope-sable.vercel.app` đã gán alias.
+- Public bundle: `index-CEVyxfPf.js` và `index-DLp_Ny_s.css` trả HTTP 200.
+- Nội dung cập nhật:
+  - Chỉ giữ 1 nút "Clear" duy nhất ở cạnh nút "Add", loại bỏ nút Clear trùng lặp ở thanh công cụ phía dưới màn hình Checker.
+  - Thu nhỏ và cân đối kích thước của hai nút "Add" và "Clear" trên màn hình di động/mobile (áp dụng `.btn-sm`, height 34px, padding gọn gàng, không bị kéo dãn toàn chiều rộng).
+  - Chuyển đổi toàn bộ ngôn ngữ ứng dụng từ tiếng Việt sang tiếng Anh (bỏ tiếng Việt trên toàn bộ giao diện: navigation, dashboard, history, numbers, pairs, checker, generator, sync controls, error boundary, modal/tooltips, API proxy messages).
+  - Kiểm thử 97 unit tests frontend đạt 100% pass, format/typecheck/lint sạch sẽ.
+- Local Docker: Image `vietlottanalytics-frontend:latest` đã build lại và chạy trên container `vietlottanalytics-frontend-1` (`http://127.0.0.1:8088`), đã xác thực HTTP 200 OK.
+- Public Cloud: Vercel production URL `https://lottoscope-sable.vercel.app` trả HTTP 200 OK và API proxy `/api/v1/games` hoạt động ổn định.
+
 ## Cập nhật UI & Vercel — 17/11/2026
 
 - Release frontend: commit **`0f8a690`**, branch **`deploy/free-cloud`** (bao gồm `5969a93` và fixes cho build/oxlint).
