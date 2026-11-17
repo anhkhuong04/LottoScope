@@ -1,4 +1,4 @@
-import { ArrowRight, Clock3 } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { Link } from 'react-router'
 import {
   api,
@@ -9,7 +9,6 @@ import {
   type NumbersResponse,
   type PairsResponse,
   type Page,
-  type Status,
 } from '../api'
 import { useApp, useQuery } from '../state'
 import {
@@ -22,7 +21,6 @@ import {
   PairLink,
   ScopeSummary,
   WindowSelector,
-  formatVietnamTime,
 } from '../ui'
 
 export function Dashboard() {
@@ -33,7 +31,6 @@ export function Dashboard() {
   const latest = useQuery(`${base}/draws/latest`, (signal) =>
     api<Draw>(`${base}/draws/latest`, signal),
   )
-  const status = useQuery(`${base}/status`, (signal) => api<Status>(`${base}/status`, signal))
   const numbers = useQuery(`${base}/analytics/numbers?${query}`, (signal) =>
     api<NumbersResponse>(`${base}/analytics/numbers?${query}`, signal),
   )
@@ -53,10 +50,6 @@ export function Dashboard() {
   const frequent = [...(numbers.data?.items ?? [])]
     .sort((a, b) => b.frequency - a.frequency || a.number - b.number)
     .slice(0, 6)
-  const syncFailed =
-    !!status.data?.last_failed_ingestion_at &&
-    (!status.data.last_successful_ingestion_at ||
-      status.data.last_failed_ingestion_at > status.data.last_successful_ingestion_at)
   const gaps = [...(numbers.data?.items ?? [])]
     .filter((item) => item.current_gap !== null)
     .sort((a, b) => (b.current_gap ?? -1) - (a.current_gap ?? -1) || a.number - b.number)
@@ -99,62 +92,6 @@ export function Dashboard() {
                 </>
               )}
             </DataState>
-          </div>
-          <div className="data-freshness">
-            <details
-              className={`data-details${syncFailed || status.error ? ' source-warning' : ''}`}
-            >
-              <summary aria-busy={status.loading}>
-                <Clock3 size={15} aria-hidden="true" />
-                <span>
-                  {status.error
-                    ? status.data
-                      ? 'Trạng thái đồng bộ chưa được cập nhật'
-                      : 'Chưa kiểm tra được trạng thái đồng bộ'
-                    : status.loading
-                      ? 'Đang kiểm tra trạng thái đồng bộ…'
-                      : syncFailed
-                        ? 'Lần đồng bộ gần nhất chưa hoàn tất'
-                        : 'Tình trạng dữ liệu'}
-                </span>
-              </summary>
-              <div className="stack">
-                <DataState {...status} hasData={!!status.data}>
-                  {status.data && (
-                    <>
-                      <div>
-                        <strong>Đồng bộ thành công:</strong>{' '}
-                        {status.data.last_successful_ingestion_at
-                          ? formatVietnamTime(status.data.last_successful_ingestion_at)
-                          : 'Chưa có'}
-                      </div>
-                      {syncFailed && (
-                        <div>
-                          <strong>Lần chưa hoàn tất:</strong>{' '}
-                          {formatVietnamTime(status.data.last_failed_ingestion_at!)}
-                        </div>
-                      )}
-                      {!numbers.data && (
-                        <div>
-                          <strong>Phiên bản kho dữ liệu:</strong> {status.data.data_version}
-                        </div>
-                      )}
-                    </>
-                  )}
-                </DataState>
-                {numbers.data && (
-                  <>
-                    <div>
-                      <strong>Phiên bản dữ liệu thống kê:</strong>{' '}
-                      {numbers.data.context.data_version}
-                    </div>
-                    <div>
-                      <strong>Số kỳ trong phạm vi:</strong> {numbers.data.context.actual_draw_count}
-                    </div>
-                  </>
-                )}
-              </div>
-            </details>
           </div>
         </Card>
       </div>

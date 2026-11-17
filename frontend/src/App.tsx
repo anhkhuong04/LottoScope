@@ -1,7 +1,6 @@
 import {
   CalendarDays,
   ChevronDown,
-  CircleHelp,
   GitCompareArrows,
   Grid2X2,
   LayoutDashboard,
@@ -49,12 +48,7 @@ function Shell() {
   const moreButton = useRef<HTMLButtonElement>(null)
   const moreMenu = useRef<HTMLDivElement>(null)
   const main = useRef<HTMLElement>(null)
-  const method = useRef<HTMLDetailsElement>(null)
   const previousPath = useRef(location.pathname)
-  const openMethod = () => {
-    if (method.current) method.current.open = true
-    setMore(false)
-  }
   useEffect(() => {
     if (!more) return
     moreMenu.current?.querySelector('a')?.focus()
@@ -116,15 +110,6 @@ function Shell() {
             </NavLink>
           ))}
         </nav>
-        <a
-          className="method-link"
-          aria-label="Phương pháp thống kê"
-          href="#analysis-method"
-          onClick={openMethod}
-        >
-          <CircleHelp size={18} aria-hidden="true" />
-          <span>Phương pháp thống kê</span>
-        </a>
       </aside>
       <div className="main-column">
         <header className="topbar">
@@ -196,27 +181,6 @@ function Shell() {
           ) : (
             <LoadingSkeleton page />
           )}
-          {game && (
-            <details className="method-details data-details" id="analysis-method" ref={method}>
-              <summary>
-                <CircleHelp size={18} aria-hidden="true" />
-                Phương pháp thống kê
-              </summary>
-              <div className="method-copy">
-                <p>Thống kê mô tả các kỳ quay đã lưu, không dự đoán kết quả kỳ tiếp theo.</p>
-                <p>
-                  Tần suất là số kỳ có xuất hiện số hoặc cặp số trong phạm vi đã chọn. Khoảng cách
-                  tính theo số kỳ kể từ lần xuất hiện gần nhất; dấu — thể hiện chưa có giá trị xác
-                  định.
-                </p>
-                <p>
-                  Phân tích cặp số và kiểm tra bộ số chỉ dùng số chính. Thống kê số đặc biệt Lotto
-                  5/35 được tính riêng trên miền 01–12. Số kỳ thực tế có thể ít hơn phạm vi yêu cầu
-                  nếu lịch sử chưa đủ.
-                </p>
-              </div>
-            </details>
-          )}
         </main>
       </div>
       <nav className="bottom-nav" aria-label="Điều hướng di động">
@@ -256,10 +220,6 @@ function Shell() {
               {label}
             </Link>
           ))}
-          <a href="#analysis-method" onClick={openMethod}>
-            <CircleHelp size={20} aria-hidden="true" />
-            Phương pháp thống kê
-          </a>
         </div>
       )}
     </div>

@@ -85,6 +85,13 @@ export function Checker() {
     setInputError(null)
     setSimilarPage(1)
   }
+  const clear = () => {
+    controller.current?.abort()
+    setSelected([])
+    setInput('')
+    setInputError(null)
+    setSimilarPage(1)
+  }
   const validation = validateNumbers(selected, game!.main_min, game!.main_max, game!.main_count)
   const run = async (page = similarPage) => {
     if (validation) {
@@ -175,6 +182,14 @@ export function Checker() {
             <button className="btn" onClick={addInput}>
               Thêm số
             </button>
+            <button
+              className="btn"
+              disabled={selected.length === 0}
+              onClick={clear}
+              aria-label="Xóa nhanh các số"
+            >
+              Clear
+            </button>
           </div>
           {inputError && (
             <div className="notice error" role="alert">
@@ -201,9 +216,23 @@ export function Checker() {
           <p className="muted" style={{ marginTop: 15 }}>
             {selected.length}/{game!.main_count} số đã chọn
           </p>
-          <button className="btn primary" disabled={loading || !!validation} onClick={() => run()}>
-            {loading ? 'Đang đối chiếu…' : 'Kiểm tra lịch sử'}
-          </button>
+          <div className="toolbar" style={{ marginTop: 15, marginBottom: 0 }}>
+            <button
+              className="btn primary"
+              disabled={loading || !!validation}
+              onClick={() => run()}
+            >
+              {loading ? 'Đang đối chiếu…' : 'Kiểm tra lịch sử'}
+            </button>
+            <button
+              className="btn"
+              disabled={selected.length === 0}
+              onClick={clear}
+              aria-label="Xóa nhanh các số"
+            >
+              Clear
+            </button>
+          </div>
         </Card>
         <Card title="Kết quả đối chiếu">
           <div

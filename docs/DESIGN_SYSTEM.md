@@ -6,7 +6,7 @@ hiện tại; domain/API và [wireframe](wireframe.md) vẫn giữ thẩm quyề
 
 ## Nhận diện và typography
 
-- Navy `#102b36`, teal `#006d67`, mint `#57d5bd`; nền sáng và card trắng.
+- Navy `#102b36`, teal `#006d67`, mint `#57d5bd`; nền main layout trắng thuần `#ffffff`.
 - Main/special có label riêng; cầu main xanh lá `#15803d`, special đỏ `#b91c1c`,
   chữ số trắng `#ffffff` theo yêu cầu 03/11/2026. Áp dụng badges và khay kết quả.
   Riêng bóng bên trong máy 3D dùng teal/số trắng theo mẫu đã duyệt tại
@@ -15,11 +15,12 @@ hiện tại; domain/API và [wireframe](wireframe.md) vẫn giữ thẩm quyề
 - Brand mark dùng chung `/lottoscope.svg` trong sidebar/mobile/favicon.
 - Outfit cho heading/số nổi bật, DM Sans cho nội dung, system fallback;
   số liệu dùng tabular numerals. Heading ngắn, mô tả và metadata phân cấp rõ.
-- Card radius 16 px, viền nhẹ; chỉ card kết quả mới nhất có tint/gradient nhẹ.
-  Card tĩnh không có hiệu ứng nâng lên khi hover để tránh gợi ý có thể bấm.
-- Cleanup 03/11/2026: spacing scale 4/8/12/16/24/32px, card padding 24px
-  (mobile 16px); heading 1.5–1.875rem, section title 1.125rem, body 1rem và
-  metadata 0.875rem. Tokens và override presentation tại `theme.css`.
+- Layout phẳng không bọc ô wrap (yêu cầu 17/11/2026): các section, bảng dữ liệu,
+  bộ lọc và danh sách đặt trực tiếp trên nền trắng thuần; không dùng viền hộp,
+  đổ bóng hoặc bo góc card wrap. Phân tách bằng đường hairline divider `1px solid var(--line)`
+  và khoảng cách whitespace.
+- Spacing scale 4/8/12/16/24/32px; heading 1.5–1.875rem, section title 1.125rem,
+  body 1rem và metadata 0.875rem. Tokens và override presentation tại `theme.css`.
 
 ## Bố cục và controls
 
@@ -29,12 +30,9 @@ hiện tại; domain/API và [wireframe](wireframe.md) vẫn giữ thẩm quyề
 - Dashboard: kết quả mới nhất trước phân tích; bỏ bốn KPI trùng thông tin.
   Card không bị ép cùng chiều cao với nội dung dài bên cạnh. Có tóm tắt 6 số tần suất cao,
   5 cặp, 5 gap, 3 kỳ gần đây; đường dẫn tới phân tích/lịch sử đầy đủ.
-- Thời gian đồng bộ, data version và số kỳ thực tế nằm trong details trạng
-  thái dữ liệu, không lặp pill ở cuối trang. Bỏ refresh khi đang hiển thị dữ
-  liệu thành công; bộ lọc tự tải và Đồng bộ tự refresh. Giữ retry ở phần lỗi.
-- Giải thích thống kê/main-only/cảnh báo không dự đoán nằm trong details
-  Phương pháp thống kê cuối nội dung; sidebar có link mở trực tiếp. Mobile
-  có link trong menu Thêm và summary trong nội dung; tablet giữ icon trợ giúp.
+- Cleanup 17/11/2026: loại bỏ 2 khối details 'thông tin dữ liệu' tại Dashboard
+  và 'phương pháp thống kê' ở chân trang/sidebar để giao diện tối giản, tập trung dữ liệu.
+  Màu nút bấm chuyển sang xám nhạt `#eef2f5` trên nền trắng; thêm nút 'Clear' xóa nhanh số tại trang Kiểm tra.
 - Game selector chỉ có ba game frontend hỗ trợ: Lotto/Mega/Power. Không hiển
   thị game tương lai chưa có giao diện; giữ API game definitions độc lập.
 - Toolbar phạm vi/sort/view dùng một nhóm có label; date-range giữ validation

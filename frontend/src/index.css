@@ -146,7 +146,7 @@
 :root {
   font-family: 'DM Sans', system-ui, sans-serif;
   color: #182939;
-  background: #f3f6f8;
+  background: #ffffff;
   font-synthesis: none;
   --ink: #182939;
   --muted: #526574;
@@ -286,23 +286,11 @@ small,
 .nav-link.active {
   box-shadow: inset 3px 0 #52c9b4;
 }
-.method-link {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  margin-top: auto;
-  padding: 16px 12px;
-  border-top: 1px solid #2b4a53;
-  font-size: 0.75rem;
-  line-height: 1.5;
-  color: #a9c0c1;
-}
-.method-link svg {
-  flex: none;
-}
+
 .main-column {
   min-width: 0;
   flex: 1;
+  background: #ffffff;
 }
 .topbar {
   height: 76px;
@@ -360,11 +348,11 @@ small,
   margin: 0;
 }
 .card {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 3px 14px #1a455008;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
 }
 .card-head {
   display: flex;
@@ -435,13 +423,13 @@ small,
   min-height: 44px;
   border-radius: 9px;
   padding: 0 16px;
-  border: 1px solid #cbdadf;
-  background: #fff;
+  border: 1px solid #d0dce1;
+  background: #eef2f5;
   color: var(--ink);
   font-weight: 700;
 }
 .btn:hover {
-  background: #f0f5f5;
+  background: #e0e7ec;
   text-decoration: none;
 }
 .btn.primary {
@@ -536,12 +524,14 @@ small,
   text-align: left;
 }
 .data-table th {
-  background: #f7f9fa;
+  background: #ffffff;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   font-size: 0.68rem;
   color: #526574;
-  padding: 12px;
+  padding: 12px 10px;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
 }
 .data-table td {
   padding: 13px 12px;
@@ -714,11 +704,14 @@ small,
 }
 .picker button {
   min-height: 46px;
-  border: 1px solid #d5e2e3;
+  border: 1px solid #d0dce1;
   border-radius: 9px;
-  background: #fff;
+  background: #eef2f5;
   color: var(--ink);
   font-weight: 700;
+}
+.picker button:hover {
+  background: #e0e7ec;
 }
 .picker button.selected {
   background: var(--teal);
@@ -919,7 +912,7 @@ small,
     grid-column: auto;
   }
   .card {
-    padding: 18px;
+    padding: 0;
   }
   .toolbar {
     align-items: stretch;
