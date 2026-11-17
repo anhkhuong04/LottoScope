@@ -5,6 +5,20 @@ và database chạy trên cloud, không phụ thuộc máy cá nhân đang bật
 Runbook: [DEPLOYMENT_FREE.md](DEPLOYMENT_FREE.md), quyết định:
 [ADR 0011](DECISIONS/0011-free-cloud-deployment.md).
 
+## Cập nhật UI & Vercel — 17/11/2026
+
+- Release frontend: commit **`0f8a690`**, branch **`deploy/free-cloud`** (bao gồm `5969a93` và fixes cho build/oxlint).
+- Vercel: **`dpl_J4QQXPC1yzDNDQjvni4ZPSg2RAxb` READY**, production URL `https://lottoscope-sable.vercel.app` đã gán alias.
+- Public bundle: `index-PyBJhjnT.js` và `index-DyjntYcM.css` trả HTTP 200.
+- Nội dung cập nhật:
+  - Main layout nền trắng thuần, các thành phần đặt trực tiếp trên canvas không bọc card viền ô.
+  - Lược bỏ hoàn toàn 2 mục "thông tin dữ liệu" (data freshness) và "phương pháp thống kê" (methodology accordion & navigation links).
+  - Đổi màu các nút thao tác và ô số picker sang tone xám nhạt (`#eef2f5`).
+  - Thêm nút "Clear" (xóa nhanh dãy số) ở màn hình kiểm tra vé (Checker).
+  - Cập nhật phạm vi `oxlint`, bổ sung `frontend/.gitignore`, và mở rộng timeout kiểm thử mô phỏng vật lý 3D.
+- Local Docker: Image `vietlottanalytics-frontend:latest` đã build lại và chạy trên container `vietlottanalytics-frontend-1` (`http://127.0.0.1:8088`).
+
+
 ## Cập nhật public — 04/11/2026
 
 - Release ứng dụng **`b5646f8862e414a58bdb41a34b777d694b847893`**, đã push lên
