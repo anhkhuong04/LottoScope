@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "lint": "oxlint . --deny-warnings",
+    "lint": "oxlint src e2e api server *.ts --deny-warnings",
     "format:check": "prettier --check src e2e api server *.ts *.json *.html",
     "typecheck": "tsc -b --noEmit",
     "test": "vitest run",

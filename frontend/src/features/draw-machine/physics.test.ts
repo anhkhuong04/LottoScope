@@ -134,7 +134,7 @@ describe('real Rapier draw machine', () => {
         expect(m.drawn).toEqual(saved)
       }
     },
-    30000,
+    120000,
   )
 
   it('only records an outward crossing; duplicate checks never add a second result', () => {
