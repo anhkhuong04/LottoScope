@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { api } from '../api'
@@ -135,7 +135,7 @@ describe('mobile-optimized analytics pages', () => {
     expect(container.querySelector('.frequency-meter')).toBeNull()
   })
 
-  it('auto-checks full combination on Checker without token chips or Check button and hides 0–2 matches', async () => {
+  it('auto-checks full combination on Checker, hides zero-exact boilerplate, and switches Kiểu A detail tabs', async () => {
     vi.mocked(api).mockResolvedValue({
       context: {
         game: 'lotto_535',
@@ -156,9 +156,36 @@ describe('mobile-optimized analytics pages', () => {
         match_4: 6,
         match_5: 0,
       },
-      similar_draws: { page: 1, page_size: 10, total: 0, items: [] },
-      number_analysis: [],
-      pair_analysis: [],
+      similar_draws: {
+        page: 1,
+        page_size: 5,
+        total: 1,
+        items: [
+          {
+            overlap_count: 4,
+            draw: {
+              draw_id: '01010',
+              draw_date: '2026-11-10',
+              draw_time: null,
+              main_numbers: [1, 2, 3, 4, 35],
+              special_number: 8,
+              source_url: 'https://example.test/01010',
+              source_retrieved_at: '2026-11-10T12:00:00Z',
+            },
+          },
+        ],
+      },
+      number_analysis: [
+        {
+          number: 1,
+          frequency: 12,
+          frequency_percent: 40,
+          current_gap: 2,
+          average_gap: 3,
+          max_gap: 8,
+        },
+      ],
+      pair_analysis: [{ numbers: [1, 2], frequency: 4, percent_of_draws: 13.3 }],
     })
     const { container } = render(
       <MemoryRouter>
@@ -175,15 +202,72 @@ describe('mobile-optimized analytics pages', () => {
     expect(api).toHaveBeenCalledWith(
       '/games/lotto_535/combinations/check',
       expect.any(Object),
-      expect.objectContaining({ main_numbers: [1, 2, 3, 4, 5] }),
+      expect.objectContaining({ main_numbers: [1, 2, 3, 4, 5], similar_page_size: 5 }),
     )
-    await waitFor(() => expect(screen.getByText('Exact Matches: 0 draw(s)')).toBeVisible())
-    expect(screen.queryByText('0 matched')).toBeNull()
-    expect(screen.queryByText('1 matched')).toBeNull()
-    expect(screen.queryByText('2 matched')).toBeNull()
-    expect(screen.getByText('3 matched')).toBeVisible()
-    expect(screen.getByText('4 matched')).toBeVisible()
-    expect(screen.getByText('5 matched')).toBeVisible()
+    await waitFor(() => expect(screen.getByText('Checked 1026 draws')).toBeVisible())
+    expect(screen.queryByText(/Exact Matches:/i)).toBeNull()
+    expect(screen.queryByText(/No exact match found/i)).toBeNull()
+    const dist = within(screen.getByLabelText('Match Distribution'))
+    expect(dist.queryByText('0 matched')).toBeNull()
+    expect(dist.queryByText('1 matched')).toBeNull()
+    expect(dist.queryByText('2 matched')).toBeNull()
+    expect(dist.getByText('3 matched')).toBeVisible()
+    expect(dist.getByText('4 matched')).toBeVisible()
+    expect(dist.getByText('5 matched')).toBeVisible()
+
+    expect(screen.getByRole('tab', { name: /Similar Draws/i })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    )
+    const dimmedBalls = container.querySelectorAll('.checker-similar-row .ball.dimmed')
+    expect(dimmedBalls).toHaveLength(1)
+    expect(dimmedBalls[0]).toHaveTextContent('35')
+
+    fireEvent.click(screen.getByRole('tab', { name: /Numbers/i }))
+    expect(screen.getByRole('tab', { name: /Numbers/i })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByText('40.0%')).toBeVisible()
+
+    fireEvent.click(screen.getByRole('tab', { name: /Pairs/i }))
+    expect(screen.getByRole('tab', { name: /Pairs/i })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByText('13.3%')).toBeVisible()
+  })
+
+  it('shows exact match link pill on Checker only when exact_match_count > 0', async () => {
+    vi.mocked(api).mockResolvedValue({
+      context: {
+        game: 'lotto_535',
+        analysis_window: { kind: 'last_draws', count: 30 },
+        actual_draw_count: 30,
+        as_of_draw_id: '01026',
+        data_version: 1,
+      },
+      main_numbers: [1, 2, 3, 4, 5],
+      history_draw_count: 1026,
+      exact_match_count: 1,
+      last_exact_match: {
+        draw_id: '01025',
+        draw_date: '2026-11-23',
+        draw_time: null,
+        main_numbers: [1, 2, 3, 4, 5],
+        special_number: 6,
+        source_url: 'https://example.test/01025',
+        source_retrieved_at: '2026-11-23T12:00:00Z',
+      },
+      overlap_histogram: { match_3: 2, match_4: 1, match_5: 1 },
+      similar_draws: { page: 1, page_size: 5, total: 0, items: [] },
+      number_analysis: [],
+      pair_analysis: [],
+    })
+    render(
+      <MemoryRouter>
+        <Checker />
+      </MemoryRouter>,
+    )
+    for (const num of ['01', '02', '03', '04', '05']) {
+      fireEvent.click(screen.getByRole('button', { name: `Number ${num}` }))
+    }
+    await waitFor(() => expect(screen.getByText(/Exact match: 1 draw/)).toBeVisible())
+    expect(screen.getByRole('link', { name: 'Draw 01025' })).toBeVisible()
   })
 
   it('toggles History advanced filter drawer state', () => {
