@@ -10,11 +10,9 @@ import {
 import { useApp, useQuery, useUrlField } from '../state'
 import {
   BackLink,
-  Ball,
   Card,
   ContextNote,
   DataState,
-  DataTable,
   DrawRows,
   FrequencyTile,
   PageHead,
@@ -29,7 +27,6 @@ export function Numbers() {
   const { game, window } = useApp()
   const location = useLocation()
   const [sort, setSort] = useUrlField('sort', 'number')
-  const [view, setView] = useUrlField('view', 'grid')
   const [kind, setKind] = useUrlField('number_kind', 'main')
   const special = game!.id === 'lotto_535' && kind === 'special'
   const path = `/games/${game!.id}/analytics/numbers?${params({ ...windowQuery(window), sort, number_kind: special ? 'special' : 'main' })}`
@@ -53,8 +50,8 @@ export function Numbers() {
               value={special ? 'special' : 'main'}
               onChange={(event) => setKind(event.target.value)}
             >
-              <option value="main">Main numbers 01–35</option>
-              <option value="special">Special numbers 01–12</option>
+              <option value="main">Main (01–35)</option>
+              <option value="special">Special (01–12)</option>
             </select>
           </label>
         )}
@@ -67,14 +64,6 @@ export function Numbers() {
             <option value="gap_desc">Gap (desc)</option>
           </select>
         </label>
-        <label className="field">
-          View
-          <select value={view} onChange={(event) => setView(event.target.value)}>
-            <option value="grid">Grid</option>
-            <option value="table">Table</option>
-            <option value="chart">Chart</option>
-          </select>
-        </label>
       </WindowSelector>
       <Card>
         <DataState {...result} hasData={!!result.data} empty="No number statistics available.">
@@ -84,97 +73,20 @@ export function Numbers() {
                 context={result.data.context}
                 subject={special ? 'Special numbers' : 'Main numbers'}
               />
-              {view === 'grid' && (
-                <div className="number-grid">
-                  {result.data.items.map((item) => (
-                    <FrequencyTile
-                      key={item.number}
-                      to={`/numbers/${item.number}${location.search}`}
-                      number={item.number}
-                      frequency={item.frequency}
-                      maximum={max}
-                      special={special}
-                      rank={
-                        result.data?.context.actual_draw_count ? item.frequency_rank : undefined
-                      }
-                    />
-                  ))}
-                </div>
-              )}
-              {view === 'table' && (
-                <DataTable>
-                  <thead>
-                    <tr>
-                      <th>Number</th>
-                      <th>Rank</th>
-                      <th>Frequency</th>
-                      <th>Rate</th>
-                      <th>Current gap</th>
-                      <th>Avg gap</th>
-                      <th>Last seen</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {result.data.items.map((item) => (
-                      <tr key={item.number}>
-                        <td>
-                          <Link to={`/numbers/${item.number}${location.search}`}>
-                            <Ball value={item.number} special={special} />
-                          </Link>
-                        </td>
-                        <td>
-                          {result.data?.context.actual_draw_count ? item.frequency_rank : '—'}
-                        </td>
-                        <td>{item.frequency}</td>
-                        <td>{formatPercent(item.frequency_percent)}</td>
-                        <td>{item.current_gap ?? '—'}</td>
-                        <td>{item.average_gap?.toFixed(1) ?? '—'}</td>
-                        <td>
-                          {item.last_seen_draw_id ? (
-                            <Link
-                              to={`/history/${item.last_seen_draw_id}${globalSearch(game!.id, window)}`}
-                            >
-                              {item.last_seen_draw_id}
-                            </Link>
-                          ) : (
-                            '—'
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </DataTable>
-              )}
-              {view === 'chart' && (
-                <>
-                  <div className="bar-list">
-                    {result.data.items.map((item) => (
-                      <div className="bar-row" key={item.number}>
-                        <Link to={`/numbers/${item.number}${location.search}`}>
-                          {String(item.number).padStart(2, '0')}
-                        </Link>
-                        <div className="bar-track">
-                          <div
-                            className="bar-fill"
-                            style={{ width: `${(100 * item.frequency) / Math.max(1, max)}%` }}
-                          />
-                        </div>
-                        <strong>{item.frequency}</strong>
-                      </div>
-                    ))}
-                  </div>
-                  <p className="muted" style={{ marginTop: 17 }}>
-                    Max frequency {max} draws; each bar indicates corresponding draw count.
-                  </p>
-                </>
-              )}
-              {view === 'grid' && (
-                <p className="chart-caption">
-                  Longer bar indicates higher frequency. Max {max} draws. Choose Table for full
-                  metrics. Ties share rank; ties sorted ascending.
-                </p>
-              )}
-              <div style={{ marginTop: 16 }}>
+              <div className="number-grid numbers-page-grid">
+                {result.data.items.map((item) => (
+                  <FrequencyTile
+                    key={item.number}
+                    to={`/numbers/${item.number}${location.search}`}
+                    number={item.number}
+                    frequency={item.frequency}
+                    maximum={max}
+                    special={special}
+                    rank={result.data?.context.actual_draw_count ? item.frequency_rank : undefined}
+                  />
+                ))}
+              </div>
+              <div style={{ marginTop: 12 }}>
                 <ContextNote
                   count={result.data.context.actual_draw_count}
                   version={result.data.context.data_version}

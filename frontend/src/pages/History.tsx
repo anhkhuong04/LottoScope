@@ -1,3 +1,5 @@
+import { SlidersHorizontal } from 'lucide-react'
+import { useState } from 'react'
 import { Link, useLocation, useParams } from 'react-router'
 import { api, globalSearch, params, type Draw, type Page } from '../api'
 import { useApp, useQuery, useUrlField } from '../state'
@@ -23,42 +25,43 @@ export function History() {
   const [drawId, setDrawId] = useUrlField('draw_id', '')
   const [sort, setSort] = useUrlField('sort', 'desc')
   const [pageValue, setPage] = useUrlField('page', '1')
+  const activeFilterCount = Number(Boolean(from)) + Number(Boolean(to)) + Number(Boolean(drawId))
+  const [filtersOpen, setFiltersOpen] = useState(activeFilterCount > 0)
   const page = Math.max(1, Number(pageValue) || 1)
   const path = `/games/${game!.id}/draws?${params({ from_date: from, to_date: to, draw_id: drawId, sort, page, page_size: 25 })}`
   const result = useQuery(path, (signal) => api<Page<Draw>>(path, signal))
   return (
     <>
-      <PageHead
-        title="Draw History"
-        description="Search by date or draw ID; special numbers displayed separately."
-      />
+      <PageHead title="Draw History" description="Search historical draws by date or draw ID." />
       <FilterBar>
-        <label className="field">
-          From date
-          <input
-            type="date"
-            value={from}
-            max={to || undefined}
-            onChange={(event) => setFrom(event.target.value)}
-          />
-        </label>
-        <label className="field">
-          To date
-          <input
-            type="date"
-            value={to}
-            min={from || undefined}
-            onChange={(event) => setTo(event.target.value)}
-          />
-        </label>
-        <label className="field">
-          Draw ID
-          <input
-            value={drawId}
-            onChange={(event) => setDrawId(event.target.value)}
-            placeholder="e.g. 00830"
-          />
-        </label>
+        <div className={`filter-extra${filtersOpen ? ' open' : ''}`}>
+          <label className="field">
+            From date
+            <input
+              type="date"
+              value={from}
+              max={to || undefined}
+              onChange={(event) => setFrom(event.target.value)}
+            />
+          </label>
+          <label className="field">
+            To date
+            <input
+              type="date"
+              value={to}
+              min={from || undefined}
+              onChange={(event) => setTo(event.target.value)}
+            />
+          </label>
+          <label className="field">
+            Draw ID
+            <input
+              value={drawId}
+              onChange={(event) => setDrawId(event.target.value)}
+              placeholder="e.g. 00830"
+            />
+          </label>
+        </div>
         <label className="field">
           Order
           <select value={sort} onChange={(event) => setSort(event.target.value)}>
@@ -66,6 +69,15 @@ export function History() {
             <option value="asc">Oldest first</option>
           </select>
         </label>
+        <button
+          type="button"
+          className="btn filter-toggle"
+          aria-expanded={filtersOpen}
+          onClick={() => setFiltersOpen((open) => !open)}
+        >
+          <SlidersHorizontal size={15} aria-hidden="true" />
+          <span>{activeFilterCount ? `Filter (${activeFilterCount})` : 'Filter'}</span>
+        </button>
       </FilterBar>
       {from && to && from > to ? (
         <div className="notice error">Start date must be on or before end date.</div>

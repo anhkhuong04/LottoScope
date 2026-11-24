@@ -31,7 +31,7 @@ export function Pairs() {
         description="Co-occurrence frequency of two main numbers across draws."
       />
       <WindowSelector>
-        <label className="field">
+        <label className="field field-compact">
           Min frequency
           <input
             type="number"
@@ -53,9 +53,8 @@ export function Pairs() {
         <DataState {...result} hasData={!!result.data} empty="No pairs match the filter.">
           {result.data && (
             <>
-              <ScopeSummary context={result.data.context} subject="Main number pairs" />
-              <p className="chart-caption">Ties share rank; pairs sorted ascending on ties.</p>
-              <DataTable>
+              <ScopeSummary context={result.data.context} subject="Main pairs" />
+              <DataTable mobileHidden>
                 <thead>
                   <tr>
                     <th>Pair</th>
@@ -91,6 +90,35 @@ export function Pairs() {
                   ))}
                 </tbody>
               </DataTable>
+              <div className="mobile-only pair-mobile-list">
+                {result.data.items.map((pair) => (
+                  <div className="pair-mobile-row" key={pair.numbers.join('-')}>
+                    <PairLink pair={pair} />
+                    <div className="pair-mobile-stats">
+                      <strong>
+                        {pair.frequency} draws ({formatPercent(pair.percent_of_draws)})
+                      </strong>
+                      <span className="muted">
+                        {result.data?.context.actual_draw_count
+                          ? `Rank ${pair.frequency_rank}`
+                          : '—'}{' '}
+                        · Gap {pair.current_gap ?? '—'}
+                      </span>
+                    </div>
+                    <div className="pair-mobile-draw">
+                      {pair.last_seen_draw_id ? (
+                        <Link
+                          to={`/history/${pair.last_seen_draw_id}${globalSearch(game!.id, window)}`}
+                        >
+                          #{pair.last_seen_draw_id}
+                        </Link>
+                      ) : (
+                        <span className="muted">—</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
               {result.data.items.length === 0 && (
                 <p className="muted">No pairs match the filter.</p>
               )}
