@@ -5,6 +5,18 @@ và database chạy trên cloud, không phụ thuộc máy cá nhân đang bật
 Runbook: [DEPLOYMENT_FREE.md](DEPLOYMENT_FREE.md), quyết định:
 [ADR 0011](DECISIONS/0011-free-cloud-deployment.md).
 
+## Cập nhật AI Access (Static SSR + Edge Cache + WebMCP) & Vercel — 24/11/2026
+
+- Release frontend: commit **`43d348c`**, branch **`deploy/free-cloud`**.
+- Vercel: **`dpl_5CGhwTqdnoQ31nh8jHwkoy1AuqQ2` READY**, production URL `https://lottoscope-sable.vercel.app` đã gán alias.
+- Public bundle: `index-8EWrYIvo.js`, `index-DLp_Ny_s.css`, `robots.txt` và `llms.txt` trả HTTP 200.
+- Nội dung cập nhật:
+  - Lớp 1 (Mọi tài khoản ChatGPT Web/Mobile/Desktop): Thêm `frontend/public/robots.txt`, `frontend/public/llms.txt`, serverless static SSR `api/data.ts` (`/data`, `/data/{game}`, hỗ trợ HTML và `?format=md`, Edge Cache `s-maxage=300` với `X-Vercel-Cache: HIT` đã xác thực), và `frontend/middleware.ts` chuyển hướng AI crawlers (`ChatGPT-User`, `OAI-SearchBot`, `GPTBot`, `ClaudeBot`, `PerplexityBot`...) tại `/` sang `/api/data` (giữ `Vary: User-Agent`, trình duyệt thường vẫn nhận SPA).
+  - Lớp 2 (WebMCP): Đăng ký 8 tool read-only (`get_games`, `get_game_status`, `get_latest_draw`, `get_draws`, `get_number_frequencies`, `get_number_detail`, `get_pair_frequencies`, `check_combination`) qua `document.modelContext ?? navigator.modelContext` với `annotations: { readOnlyHint: true }`.
+  - Kiểm chứng: `oxlint` (0 warnings/errors), `prettier --check`, `tsc -b --noEmit`, **13 test files / 103 unit tests pass**, và `vite build` thành công.
+- Local Docker: Image `vietlottanalytics-frontend:latest` đã build lại và chạy trên container `vietlottanalytics-frontend-1` (`http://127.0.0.1:8088`), đã xác thực HTTP 200 OK cho `/`, `/robots.txt`, `/llms.txt`.
+- Public Cloud: Đã xác thực HTTP 200 OK cho `/robots.txt`, `/llms.txt`, `/` (Chrome nhận SPA, `ChatGPT-User` nhận HTML bảng dữ liệu thật), `/data/mega_645?format=md` (`text/markdown`, `X-Vercel-Cache: HIT`).
+
 ## Cập nhật UI & Vercel — 17/11/2026 (English UI & Mobile Button Scale)
 
 - Release frontend: commit **`f6d3c8d`**, branch **`deploy/free-cloud`**.
