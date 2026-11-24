@@ -17,9 +17,6 @@
     <img src="https://img.shields.io/badge/Three.js_%2B_Rapier-3D_Physics-102B36" alt="Three.js and Rapier" />
   </p>
 </div>
-
-![LottoScope Dashboard Overview](assets/screenshots/dashboard.png)
-
 ---
 
 ## Overview
@@ -43,7 +40,7 @@ Official lottery pages publish draws one result at a time without aggregated fre
 - **Combination History Checker** (`/checker`): Validates a candidate main-number set against all historical draws up to an optional cutoff, reporting exact-match counts, a full overlap distribution histogram (`0` to `5`/`6` matches), matching draw records, and window-scoped number/pair metrics.
 - **3D Physical Draw Simulator** (`/generator`): Client-side interactive draw drum powered by Three.js, React Three Fiber, and Rapier3D physics. Features a spherical glass drum, Z-axis 3-blade Y-rotor, 6-o'clock bottom discharge gate, dual-wing catch tray, distinct Lotto 5/35 red special-ball chamber (`01–12`) and enlarged `+50%` balls, reduced-motion mode, clipboard export, and one-click deep linking into Checker.
 - **Idempotent Ingestion & Opt-In Publisher Fallback**: CLI importers, scheduled/manual sync (`POST /api/v1/games/{game}/sync` with 60s per-game cooldown), PostgreSQL session advisory locks, source provenance (`source_url`, `source_sha256`), discrepancy tracking (`draw_corrections`), and optional fallback to vetted community publishers when upstream returns anti-bot challenges.
-- **AI & Crawler Access Layer**: Public [`robots.txt`](frontend/public/robots.txt) and [`llms.txt`](frontend/public/llms.txt), Edge-cached SSR data pages (`/data`, `/data/{game}`) supporting HTML, Markdown (`?format=md`), and RFC-4180 CSV (`?format=csv`), Vercel Edge Middleware auto-routing for AI crawlers, and 8 read-only client-side **WebMCP** tools (`document.modelContext`).
+
 
 ---
 
@@ -53,9 +50,9 @@ Official lottery pages publish draws one result at a time without aggregated fre
 | :----------------------------------------------------------: | :--------------------------------------------------------------: |
 | ![Lotto 5/35 Frequency Grid](assets/screenshots/numbers.png) | ![Mega 6/45 Combination Checker](assets/screenshots/checker.png) |
 
-|           3D Draw Simulator (`Lotto 5/35` Special Chamber)           |                                    Mobile Dashboard (`390×844`)                                     |
-| :------------------------------------------------------------------: | :-------------------------------------------------------------------------------------------------: |
-| ![Lotto 5/35 3D Draw Simulator](assets/screenshots/draw-machine.png) | <img src="assets/screenshots/mobile-dashboard.png" width="280" alt="LottoScope Mobile Dashboard" /> |
+|           3D Draw Simulator (`Lotto 5/35` Special Chamber)           |                                                                       
+| :------------------------------------------------------------------: |
+| ![Lotto 5/35 3D Draw Simulator](assets/screenshots/draw-machine.png) | 
 
 ---
 
@@ -312,83 +309,5 @@ All HTTP JSON endpoints live under `/api/v1` (except health probes). Interactive
 
 ---
 
-## Testing
 
-All verification commands follow the repository's backend (`uv` / `pytest`) and frontend (`npm` / `vitest` / `playwright`) quality checks.
 
-> [!CAUTION]
-> Backend integration tests **truncate tables** in the database targeted by `LOTTO_TEST_DATABASE_URL`. Always point `LOTTO_TEST_DATABASE_URL` to a dedicated test database (e.g., `lotto_test`), never your application database.
-
-### Backend Quality Gates
-
-```bash
-# Ensure PostgreSQL test database exists and is migrated before pytest
-docker compose exec -T postgres createdb -U lotto lotto_test
-
-cd backend
-uv sync --locked
-uv run --locked ruff check .
-uv run --locked ruff format --check .
-uv run --locked pyright
-LOTTO_DATABASE_URL=postgresql+psycopg://lotto:lotto@127.0.0.1:5432/lotto_test uv run --locked alembic upgrade head
-LOTTO_DATABASE_URL=postgresql+psycopg://lotto:lotto@127.0.0.1:5432/lotto_test uv run --locked alembic check
-uv run --locked pytest
-```
-
-### Frontend Quality Gates & Browser E2E
-
-```bash
-cd frontend
-npm ci
-npm run lint
-npm run format:check
-npm run typecheck
-npm test
-npm run build
-
-# End-to-end Playwright + Axe accessibility suite (optionally set PLAYWRIGHT_BASE_URL=http://127.0.0.1:8088)
-npm run test:e2e
-```
-
----
-
-## Deployment
-
-### Free Cloud Stack (`Vercel` + `Render` + `Neon`)
-
-- **Database**: Neon Free PostgreSQL 16 (direct TLS URL required — avoid `-pooler.` hostnames so PostgreSQL session advisory locks work reliably).
-- **Backend**: Deployed via Blueprint [`render.yaml`](render.yaml) on Render Free (`plan: free`, region `singapore`) using [`backend/Dockerfile`](backend/Dockerfile) and `python -m app.commands.serve`.
-- **Frontend & Gateway**: Deployed from `frontend/` via [`frontend/vercel.json`](frontend/vercel.json), serving the static Vite bundle alongside serverless routes `/api/gateway` and `/api/data`.
-- **Smoke Check**: After deploying, run the read-only verifier:
-
-  ```bash
-  node scripts/cloud-smoke.mjs https://your-site.vercel.app https://your-api.onrender.com
-  ```
-
-### Local Wi-Fi Sharing (Opt-In)
-
-To expose the local Docker frontend over trusted LAN Wi-Fi without opening PostgreSQL or FastAPI ports publicly, bind `FRONTEND_LAN_IP` in `.env` and layer [`compose.lan.yaml`](compose.lan.yaml).
-
----
-
-## Limitations & Roadmap
-
-### Current Limitations
-
-- **No Automatic Scheduled Sync by Default**: `LOTTO_SCHEDULER_ENABLED` defaults to `false`; new draws are added via manual UI/API sync or explicit CLI jobs.
-- **Free-Tier Cold Starts**: Render Free sleeps after ~15 minutes without inbound traffic; initial requests after idle periods may experience cold-start latency.
-- **Upstream Challenge & Rate Limits**: Vietlott endpoints impose rate limits (`>= 1.0s` spacing enforced in backend settings) and occasional Cloudflare challenges. Opt-in community fallback (`LOTTO_COMMUNITY_FALLBACK_ENABLED=true`) mitigates manual sync blocks on verified checkpoints, while full historical/prize audits still rely on official pages.
-- **Decoupled Generator UI**: `/generator` executes local browser physics (Rapier3D) and does not call the backend rule-based `/combinations/generate` API endpoint.
-
-### Documented Roadmap (Out of MVP Scope)
-
-Items beyond the completed MVP scope include:
-
-- **Phase 2 Analytics**: Saved strategy definitions, strict pre-cutoff historical backtesting, and random-baseline comparisons.
-- **AI Analytics Chat V1** _(design specification only — not yet implemented)_: Evidence-grounded Vietnamese Q&A interface backed by read-only analytics tool calls over immutable turn snapshots.
-
----
-
-## License
-
-This repository does not currently include an explicit open-source `LICENSE` file. All rights remain unspecified until a license is added by the repository owner.
