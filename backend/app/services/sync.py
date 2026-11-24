@@ -5,13 +5,11 @@ from typing import Literal
 
 import httpx
 from sqlalchemy import Engine, text
-from sqlalchemy.orm import Session
 
 from app.games.definitions import get_game
-from app.ingestion.community import CommunityFallbackService
+from app.ingestion.community import CommunityFallbackService, fallback_reason_for_run
 from app.ingestion.fetcher import configured_fetcher
 from app.ingestion.service import IngestionService, JobOverlapError, PageFetcher, RunSummary
-from app.models.ingestion import IngestionRunRow
 
 
 class SyncCooldownError(RuntimeError):
@@ -95,11 +93,9 @@ class ManualSyncService:
     def _collect_with(self, game: str, fetcher: PageFetcher) -> RunSummary:
         summary = IngestionService(self.engine, fetcher).collect(game, recheck_recent=False)
         if self.community_fallback_enabled and summary.status == "failed":
-            with Session(self.engine) as session:
-                row = session.get(IngestionRunRow, summary.run_id)
-                challenged = row is not None and "Cloudflare challenge; deferred" in (
-                    row.error_summary or ""
+            reason = fallback_reason_for_run(self.engine, summary.run_id)
+            if reason is not None:
+                return CommunityFallbackService(self.engine, fetcher).collect(
+                    game, fallback_reason=reason
                 )
-            if challenged:
-                return CommunityFallbackService(self.engine, fetcher).collect(game)
         return summary

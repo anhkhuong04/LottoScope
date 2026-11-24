@@ -8,7 +8,9 @@ from urllib.parse import urljoin, urlsplit
 from zoneinfo import ZoneInfo
 
 from app.domain.draw import Draw
+from app.domain.prizes import PrizeMatch, PrizeTier, validate_prizes
 from app.games.definitions import get_game
+from app.ingestion.metadata import get_source
 from app.ingestion.service import PageFetcher
 
 MAX_PAGES = 12
@@ -17,6 +19,13 @@ _URLS = {
     "mega_645": "https://www.minhngoc.net.vn/ket-qua-xo-so/dien-toan-vietlott/mega-6x45.html",
     "power_655": "https://www.minhngoc.net.vn/ket-qua-xo-so/dien-toan-vietlott/power-6x55.html",
 }
+_MINHCHINH_HEADERS = ("giải", "trùng khớp", "số lượng", "giá trị")
+_MINHNGOC_HEADERS = ("giải thưởng", "trùng khớp", "số lượng giải", "giá trị giải (đồng)")
+_TIER_ALIASES = {
+    "độc đắc": "giải độc đắc",
+    "giải kk": "giải khuyến khích",
+    "kk": "giải khuyến khích",
+}
 
 
 def feed_url(game: str) -> str:
@@ -24,14 +33,107 @@ def feed_url(game: str) -> str:
     return _URLS[game]
 
 
+def _fallback_integer(text: str, *, allow_currency: bool = False) -> int:
+    value = " ".join(text.split())
+    if allow_currency:
+        value = re.sub(r"\s*(?:vnđ|vnd|đ)$", "", value, flags=re.IGNORECASE).strip()
+    if re.fullmatch(r"(?:0|[1-9][0-9]*|[1-9][0-9]{0,2}(?:,[0-9]{3})+)", value) is None:
+        raise ValueError(f"invalid fallback prize integer: {text!r}")
+    return int(value.replace(",", ""))
+
+
+def _is_prize_header(header: tuple[str, ...]) -> bool:
+    return header in (_MINHCHINH_HEADERS, _MINHNGOC_HEADERS)
+
+
+def _looks_like_prize_header(header: tuple[str, ...]) -> bool:
+    return len(header) >= 2 and (
+        "trùng khớp" in header
+        or "số lượng giải" in header
+        or any(col in ("giải thưởng", "giải") for col in header)
+    )
+
+
+def _parse_prize_rows(
+    game: str, rows: list[tuple[tuple[str, ...], tuple[PrizeMatch, ...]]]
+) -> tuple[PrizeTier, ...]:
+    source = get_source(game)
+    if len(rows) != len(source.prize_names):
+        raise ValueError("fallback prize tier count mismatch")
+    tiers: list[PrizeTier] = []
+    for index, (cells, matches) in enumerate(rows):
+        if len(cells) != 4:
+            raise ValueError("fallback prize row must have 4 cells")
+        raw_name, _condition, raw_count, raw_amount = cells
+        normalized = " ".join(raw_name.split()).casefold()
+        normalized = _TIER_ALIASES.get(normalized, normalized)
+        canonical_name = source.prize_names[index]
+        if normalized != canonical_name.casefold():
+            raise ValueError(f"fallback prize tier mismatch: {raw_name}")
+        if (
+            tuple((match.main_count, match.special) for match in matches)
+            != source.prize_matches[index]
+        ):
+            raise ValueError(f"fallback prize match mismatch for {canonical_name}")
+        tiers.append(
+            PrizeTier(
+                canonical_name,
+                matches,
+                _fallback_integer(raw_count),
+                _fallback_integer(raw_amount, allow_currency=True),
+            )
+        )
+    prizes = tuple(tiers)
+    validate_prizes(game, prizes)
+    return prizes
+
+
+@dataclass
+class _TableCell:
+    is_header: bool
+    text: list[str] = field(default_factory=lambda: list[str]())
+    matches: list[PrizeMatch] = field(default_factory=lambda: list[PrizeMatch]())
+    line_depth: int | None = None
+    ball_zone: str | None = None
+    zone_depth: int | None = None
+    line_main: int = 0
+    line_special: bool = False
+    has_sep: bool = False
+    saw_line_circle: bool = False
+    saw_italic: bool = False
+    invalid_match: bool = False
+
+
+@dataclass
+class _TableRow:
+    cells: list[str] = field(default_factory=lambda: list[str]())
+    cell_is_header: list[bool] = field(default_factory=lambda: list[bool]())
+    matches: tuple[PrizeMatch, ...] = ()
+    cell: _TableCell | None = None
+    invalid_match: bool = False
+
+
+@dataclass
+class _TableState:
+    in_body: bool = False
+    headers: list[tuple[str, ...]] = field(default_factory=lambda: list[tuple[str, ...]]())
+    rows: list[tuple[tuple[str, ...], tuple[PrizeMatch, ...]]] = field(
+        default_factory=lambda: list[tuple[tuple[str, ...], tuple[PrizeMatch, ...]]]()
+    )
+    row: _TableRow | None = None
+    invalid_match: bool = False
+
+
 @dataclass
 class _Card:
     text: list[str] = field(default_factory=lambda: list[str]())
     numbers: list[tuple[str, bool]] = field(default_factory=lambda: list[tuple[str, bool]]())
+    prizes: tuple[PrizeTier, ...] | None = None
+    table_stack: list[_TableState] = field(default_factory=lambda: list[_TableState]())
 
 
 class _Page(HTMLParser):
-    """Scope balls to result cards; never read prize tables or statistics as results."""
+    """Scope balls and prize tables to result cards; reject structural drift."""
 
     def __init__(self, game: str) -> None:
         super().__init__(convert_charrefs=True)
@@ -56,15 +158,89 @@ class _Page(HTMLParser):
             self.links.append(href)
         if tag == "div":
             self.depth += 1
-            marker = "boxketqua_vl" if self.game == "lotto_535" else "boxkqxsdientoan"
-            if marker in classes:
-                if self.card is not None or len(self.cards) >= 200:
-                    raise ValueError("nested or excessive publisher result cards")
-                self.root = self.depth
-                self.card = _Card()
-            if self.card is not None and "box_ketqua" in classes:
-                self.number_root = self.depth
+            if self.card is None or not self.card.table_stack:
+                marker = "boxketqua_vl" if self.game == "lotto_535" else "boxkqxsdientoan"
+                if marker in classes:
+                    if self.card is not None or len(self.cards) >= 200:
+                        raise ValueError("nested or excessive publisher result cards")
+                    self.root = self.depth
+                    self.card = _Card()
+                if self.card is not None and "box_ketqua" in classes:
+                    self.number_root = self.depth
+            else:
+                table = self.card.table_stack[-1]
+                if (
+                    table.row is not None
+                    and table.row.cell is not None
+                    and not table.row.cell.is_header
+                    and len(table.row.cells) == 1
+                ):
+                    cell = table.row.cell
+                    if "line-circle-num" in classes:
+                        if cell.line_depth is not None or cell.saw_italic:
+                            cell.invalid_match = True
+                        else:
+                            cell.line_depth = self.depth
+                            cell.saw_line_circle = True
+                            cell.line_main = 0
+                            cell.line_special = False
+                            cell.ball_zone = None
+                            cell.zone_depth = None
+                    elif cell.line_depth is not None and "circle-line-normal" in classes:
+                        cell.ball_zone = "normal"
+                        cell.zone_depth = self.depth
+                    elif cell.line_depth is not None and "circle-line-special" in classes:
+                        cell.ball_zone = "special"
+                        cell.zone_depth = self.depth
         if self.card is None:
+            return
+        if tag == "table":
+            self.card.table_stack.append(_TableState())
+            return
+        if self.card.table_stack:
+            table = self.card.table_stack[-1]
+            if tag == "tbody":
+                table.in_body = True
+            elif tag == "thead":
+                table.in_body = False
+            elif tag == "tr":
+                table.row = _TableRow()
+            elif tag in {"td", "th"} and table.row is not None:
+                table.row.cell = _TableCell(is_header=(tag == "th"))
+            elif (
+                table.row is not None
+                and table.row.cell is not None
+                and not table.row.cell.is_header
+                and len(table.row.cells) == 1
+            ):
+                cell = table.row.cell
+                if tag == "span" and "ball" in classes and cell.line_depth is not None:
+                    if "ball_lotto_2" in classes:
+                        if cell.ball_zone == "normal" or cell.line_special:
+                            cell.invalid_match = True
+                        else:
+                            cell.line_special = True
+                    elif "ball_lotto" in classes:
+                        if cell.ball_zone == "special":
+                            cell.invalid_match = True
+                        else:
+                            cell.line_main += 1
+                elif tag == "i" and not cell.saw_line_circle:
+                    cell.saw_italic = True
+                    if "number_device_i" in classes:
+                        if cell.has_sep or cell.line_special or cell.line_main == 0:
+                            cell.invalid_match = True
+                        else:
+                            cell.has_sep = True
+                    elif "number_special_i" in classes:
+                        if cell.line_special or (cell.line_main > 0 and not cell.has_sep):
+                            cell.invalid_match = True
+                        else:
+                            cell.line_special = True
+                    elif cell.has_sep or cell.line_special:
+                        cell.invalid_match = True
+                    else:
+                        cell.line_main += 1
             return
         if tag == "ul" and "result-number" in classes:
             self.number_list = True
@@ -82,10 +258,75 @@ class _Page(HTMLParser):
             self.card.text.append(data)
             if self.capture is not None:
                 self.capture[1].append(data)
+            if (
+                self.card.table_stack
+                and (row := self.card.table_stack[-1].row) is not None
+                and row.cell is not None
+            ):
+                row.cell.text.append(data)
 
     def handle_endtag(self, tag: str) -> None:
         if tag in ("script", "style"):
             self.ignored = max(0, self.ignored - 1)
+        if self.card is not None and self.card.table_stack:
+            table = self.card.table_stack[-1]
+            if tag == "div":
+                if (row := table.row) is not None and (cell := row.cell) is not None:
+                    if cell.zone_depth == self.depth:
+                        cell.ball_zone = None
+                        cell.zone_depth = None
+                    if cell.line_depth == self.depth:
+                        if cell.line_main or cell.line_special:
+                            cell.matches.append(PrizeMatch(cell.line_main, cell.line_special))
+                        cell.line_depth = None
+                        cell.line_main = 0
+                        cell.line_special = False
+                self.depth -= 1
+                return
+            if tag in {"td", "th"} and table.row is not None and table.row.cell is not None:
+                cell = table.row.cell
+                if cell.line_depth is not None:
+                    cell.invalid_match = True
+                if not cell.is_header and len(table.row.cells) == 1:
+                    if (
+                        cell.saw_italic
+                        and not cell.saw_line_circle
+                        and (cell.line_main or cell.line_special)
+                    ):
+                        cell.matches.append(PrizeMatch(cell.line_main, cell.line_special))
+                    table.row.matches = tuple(cell.matches)
+                    if cell.invalid_match:
+                        table.row.invalid_match = True
+                table.row.cells.append(" ".join("".join(cell.text).split()))
+                table.row.cell_is_header.append(cell.is_header)
+                table.row.cell = None
+                return
+            if tag == "tr" and table.row is not None:
+                row = table.row
+                if row.cells:
+                    if not table.in_body or all(row.cell_is_header):
+                        table.headers.append(tuple(cell.casefold() for cell in row.cells))
+                    else:
+                        if row.invalid_match:
+                            table.invalid_match = True
+                        table.rows.append((tuple(row.cells), row.matches))
+                table.row = None
+                return
+            if tag == "tbody":
+                table.in_body = False
+                return
+            if tag == "table":
+                finished = self.card.table_stack.pop()
+                if any(_is_prize_header(header) for header in finished.headers):
+                    if self.card.prizes is not None:
+                        raise ValueError("duplicate fallback prize table")
+                    if finished.invalid_match or finished.in_body or finished.row is not None:
+                        raise ValueError("malformed fallback prize table")
+                    self.card.prizes = _parse_prize_rows(self.game, finished.rows)
+                elif any(_looks_like_prize_header(header) for header in finished.headers):
+                    raise ValueError("fallback prize table structure changed")
+                return
+            return
         if self.capture is not None and tag == self.capture[0]:
             if self.card is None:
                 raise ValueError("publisher ball outside card")
@@ -132,6 +373,8 @@ def _page(
         draw_date = date(int(year), int(month), int(day))
         if draw_date > today:
             raise ValueError("publisher result date is in the future")
+        if card.table_stack:
+            raise ValueError("unclosed fallback prize table")
         if any(re.fullmatch(r"[0-9]{1,2}", value) is None for value, _ in card.numbers):
             raise ValueError("publisher result contains unfinished or invalid balls")
         main = tuple(int(value) for value, special in card.numbers if not special)
@@ -147,6 +390,8 @@ def _page(
             special_number=special[0] if special else None,
             source_url=f"{source_url}#draw={identity}",
             source_retrieved_at=retrieved,
+            prizes=card.prizes,
+            prizes_retrieved_at=retrieved if card.prizes is not None else None,
         )
         if draw.draw_seq in draws:
             raise ValueError("duplicate publisher identity")
@@ -199,6 +444,13 @@ def load_draws(fetcher: PageFetcher, game: str, lower: int) -> dict[int, Draw]:
                 previous.special_number,
             ) != (draw.draw_date, draw.main_numbers, draw.special_number):
                 raise ValueError("conflicting publisher result across pages")
+            if (
+                previous is not None
+                and previous.prizes is not None
+                and draw.prizes is not None
+                and previous.prizes != draw.prizes
+            ):
+                raise ValueError("conflicting publisher prizes across pages")
             draws.setdefault(sequence, draw)
         if lower in draws:
             return {sequence: draw for sequence, draw in draws.items() if sequence >= lower}

@@ -15,20 +15,102 @@ NOW = datetime(2026, 11, 3, tzinfo=UTC)
 
 
 @pytest.mark.parametrize(
-    "game,file,identity,main,special",
+    "game,file,identity,main,special,expected_prizes",
     [
-        ("lotto_535", "lotto535", 985, (4, 11, 21, 22, 33), 4),
-        ("mega_645", "mega645", 1583, (5, 9, 17, 18, 34, 36), None),
-        ("power_655", "power655", 1419, (10, 22, 31, 39, 43, 54), 14),
+        (
+            "lotto_535",
+            "lotto535",
+            985,
+            (4, 11, 21, 22, 33),
+            4,
+            [
+                ("Giải Độc Đắc", (0, 10_806_423_500)),
+                ("Giải Nhất", (0, 10_000_000)),
+                ("Giải Nhì", (5, 5_000_000)),
+                ("Giải Ba", (127, 500_000)),
+                ("Giải Tư", (283, 100_000)),
+                ("Giải Năm", (3_004, 30_000)),
+                ("Giải Khuyến Khích", (21_461, 10_000)),
+            ],
+        ),
+        (
+            "mega_645",
+            "mega645",
+            1583,
+            (5, 9, 17, 18, 34, 36),
+            None,
+            [
+                ("Jackpot", (0, 23_200_118_500)),
+                ("Giải Nhất", (35, 10_000_000)),
+                ("Giải Nhì", (1_481, 300_000)),
+                ("Giải Ba", (25_743, 30_000)),
+            ],
+        ),
+        (
+            "power_655",
+            "power655",
+            1419,
+            (10, 22, 31, 39, 43, 54),
+            14,
+            [
+                ("Jackpot 1", (0, 39_296_824_950)),
+                ("Jackpot 2", (0, 5_270_244_750)),
+                ("Giải Nhất", (19, 40_000_000)),
+                ("Giải Nhì", (1_013, 500_000)),
+                ("Giải Ba", (19_076, 50_000)),
+            ],
+        ),
     ],
 )
-def test_frozen_real_result_card(game, file, identity, main, special):
+def test_frozen_real_result_card(game, file, identity, main, special, expected_prizes):
     content = (Path(__file__).parent / "fixtures" / "publishers" / f"{file}.html").read_text(
         encoding="utf-8"
     )
     draw = parse_feed(content, game, 1, NOW)[identity]
     assert draw.main_numbers == main
     assert draw.special_number == special
+    assert draw.prizes is not None
+    assert [(tier.name, (tier.winner_count, tier.amount_vnd)) for tier in draw.prizes] == (
+        expected_prizes
+    )
+    assert draw.prizes_retrieved_at == NOW
+
+
+@pytest.mark.parametrize(
+    "file,game,old,new",
+    [
+        ("lotto535", "lotto_535", "<span>3,004</span>", "<span>-1</span>"),
+        ("lotto535", "lotto_535", "<strong>500,000</strong>", "<strong>không rõ</strong>"),
+        ("lotto535", "lotto_535", "<th>Số lượng</th>", "<th>Khác</th>"),
+        ("lotto535", "lotto_535", "<td>Giải tư</td>", "<td>Giải lạ</td>"),
+        ("mega645", "mega_645", "23,200,118,500", "23.200.118.500"),
+        (
+            "power655",
+            "power_655",
+            '<i class="number_device_i">\xa0</i><i class="number_special_i">',
+            '<i class="number_special_i">',
+        ),
+    ],
+    ids=["neg-count", "bad-amount", "header-drift", "tier-drift", "dot-amount", "missing-sep"],
+)
+def test_malformed_fallback_prize_table_rejected(file, game, old, new):
+    content = (Path(__file__).parent / "fixtures" / "publishers" / f"{file}.html").read_text(
+        encoding="utf-8"
+    )
+    assert old in content
+    with pytest.raises(ValueError):
+        parse_feed(content.replace(old, new, 1), game, 1, NOW)
+
+
+def test_duplicate_fallback_prize_table_rejected():
+    content = (Path(__file__).parent / "fixtures" / "publishers" / "mega645.html").read_text(
+        encoding="utf-8"
+    )
+    table_start = content.index('<table class="table table-striped"')
+    table_end = content.index("</table>", table_start) + len("</table>")
+    duplicated = content[:table_end] + content[table_start:table_end] + content[table_end:]
+    with pytest.raises(ValueError, match="duplicate"):
+        parse_feed(duplicated, "mega_645", 1, NOW)
 
 
 def test_same_day_lotto_draws_keep_separate_identities():

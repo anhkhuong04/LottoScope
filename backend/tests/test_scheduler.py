@@ -86,6 +86,17 @@ def test_vietnam_schedule_registers_poll_and_reconcile() -> None:
     assert "day_of_week='tue,thu,sat'" in jobs["power"]
 
 
+def test_default_vietnam_schedule_matches_configured_draw_windows() -> None:
+    scheduler = build_scheduler(
+        Settings(database_url="postgresql+psycopg://lotto:example@localhost/lotto")
+    )
+    jobs = {job.id: str(job.trigger) for job in scheduler.get_jobs()}
+    assert "hour='13'" in jobs["lotto_first"] and "minute='10'" in jobs["lotto_first"]
+    assert "hour='21'" in jobs["lotto_second"] and "minute='10'" in jobs["lotto_second"]
+    assert "hour='18'" in jobs["mega"] and "minute='30'" in jobs["mega"]
+    assert "hour='18'" in jobs["power"] and "minute='30'" in jobs["power"]
+
+
 def test_delayed_scheduler_start_does_not_discard_catchup(monkeypatch) -> None:
     completed = {game: Event() for game in ("lotto_535", "mega_645", "power_655")}
     monkeypatch.setattr(collection, "run_collection", lambda game: completed[game].set())

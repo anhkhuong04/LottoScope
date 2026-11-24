@@ -10,6 +10,7 @@ from test_ingestion_service import engine as engine
 from app.domain.draw import Draw
 from app.ingestion.community import CommunityFallbackService, feed_url, parse_feed
 from app.ingestion.fetcher import SourceDeferredError, SourceFetchError
+from app.ingestion.metadata import get_source
 from app.ingestion.service import JobOverlapError
 from app.models.draw import DrawRow
 from app.models.ingestion import IngestionCheckpointRow, IngestionItemRow, IngestionRunRow
@@ -33,7 +34,56 @@ def body(game, end=121):
     return html(game, [record(game, seq) for seq in range(100, end + 1)])
 
 
-def html(game, records):
+def _prize_table_html(game: str) -> str:
+    source = get_source(game)
+    rows: list[str] = []
+    for index, name in enumerate(source.prize_names):
+        winners = f"{index + 1:,}"
+        amount = f"{(len(source.prize_names) - index) * 100_000:,}"
+        if game == "lotto_535":
+            lines: list[str] = []
+            for main_count, has_special in source.prize_matches[index]:
+                normal = '<span class="ball ball_lotto"></span>' * main_count
+                spec = '<span class="ball ball_lotto_2 hasPlus"></span>' if has_special else ""
+                lines.append(
+                    f'<div class="line-circle-num">'
+                    f'<div class="circle-line-normal">{normal}</div>'
+                    f'<div class="circle-line-special">{spec}</div>'
+                    f"</div>"
+                )
+            rows.append(
+                f"<tr><td>{name}</td><td>{''.join(lines)}</td>"
+                f"<td><span>{winners}</span></td>"
+                f"<td><span><strong>{amount}</strong></span></td></tr>"
+            )
+        else:
+            main_count, has_special = source.prize_matches[index][0]
+            icons = "<i> </i>" * main_count
+            if has_special:
+                icons += '<i class="number_device_i"> </i><i class="number_special_i"> </i>'
+            rows.append(
+                f'<tr><td>{name}</td><td class="circle-num">{icons}</td>'
+                f"<td>{winners}</td><td><b>{amount}<sup>đ</sup></b></td></tr>"
+            )
+    if game == "lotto_535":
+        return (
+            '<table class="table_vietlott table-lotto">'
+            "<thead><tr><th>Giải</th><th>Trùng khớp</th>"
+            "<th>Số lượng</th><th>Giá trị</th></tr></thead>"
+            f"<tbody>{''.join(rows)}</tbody></table>"
+        )
+    return (
+        '<div class="result clearfix table-responsive"><table><tbody><tr><td>'
+        '<table class="table table-striped">'
+        "<thead><tr><th>Giải thưởng</th><th>Trùng khớp</th>"
+        "<th>Số lượng giải</th><th>Giá trị giải (đồng)</th></tr></thead>"
+        f"<tbody>{''.join(rows)}</tbody></table>"
+        "</td></tr></tbody></table></div>"
+    )
+
+
+def html(game, records, *, include_prizes: bool = False):
+    prize_table = _prize_table_html(game) if include_prizes else ""
     cards = []
     for row in records:
         day = row["date"]
@@ -48,7 +98,7 @@ def html(game, records):
             cards.append(
                 f'<div class="boxketqua_vl"><div class="title">Lotto5/35</div>'
                 f'<div class="ngay">#{row["id"]} ngày {day}</div>'
-                f'<div class="box_ketqua">{balls}</div></div>'
+                f'<div class="box_ketqua">{balls}</div>{prize_table}</div>'
             )
         else:
             label = "Mega 6/45" if game == "mega_645" else "Power 6/55"
@@ -58,7 +108,8 @@ def html(game, records):
             )
             cards.append(
                 f'<div class="boxkqxsdientoan"><h4>{label} NGÀY:{day}</h4>'
-                f'<p>Kỳ vé: #{row["id"]}</p><ul class="result-number">{balls}</ul></div>'
+                f'<p>Kỳ vé: #{row["id"]}</p><ul class="result-number">{balls}</ul>'
+                f"{prize_table}</div>"
             )
     return "".join(cards)
 
@@ -232,3 +283,59 @@ def test_no_reference_history_refuses_fallback_before_network_io(engine):
     fetcher = FeedFetcher(body("lotto_535"))
     result = CommunityFallbackService(engine, fetcher).collect("lotto_535")
     assert result.status == "failed" and fetcher.calls == []
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("game", GAMES)
+def test_collect_persists_new_prizes_and_backfills_missing_anchor_prizes(engine, game):
+    seed(engine, game)
+    feed = html(game, [record(game, seq) for seq in range(100, 122)], include_prizes=True)
+    service = CommunityFallbackService(engine, FeedFetcher(feed))
+    first = service.collect(game)
+    assert first.status == "success"
+    assert first.counters["created"] == 2
+    assert first.counters["enriched"] == 20
+    second = service.collect(game)
+    assert second.counters["created"] == 0
+    assert second.counters["enriched"] == 0
+    assert second.counters["unchanged"] == 1
+    with Session(engine) as session:
+        rows = session.scalars(select(DrawRow).order_by(DrawRow.draw_seq)).all()
+        assert len(rows) == 22
+        assert all(row.prizes is not None for row in rows)
+        assert all(row.source_url == "https://vietlott.vn/reference" for row in rows[:20])
+        assert all(row.source_url.startswith(feed_url(game)) for row in rows[20:])
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize(
+    "error_factory",
+    [
+        lambda url: SourceDeferredError(url, "HTTP 429; deferred"),
+        lambda url: SourceDeferredError(url, "Retry-After exceeds 60 seconds; deferred"),
+        lambda url: SourceFetchError(url, "HTTP 403"),
+        lambda url: SourceFetchError(url, "ReadTimeout"),
+        lambda url: SourceFetchError(url, "ConnectError"),
+    ],
+    ids=["429", "retry-after", "403", "read-timeout", "connect-error"],
+)
+def test_expanded_official_blocks_and_timeouts_trigger_fallback(engine, error_factory):
+    game = "mega_645"
+    seed(engine, game)
+
+    class ErrorFetcher:
+        def __init__(self, content):
+            self.content = content
+            self.calls = []
+
+        def fetch(self, url):
+            self.calls.append(url)
+            if url.startswith("https://vietlott.vn/"):
+                raise error_factory(url)
+            return self.content, NOW
+
+    fetcher = ErrorFetcher(body(game))
+    result = ManualSyncService(engine, fetcher, community_fallback_enabled=True).sync(game)
+    assert result.source == "community"
+    assert result.created == 2
+    assert feed_url(game) in fetcher.calls

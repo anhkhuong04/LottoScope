@@ -31,13 +31,14 @@ $taskSettings = New-ScheduledTaskSettingsSet -MultipleInstances IgnoreNew `
 $baseArgs = "-NoProfile -NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$workerPath`" -UvPath `"$uvPath`""
 $pollAction = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument $baseArgs -WorkingDirectory $repoPath
 $pollTriggers = @(
+    (New-ScheduledTaskTrigger -Daily -At '13:10'),
     (New-ScheduledTaskTrigger -Daily -At '18:30'),
-    (New-ScheduledTaskTrigger -Daily -At '21:15')
+    (New-ScheduledTaskTrigger -Daily -At '21:10')
 )
 $null = Register-ScheduledTask -TaskName $taskNames[0] -Action $pollAction -Trigger $pollTriggers `
-    -Settings $taskSettings -Principal $principal -Description 'Latest-only LottoScope sync at 18:30 and 21:15 Windows local time.' -Force
+    -Settings $taskSettings -Principal $principal -Description 'Latest-only LottoScope sync at 13:10, 18:30, and 21:10 Windows local time.' -Force
 # Retire the previous daily schedule; reconciliation remains available manually.
 if (Get-ScheduledTask -TaskName $taskNames[1] -ErrorAction SilentlyContinue) {
     $null = Disable-ScheduledTask -TaskName $taskNames[1]
 }
-Write-Output 'Installed LottoScope-LocalSync (18:30 and 21:15 local); automatic reconciliation disabled.'
+Write-Output 'Installed LottoScope-LocalSync (13:10, 18:30, and 21:10 local); automatic reconciliation disabled.'

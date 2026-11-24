@@ -7,11 +7,13 @@ from pathlib import Path
 import pytest
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
+from test_community_fallback import FeedFetcher, html, record, seed
 from test_ingestion_service import FixtureFetcher
 from test_ingestion_service import engine as engine
 
 from app.domain.prizes import PrizeMatch, PrizeTier
 from app.games.definitions import DomainValidationError
+from app.ingestion.community import feed_url
 from app.ingestion.service import JobOverlapError
 from app.ingestion.sources import SourceParseError, parse_result, result_url
 from app.models.draw import DrawCorrectionRow
@@ -21,6 +23,7 @@ from app.services.prizes import (
     PrizeReviewPendingError,
     PrizeSourceUnavailableError,
 )
+from app.services.sync import ManualSyncService
 
 FIXTURES = Path(__file__).parent / "fixtures" / "vietlott"
 RETRIEVED_AT = datetime(2026, 10, 7, tzinfo=UTC)
@@ -282,3 +285,56 @@ def test_enrichment_overlap_and_changed_numbers_are_not_silently_accepted(engine
         DrawPrizeService(engine, fetcher).get(draw.game, draw.draw_id)
     with Session(engine) as session:
         assert DrawRepository(session).get_by_id(draw.game, draw.draw_id).prizes is None
+
+
+@pytest.mark.integration
+def test_prize_enrichment_falls_back_to_community_without_altering_provenance(engine) -> None:
+    game = "lotto_535"
+    seed(engine, game)
+    with Session(engine) as session:
+        before = DrawRepository(session).get_by_id(game, "00119")
+        assert before is not None and before.prizes is None
+        before_hash = before.source_sha256
+    feed = html(game, [record(game, seq) for seq in range(100, 120)], include_prizes=True)
+    fetcher = FeedFetcher(feed, challenge=True)
+    details = DrawPrizeService(engine, fetcher, community_fallback_enabled=True).get(game, "00119")
+    assert details is not None
+    assert len(details.items) == 7
+    assert details.source_url == "https://vietlott.vn/reference"
+    assert feed_url(game) in fetcher.calls
+    calls_after_enrich = len(fetcher.calls)
+    fetcher.content = ""
+    offline = DrawPrizeService(engine, fetcher, community_fallback_enabled=True).get(game, "00119")
+    assert offline == details
+    assert len(fetcher.calls) == calls_after_enrich
+    with Session(engine) as session:
+        after = DrawRepository(session).get_by_id(game, "00119")
+        assert after is not None and after.source_sha256 == before_hash
+    # Prize enrichment records kind="import" so manual sync cooldown is not tripped.
+    fetcher.content = html(
+        game, [record(game, seq) for seq in range(100, 121)], include_prizes=True
+    )
+    sync_result = ManualSyncService(engine, fetcher, community_fallback_enabled=True).sync(game)
+    assert sync_result.source == "community" and sync_result.created == 1
+
+
+@pytest.mark.integration
+def test_prize_enrichment_fallback_respects_disabled_flag_and_rejects_defects(engine) -> None:
+    game = "mega_645"
+    seed(engine, game)
+    records = [record(game, seq) for seq in range(100, 120)]
+    valid_feed = html(game, records, include_prizes=True)
+    disabled_fetcher = FeedFetcher(valid_feed, challenge=True)
+    with pytest.raises(PrizeSourceUnavailableError):
+        DrawPrizeService(engine, disabled_fetcher, community_fallback_enabled=False).get(
+            game, "00119"
+        )
+    assert feed_url(game) not in disabled_fetcher.calls
+
+    mismatched = [dict(row) for row in records]
+    mismatched[-1]["result"] = [2, 3, 4, 5, 6, 7]
+    bad_fetcher = FeedFetcher(html(game, mismatched, include_prizes=True), challenge=True)
+    with pytest.raises(PrizeSourceUnavailableError):
+        DrawPrizeService(engine, bad_fetcher, community_fallback_enabled=True).get(game, "00119")
+    with Session(engine) as session:
+        assert DrawRepository(session).get_by_id(game, "00119").prizes is None

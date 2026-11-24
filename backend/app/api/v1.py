@@ -42,7 +42,9 @@ Database = Annotated[Engine, Depends(get_engine)]
 
 
 def get_prize_service(engine: Database) -> DrawPrizeService:
-    return DrawPrizeService(engine)
+    return DrawPrizeService(
+        engine, community_fallback_enabled=get_settings().community_fallback_enabled
+    )
 
 
 def get_sync_service(engine: Database) -> ManualSyncService:
