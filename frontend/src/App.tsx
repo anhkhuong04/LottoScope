@@ -166,6 +166,7 @@ function Shell() {
                 path="/generator/preview"
                 element={<Navigate to={`/generator${search}`} replace />}
               />
+              <Route path="/data/*" element={<Navigate to={`/dashboard${search}`} replace />} />
               <Route
                 path="*"
                 element={
