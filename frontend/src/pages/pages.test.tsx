@@ -1,10 +1,11 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
-import { MemoryRouter } from 'react-router'
+import { MemoryRouter, Route, Routes } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { api } from '../api'
 import { Checker } from './Checker'
+import { Dashboard } from './Dashboard'
 import { History } from './History'
-import { Numbers } from './Numbers'
+import { NumberDetailPage, Numbers } from './Numbers'
 import { Pairs } from './Pairs'
 
 vi.mock('../api', async (importOriginal) => ({
@@ -38,6 +39,36 @@ vi.mock('../state', () => ({
   useApp: () => mockState,
   useUrlField: (_name: string, initial: string) => [initial, vi.fn()] as const,
   useQuery: (path: string) => {
+    if (path.includes('/analytics/numbers/')) {
+      return {
+        loading: false,
+        error: null,
+        retry: vi.fn(),
+        data: {
+          context: {
+            game: 'lotto_535',
+            analysis_window: { kind: 'last_draws', count: 30 },
+            actual_draw_count: 30,
+            as_of_draw_id: '01026',
+            data_version: 1,
+          },
+          number: 1,
+          metrics: {
+            number: 1,
+            frequency: 5,
+            frequency_percent: 16.7,
+            frequency_rank: 2,
+            current_gap: 1,
+            average_gap: 4.5,
+            max_gap: 10,
+            last_seen_draw_id: '01025',
+          },
+          pair_partners: [],
+          timeline_draw_ids: [],
+          appearance_draws: { page: 1, page_size: 10, total: 0, items: [] },
+        },
+      }
+    }
     if (path.includes('/analytics/numbers')) {
       return {
         loading: false,
@@ -92,6 +123,20 @@ vi.mock('../state', () => ({
               frequency_rank: 1,
             },
           ],
+        },
+      }
+    }
+    if (path.includes('/draws/latest')) {
+      return {
+        loading: false,
+        error: null,
+        retry: vi.fn(),
+        data: {
+          draw_id: '01026',
+          draw_date: '2026-11-23',
+          draw_time: '21:00:00',
+          main_numbers: [15, 22, 26, 27, 31],
+          special_number: 1,
         },
       }
     }
@@ -193,6 +238,9 @@ describe('mobile-optimized analytics pages', () => {
       </MemoryRouter>,
     )
     expect(screen.queryByRole('button', { name: /Check history/i })).toBeNull()
+    expect(screen.queryByPlaceholderText(/Quick enter/i)).toBeNull()
+    expect(screen.queryByRole('button', { name: /^Add$/i })).toBeNull()
+    expect(container.querySelector('.checker-input-bar')).toBeNull()
     expect(container.querySelector('.token-box')).toBeNull()
     for (const num of ['01', '02', '03', '04', '05']) {
       fireEvent.click(screen.getByRole('button', { name: `Number ${num}` }))
@@ -222,6 +270,8 @@ describe('mobile-optimized analytics pages', () => {
     const dimmedBalls = container.querySelectorAll('.checker-similar-row .ball.dimmed')
     expect(dimmedBalls).toHaveLength(1)
     expect(dimmedBalls[0]).toHaveTextContent('35')
+    expect(container.querySelector('.draw-special-label')).toBeNull()
+    expect(container.querySelector('.draw-special .ball.special')).toHaveTextContent('08')
 
     fireEvent.click(screen.getByRole('tab', { name: /Numbers/i }))
     expect(screen.getByRole('tab', { name: /Numbers/i })).toHaveAttribute('aria-selected', 'true')
@@ -284,7 +334,7 @@ describe('mobile-optimized analytics pages', () => {
     expect(container.querySelector('.filter-extra.open')).not.toBeNull()
   })
 
-  it('renders responsive mobile pair rows alongside desktop table in Pairs', () => {
+  it('renders responsive mobile pair rows alongside desktop table in Pairs without rank labels', () => {
     const { container } = render(
       <MemoryRouter>
         <Pairs />
@@ -293,5 +343,33 @@ describe('mobile-optimized analytics pages', () => {
     expect(container.querySelector('.desktop-only.table-wrap')).not.toBeNull()
     expect(container.querySelector('.mobile-only.pair-mobile-list .pair-mobile-row')).not.toBeNull()
     expect(screen.getByText(/3 draws \(10.0%\)/)).toBeInTheDocument()
+    expect(screen.queryByRole('columnheader', { name: 'Rank' })).toBeNull()
+    expect(screen.queryByText(/Rank \d+/)).toBeNull()
+  })
+
+  it('hides frequency rank and visible Special text across Dashboard and Number detail', () => {
+    const dash = render(
+      <MemoryRouter>
+        <Dashboard />
+      </MemoryRouter>,
+    )
+    expect(dash.container.querySelector('.rank-label')).toBeNull()
+    expect(dash.container.querySelector('.draw-special-label')).toBeNull()
+    expect(
+      dash.container.querySelector('.latest-card .draw-special .ball.special'),
+    ).toHaveTextContent('01')
+    expect(dash.container.textContent).not.toMatch(/\bRank\s+\d+/)
+    dash.unmount()
+
+    const detail = render(
+      <MemoryRouter initialEntries={['/numbers/1']}>
+        <Routes>
+          <Route path="/numbers/:number" element={<NumberDetailPage />} />
+        </Routes>
+      </MemoryRouter>,
+    )
+    expect(screen.getByText('5 draws (16.7%)')).toBeVisible()
+    expect(screen.queryByText(/Frequency rank/i)).toBeNull()
+    detail.unmount()
   })
 })

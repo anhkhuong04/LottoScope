@@ -117,7 +117,6 @@ export function Dashboard() {
                     number={item.number}
                     frequency={item.frequency}
                     maximum={max}
-                    rank={numbers.data?.context.actual_draw_count ? item.frequency_rank : undefined}
                   />
                 ))}
               </div>
@@ -140,9 +139,6 @@ export function Dashboard() {
                   <div className="draw-row" key={pair.numbers.join('-')}>
                     <PairLink pair={pair} />
                     <strong>{pair.frequency} draws</strong>
-                    <span className="rank-label">
-                      {pairs.data?.context.actual_draw_count ? `Rank ${pair.frequency_rank}` : '—'}
-                    </span>
                   </div>
                 ))}
                 {pairs.data.items.length === 0 && (
@@ -217,9 +213,6 @@ export function Dashboard() {
                       key={item.number}
                       number={item.number}
                       frequency={item.frequency}
-                      rank={
-                        special.data?.context.actual_draw_count ? item.frequency_rank : undefined
-                      }
                       maximum={specialMax}
                       special
                       to={`/numbers/${item.number}${search}&number_kind=special`}

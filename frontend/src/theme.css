@@ -123,10 +123,10 @@ h3 {
   line-height: 1.6;
   margin: 0 0 var(--space-4);
 }
-.rank-label {
-  color: var(--muted);
-  font-size: var(--text-meta);
-  font-weight: 500;
+.balls > .draw-special:not(:first-child) {
+  margin-left: 2px;
+  padding-left: 7px;
+  border-left: 1px solid var(--line);
 }
 .inline-link {
   text-decoration: underline;
@@ -250,27 +250,6 @@ h3 {
 }
 .checker-count-pill {
   font-variant-numeric: tabular-nums;
-}
-.checker-input-bar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-.checker-quick-input {
-  flex: 1 1 auto;
-  min-width: 0;
-  height: 40px;
-  padding: 0 12px;
-  border: 1px solid #d0dce1;
-  border-radius: 9px;
-  background: #fff;
-  color: var(--ink);
-  font-size: 0.88rem;
-}
-.checker-input-bar .btn-sm {
-  min-height: 40px;
-  height: 40px;
 }
 .checker-results-wrap {
   scroll-margin-top: 76px;
@@ -784,9 +763,6 @@ h3 {
   }
   .special-grid .frequency-value small {
     display: none;
-  }
-  .special-grid .rank-label {
-    font-size: 0.6rem;
   }
   .page-head {
     align-items: flex-start;
