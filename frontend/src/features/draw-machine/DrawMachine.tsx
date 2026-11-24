@@ -183,6 +183,7 @@ export default function DrawMachine({
                 <SceneBoundary key={session} onError={sceneError}>
                   <Suspense fallback={<p className="draw-loading">Loading machine and physics…</p>}>
                     <DrawScene
+                      gameId={game.id}
                       max={game.main_max}
                       count={game.main_count}
                       specialMax={specialMax}

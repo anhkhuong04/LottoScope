@@ -145,7 +145,16 @@ export function MachineModel({
       <DrumFrame materials={materials} />
       {/* Inner 6-o'clock acrylic discharge funnel */}
       <mesh position={[0, -2.36, 0]} material={materials.acrylic} renderOrder={2}>
-        <cylinderGeometry args={[0.66, 0.36, 0.45, 24, 1, true]} />
+        <cylinderGeometry
+          args={[
+            Math.max(0.68, normalized.ballRadius * 1.54 + 0.28),
+            Math.max(0.36, normalized.ballRadius * 1.54),
+            0.45,
+            24,
+            1,
+            true,
+          ]}
+        />
       </mesh>
     </group>
   )

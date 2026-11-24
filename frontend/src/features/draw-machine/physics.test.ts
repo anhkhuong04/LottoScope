@@ -12,7 +12,13 @@ import {
   STEP,
   type Machine,
 } from './physics'
-import { EXIT_DEPTH, outletPoint, outletCoordinates } from './config'
+import {
+  defaultSimulation,
+  EXIT_DEPTH,
+  outletPoint,
+  outletCoordinates,
+  simulationForGame,
+} from './config'
 
 beforeAll(async () => {
   await RAPIER.init()
@@ -27,10 +33,10 @@ function random(seed: number) {
     return seed / 4294967296
   }
 }
-function setup(max = 55, seed = 17, count = 6) {
+function setup(max = 55, seed = 17, count = 6, config = defaultSimulation) {
   const world = new RAPIER.World({ x: 0, y: -9.81, z: 0 })
   worlds.push(world)
-  return createMachine(world, RAPIER, max, random(seed), count)
+  return createMachine(world, RAPIER, max, random(seed), count, config)
 }
 function tick(machine: Machine, seconds: number) {
   for (let i = 0; i < seconds / STEP; i++) {
@@ -108,14 +114,14 @@ describe('real Rapier draw machine', () => {
   })
 
   it.each([
-    { max: 35, count: 5 },
-    { max: 45, count: 6 },
-    { max: 55, count: 6 },
+    { max: 35, count: 5, config: simulationForGame('lotto_535') },
+    { max: 45, count: 6, config: simulationForGame('mega_645') },
+    { max: 55, count: 6, config: simulationForGame('power_655') },
   ])(
     'physically draws exactly $count distinct main balls from $max',
-    ({ max, count }) => {
+    ({ max, count, config }) => {
       for (const seed of [17, 209, 4231, 97, 991]) {
-        const m = setup(max, seed, count)
+        const m = setup(max, seed, count, config)
         startMachine(m)
         tick(m, 120)
         const outside = m.balls

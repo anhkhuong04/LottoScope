@@ -23,6 +23,14 @@ export const defaultSimulation: Readonly<SimulationConfig> = Object.freeze({
   gravity: -9.81,
   angularDamping: 0.15,
 })
+// +50% larger 3D ball radius for Lotto 5/35 (35 main / 12 special).
+export const LOTTO_BALL_RADIUS = 0.285
+export function simulationForGame(gameId: string): Readonly<SimulationConfig> {
+  if (gameId === 'lotto_535') {
+    return Object.freeze({ ...defaultSimulation, ballRadius: LOTTO_BALL_RADIUS })
+  }
+  return defaultSimulation
+}
 // Straight downward 6-o'clock discharge outlet (-Y axis).
 export const OUTLET_ANGLE = 0
 export const EXIT_DEPTH = 2.7
@@ -42,7 +50,7 @@ export function validateSimulation(config: SimulationConfig) {
     config.radius < 2 ||
     config.radius > 3 ||
     config.ballRadius < 0.12 ||
-    config.ballRadius > 0.23 ||
+    config.ballRadius > 0.32 ||
     config.mass <= 0 ||
     config.mass > 5 ||
     config.rotationSpeed <= 0 ||

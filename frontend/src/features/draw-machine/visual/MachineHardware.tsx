@@ -80,13 +80,13 @@ export function BaseAndChute({
       {/* 6-o'clock discharge neck & sliding silver gate */}
       <group position={[0, -2.55, 0]}>
         <mesh material={materials.darkBase} position={[0, -0.18, 0]}>
-          <cylinderGeometry args={[0.45, 0.45, 0.58, 28, 1, true]} />
+          <cylinderGeometry args={[0.49, 0.49, 0.58, 28, 1, true]} />
         </mesh>
         <mesh material={materials.silver} position={[0, 0.08, 0]} rotation={[Math.PI / 2, 0, 0]}>
-          <torusGeometry args={[0.45, 0.055, 12, 32]} />
+          <torusGeometry args={[0.49, 0.055, 12, 32]} />
         </mesh>
         <mesh ref={hatchRef} position={[open ? 0.62 : 0, -0.05, 0]} material={materials.chrome}>
-          <cylinderGeometry args={[0.42, 0.42, 0.07, 24]} />
+          <cylinderGeometry args={[0.46, 0.46, 0.07, 24]} />
         </mesh>
       </group>
     </group>
