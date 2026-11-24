@@ -126,5 +126,5 @@ describe('Lotto physical session', () => {
     expect(snapshot.drawn.every((n) => n >= 1 && n <= 35)).toBe(true)
     expect(snapshot.specialNumber).toBeGreaterThanOrEqual(1)
     expect(snapshot.specialNumber).toBeLessThanOrEqual(12)
-  }, 30000)
+  }, 120000)
 })

@@ -1,4 +1,5 @@
-type Config = { origin?: string; token?: string }
+import { buildOriginHeaders, validateOriginConfig, type OriginConfig } from './originConfig.js'
+
 type Fetch = typeof fetch
 const MAX_BODY_BYTES = 64 * 1024
 
@@ -9,7 +10,11 @@ function error(status: number, code: string, message: string): Response {
   )
 }
 
-export function createGateway(config: Config, fetchOrigin: Fetch = fetch, timeoutMs = 270_000) {
+export function createGateway(
+  config: OriginConfig,
+  fetchOrigin: Fetch = fetch,
+  timeoutMs = 270_000,
+) {
   return async (request: Request): Promise<Response> => {
     const url = new URL(request.url)
     if (!url.pathname.startsWith('/api/v1/'))
@@ -18,19 +23,11 @@ export function createGateway(config: Config, fetchOrigin: Fetch = fetch, timeou
       return error(405, 'method_not_allowed', 'HTTP method is not supported')
 
     let origin: URL
+    let token: string
     try {
-      origin = new URL(config.origin ?? '')
-      if (
-        origin.protocol !== 'https:' ||
-        origin.username ||
-        origin.password ||
-        origin.pathname !== '/' ||
-        origin.search ||
-        origin.hash ||
-        !config.token ||
-        config.token.length < 32
-      )
-        throw new Error('Invalid gateway configuration')
+      const validated = validateOriginConfig(config)
+      origin = validated.origin
+      token = validated.token
     } catch {
       return error(503, 'gateway_not_configured', 'Service configuration is incomplete.')
     }
@@ -75,11 +72,7 @@ export function createGateway(config: Config, fetchOrigin: Fetch = fetch, timeou
       const upstream = await fetchOrigin(new URL(url.pathname + url.search, origin), {
         method: request.method,
         body,
-        headers: {
-          Accept: 'application/json',
-          'X-Lotto-Origin-Token': config.token!,
-          ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
-        },
+        headers: buildOriginHeaders(token, body !== undefined),
         redirect: 'manual',
         cache: 'no-store',
         signal: AbortSignal.any([deadline, request.signal]),

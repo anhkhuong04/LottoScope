@@ -1,0 +1,30 @@
+# LottoScope — Historical Draw Analysis
+
+LottoScope provides historical draw results, number frequencies, gap metrics, and pair co-occurrence statistics for Vietlott lottery games (`lotto_535`, `mega_645`, `power_655`).
+All statistics are purely historical and descriptive; LottoScope does not predict future draws or guarantee outcomes.
+
+## Static AI-Readable Data Pages (Server-Rendered)
+
+- [All Games Overview (HTML)](https://lottoscope-sable.vercel.app/data): Latest draws, top number frequencies, and top co-occurring pairs across Lotto 5/35, Mega 6/45, and Power 6/55.
+- [All Games Overview (Markdown)](https://lottoscope-sable.vercel.app/data?format=md): Plain Markdown format for direct LLM consumption.
+- [Lotto 5/35 Statistics](https://lottoscope-sable.vercel.app/data/lotto_535): Recent draws, main numbers (01-35) frequency & gaps, special numbers (01-12) frequency & gaps, and top pairs.
+- [Mega 6/45 Statistics](https://lottoscope-sable.vercel.app/data/mega_645): Recent draws, number frequencies & gaps (01-45), and top pairs.
+- [Power 6/55 Statistics](https://lottoscope-sable.vercel.app/data/power_655): Recent draws, main number frequencies & gaps (01-55), and top pairs.
+
+Query parameters supported on `/data` and `/data/{game}`:
+- `count`: `10`, `20`, `30` (default), `50`, or `100` recent draws.
+- `window`: `last_draws` (default) or `all_time`.
+- `format`: `html` (default) or `md` (plain Markdown).
+
+## Read-Only JSON API Endpoints
+
+- `GET /api/v1/games`: List supported games and number ranges.
+- `GET /api/v1/games/{game}/status`: Latest draw ID, date, and data version.
+- `GET /api/v1/games/{game}/draws/latest`: Latest draw result.
+- `GET /api/v1/games/{game}/draws?page=1&page_size=30&sort=desc`: Paginated draw history.
+- `GET /api/v1/games/{game}/analytics/numbers?window=last_draws&count=30&sort=frequency_desc`: Number frequencies, ranks, and gap metrics (`number_kind=main|special` for `lotto_535`).
+- `GET /api/v1/games/{game}/analytics/pairs?window=last_draws&count=30&page=1&page_size=25&sort=frequency_desc`: Co-occurring main-number pairs.
+
+## WebMCP Client-Side Tools
+
+When opened in a WebMCP-enabled browser (`document.modelContext`), the application registers read-only tools (`get_games`, `get_game_status`, `get_latest_draw`, `get_draws`, `get_number_frequencies`, `get_number_detail`, `get_pair_frequencies`, `check_combination`).
