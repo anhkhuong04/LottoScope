@@ -58,7 +58,6 @@ export function Pairs() {
                 <thead>
                   <tr>
                     <th>Pair</th>
-                    <th>Rank</th>
                     <th>Draws</th>
                     <th>Rate</th>
                     <th>Current gap</th>
@@ -71,7 +70,6 @@ export function Pairs() {
                       <td>
                         <PairLink pair={pair} />
                       </td>
-                      <td>{result.data?.context.actual_draw_count ? pair.frequency_rank : '—'}</td>
                       <td>{pair.frequency}</td>
                       <td>{formatPercent(pair.percent_of_draws)}</td>
                       <td>{pair.current_gap ?? '—'}</td>
@@ -98,12 +96,7 @@ export function Pairs() {
                       <strong>
                         {pair.frequency} draws ({formatPercent(pair.percent_of_draws)})
                       </strong>
-                      <span className="muted">
-                        {result.data?.context.actual_draw_count
-                          ? `Rank ${pair.frequency_rank}`
-                          : '—'}{' '}
-                        · Gap {pair.current_gap ?? '—'}
-                      </span>
+                      <span className="muted">Gap {pair.current_gap ?? '—'}</span>
                     </div>
                     <div className="pair-mobile-draw">
                       {pair.last_seen_draw_id ? (

@@ -92,6 +92,7 @@ export function Ball({
   return (
     <span
       className={`ball${special ? ' special' : ''}${large ? ' large' : ''}${dimmed ? ' dimmed' : ''}`}
+      aria-label={special ? `Special ${String(value).padStart(2, '0')}` : undefined}
     >
       {String(value).padStart(2, '0')}
     </span>
@@ -103,7 +104,6 @@ export function FrequencyTile({
   maximum,
   to,
   special = false,
-  rank,
   showMeter = true,
 }: {
   number: number
@@ -111,7 +111,6 @@ export function FrequencyTile({
   maximum: number
   to: string
   special?: boolean
-  rank?: number
   showMeter?: boolean
 }) {
   return (
@@ -120,7 +119,6 @@ export function FrequencyTile({
       <span className="frequency-value">
         {frequency} <small>draws</small>
       </span>
-      {rank !== undefined && <span className="rank-label">Rank {rank}</span>}
       {showMeter && (
         <span className="frequency-meter" aria-hidden="true">
           <span style={{ width: `${(100 * frequency) / Math.max(1, maximum)}%` }} />
@@ -153,7 +151,6 @@ export function Balls({
       ))}
       {special !== null && special !== undefined && (
         <span className="draw-special">
-          <span className="draw-special-label">Special</span>{' '}
           <Ball value={special} special large={large} />
         </span>
       )}

@@ -146,14 +146,6 @@ export function NumberDetailPage() {
                   </strong>
                 </div>
                 <div>
-                  Frequency rank:{' '}
-                  <strong>
-                    {result.data.context.actual_draw_count
-                      ? result.data.metrics.frequency_rank
-                      : '—'}
-                  </strong>
-                </div>
-                <div>
                   Current gap: <strong>{result.data.metrics.current_gap ?? '—'}</strong>
                 </div>
                 <div>

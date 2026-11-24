@@ -27,8 +27,6 @@ export function Checker() {
   const [selected, setSelected] = useState<number[]>(() =>
     parseCombination(search.get('numbers'), game!.main_min, game!.main_max, game!.main_count),
   )
-  const [input, setInput] = useState('')
-  const [inputError, setInputError] = useState<string | null>(null)
   const [similarPage, setSimilarPage] = useState(1)
   const [activeTab, setActiveTab] = useState<DetailTab>('similar')
   const [attempt, setAttempt] = useState(0)
@@ -98,38 +96,6 @@ export function Checker() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, validation, attempt])
 
-  const addInput = () => {
-    const parts = input
-      .trim()
-      .split(/[\s,;]+/)
-      .filter(Boolean)
-    if (!parts.length) return
-    const parsed = parts.map(Number)
-    if (
-      parts.some(
-        (part, i) =>
-          !/^\d+$/.test(part) ||
-          !Number.isInteger(parsed[i]) ||
-          parsed[i] < game!.main_min ||
-          parsed[i] > game!.main_max,
-      )
-    ) {
-      setInputError(`Enter integers from ${game!.main_min} to ${game!.main_max} only.`)
-      return
-    }
-    if (new Set([...selected, ...parsed]).size !== selected.length + parsed.length) {
-      setInputError('Duplicate numbers found.')
-      return
-    }
-    if (selected.length + parsed.length > game!.main_count) {
-      setInputError(`Select up to ${game!.main_count} main numbers.`)
-      return
-    }
-    setSelected([...selected, ...parsed].sort((a, b) => a - b))
-    setInput('')
-    setInputError(null)
-    setSimilarPage(1)
-  }
   const toggle = (number: number) => {
     setSelected((values) =>
       values.includes(number)
@@ -138,13 +104,10 @@ export function Checker() {
           ? [...values, number].sort((a, b) => a - b)
           : values,
     )
-    setInputError(null)
     setSimilarPage(1)
   }
   const clear = () => {
     setSelected([])
-    setInput('')
-    setInputError(null)
     setSimilarPage(1)
   }
   const onTabKeyDown = (event: KeyboardEvent<HTMLButtonElement>, currentIndex: number) => {
@@ -188,30 +151,6 @@ export function Checker() {
             </div>
           }
         >
-          <div className="checker-input-bar">
-            <input
-              className="checker-quick-input"
-              aria-label="Enter numbers"
-              inputMode="numeric"
-              value={input}
-              onChange={(event) => setInput(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') {
-                  event.preventDefault()
-                  addInput()
-                }
-              }}
-              placeholder="Quick enter: 04 11 21..."
-            />
-            <button className="btn btn-sm" onClick={addInput}>
-              Add
-            </button>
-          </div>
-          {inputError && (
-            <div className="notice error" role="alert">
-              {inputError}
-            </div>
-          )}
           <div className="picker" aria-label="Select main numbers">
             {Array.from(
               { length: game!.main_max - game!.main_min + 1 },
