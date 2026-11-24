@@ -11,7 +11,7 @@ import {
   STEP,
 } from './physics'
 import { afterSessionStep, createSession, sessionSnapshot } from './session'
-import { defaultSimulation } from './config'
+import { simulationForGame } from './config'
 import { defaultDesign, SPECIAL_BALL_COLOR } from './visual/design'
 import { BallPool } from './visual/BallPool'
 import { MachineModel } from './visual/MachineModel'
@@ -19,6 +19,7 @@ import { Studio, cameraOptions, rendererOptions, sceneOptions } from './visual/S
 import type { Action, Snapshot } from './DrawMachine'
 
 type Props = {
+  gameId: string
   max: number
   count: number
   specialMax: number | null
@@ -29,6 +30,7 @@ type Props = {
 }
 
 function Mechanism({
+  gameId,
   max,
   count,
   specialMax,
@@ -47,18 +49,21 @@ function Mechanism({
   const matrix = useMemo(() => new Matrix4(), [])
   const orientation = useMemo(() => new Quaternion(), [])
   const unitScale = useMemo(() => new Vector3(1, 1, 1), [])
-  const saddleTarget = useMemo(() => new Vector3(0, -3.02, 0.22), [])
-  const chuteLeft = useMemo(() => new Vector3(-2.45, -3.38, 0.22), [])
-  const chuteRight = useMemo(() => new Vector3(2.45, -3.38, 0.22), [])
+
+  const simConfig = useMemo(() => simulationForGame(gameId), [gameId])
+  const yLift = simConfig.ballRadius - 0.19
+  const saddleTarget = useMemo(() => new Vector3(0, -3.02 + yLift, 0.22), [yLift])
+  const chuteLeft = useMemo(() => new Vector3(-2.45, -3.38 + yLift, 0.22), [yLift])
+  const chuteRight = useMemo(() => new Vector3(2.45, -3.38 + yLift, 0.22), [yLift])
 
   const activeDesign = useMemo(
     () => ({
       ...defaultDesign,
-      radius: defaultSimulation.radius,
-      ballRadius: defaultSimulation.ballRadius,
+      radius: simConfig.radius,
+      ballRadius: simConfig.ballRadius,
       ballColor: phase === 'special' ? SPECIAL_BALL_COLOR : defaultDesign.ballColor,
     }),
-    [phase],
+    [phase, simConfig],
   )
 
   const publish = useCallback(() => {
@@ -73,13 +78,13 @@ function Mechanism({
   }, [onSnapshot])
 
   useLayoutEffect(() => {
-    session.current = createSession(world, rapier, max, count, specialMax, Math.random)
+    session.current = createSession(world, rapier, max, count, specialMax, Math.random, simConfig)
     publish()
     return () => {
       if (session.current) destroyMachine(session.current.machine)
       session.current = null
     }
-  }, [world, rapier, max, count, specialMax, publish])
+  }, [world, rapier, max, count, specialMax, simConfig, publish])
 
   useEffect(() => {
     const m = session.current?.machine
@@ -156,6 +161,7 @@ function Mechanism({
 
 export default function DrawScene(props: Props) {
   const economy = window.matchMedia('(max-width: 767px)').matches
+  const simConfig = useMemo(() => simulationForGame(props.gameId), [props.gameId])
   return (
     <Canvas
       frameloop={props.running ? 'always' : 'demand'}
@@ -169,7 +175,7 @@ export default function DrawScene(props: Props) {
     >
       <Studio onError={props.onError} />
       <Physics
-        gravity={[0, defaultSimulation.gravity, 0]}
+        gravity={[0, simConfig.gravity, 0]}
         timeStep={STEP}
         paused={!props.running}
         interpolate={false}

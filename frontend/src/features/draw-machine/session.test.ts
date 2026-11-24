@@ -2,7 +2,7 @@
 import RAPIER from '@dimforge/rapier3d-compat'
 import { afterEach, beforeAll, describe, expect, it } from 'vitest'
 import { afterSessionStep, createSession, sessionSnapshot } from './session'
-import { EXIT_DEPTH, outletPoint } from './config'
+import { EXIT_DEPTH, outletPoint, simulationForGame } from './config'
 import {
   beforeStep,
   destroyMachine,
@@ -21,10 +21,18 @@ function setup() {
   const world = new RAPIER.World({ x: 0, y: -9.81, z: 0 })
   worlds.push(world)
   let seed = 17
-  return createSession(world, RAPIER, 35, 5, 12, () => {
-    seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0
-    return seed / 4294967296
-  })
+  return createSession(
+    world,
+    RAPIER,
+    35,
+    5,
+    12,
+    () => {
+      seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0
+      return seed / 4294967296
+    },
+    simulationForGame('lotto_535'),
+  )
 }
 function exit(session: ReturnType<typeof setup>, number: number) {
   const m = session.machine

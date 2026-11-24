@@ -45,6 +45,10 @@ export type Machine = {
   rotor: RAPIER.RigidBody
 }
 
+function throatInnerRadius(scale: number, ballRadius: number): number {
+  return Math.max(0.36 * scale, ballRadius * 1.54)
+}
+
 function insideYRotor(x: number, y: number, z: number, scale: number, ballRadius: number): boolean {
   if (Math.hypot(x, y) < 0.15 * scale + ballRadius + 0.04) return true
   if (Math.abs(z) > 0.14 * scale + ballRadius + 0.03) return false
@@ -78,15 +82,14 @@ export function createMachine(
   }
   validateSimulation(config)
   const scale = config.radius / RADIUS
+  const throatInner = throatInnerRadius(scale, config.ballRadius)
   const positions: Point[] = []
-  const spacing = 2 * config.ballRadius + 0.05
-  for (let x = -1.78 * scale; x <= 1.78 * scale; x += spacing) {
-    for (let y = -1.78 * scale; y <= 1.78 * scale; y += spacing) {
-      for (let z = -1.78 * scale; z <= 1.78 * scale; z += spacing) {
-        if (
-          Math.hypot(x, y, z) < 2.02 * scale &&
-          !insideYRotor(x, y, z, scale, config.ballRadius)
-        ) {
+  const spacing = 2 * config.ballRadius + 0.035
+  const spawnLimit = Math.max(2.02 * scale, config.radius - config.ballRadius - 0.12)
+  for (let x = -spawnLimit; x <= spawnLimit; x += spacing) {
+    for (let y = -spawnLimit; y <= spawnLimit; y += spacing) {
+      for (let z = -spawnLimit; z <= spawnLimit; z += spacing) {
+        if (Math.hypot(x, y, z) <= spawnLimit && !insideYRotor(x, y, z, scale, config.ballRadius)) {
           positions.push({ x, y, z })
         }
       }
@@ -94,7 +97,11 @@ export function createMachine(
   }
   if (positions.length < max) throw new Error('Insufficient space for this ball pool.')
 
-  // Bottom 6-o'clock circular opening (thetaLength = PI - OPENING_ANGLE sits at -Y).
+  // Bottom 6-o'clock circular opening widened gently when larger balls are used.
+  const requiredOpening = Math.max(
+    OPENING_ANGLE,
+    Math.asin(Math.min(0.95, (throatInner + 0.09 * scale) / config.radius)),
+  )
   const geometry = new SphereGeometry(
     config.radius,
     48,
@@ -102,7 +109,7 @@ export function createMachine(
     0,
     Math.PI * 2,
     0,
-    Math.PI - OPENING_ANGLE,
+    Math.PI - requiredOpening,
   )
   const shell = world.createCollider(
     rapier.ColliderDesc.trimesh(
@@ -116,7 +123,8 @@ export function createMachine(
   const fixed = [shell]
 
   // Inner funnel guiding balls smoothly into the single-file vertical 6-o'clock neck.
-  const funnel = new CylinderGeometry(0.68 * scale, 0.36 * scale, 0.45 * scale, 24, 1, true)
+  const funnelTop = Math.max(0.68 * scale, throatInner + 0.28 * scale)
+  const funnel = new CylinderGeometry(funnelTop, throatInner, 0.45 * scale, 24, 1, true)
   const funnelCenter = outletPoint(2.38 * scale)
   funnel.translate(funnelCenter.x, funnelCenter.y, funnelCenter.z)
   fixed.push(
@@ -132,17 +140,18 @@ export function createMachine(
   funnel.dispose()
 
   // Single-file vertical throat walls below the bottom aperture.
+  const throatWallRadius = throatInner + 0.05 * scale
   for (let i = 0; i < 24; i++) {
     const angle = (i * Math.PI * 2) / 24
     const position = outletPoint(
       2.88 * scale,
-      Math.cos(angle) * 0.41 * scale,
-      Math.sin(angle) * 0.41 * scale,
+      Math.cos(angle) * throatWallRadius,
+      Math.sin(angle) * throatWallRadius,
     )
     const rotation = new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), -angle)
     fixed.push(
       world.createCollider(
-        rapier.ColliderDesc.cuboid(0.047 * scale, 0.43 * scale, 0.04 * scale)
+        rapier.ColliderDesc.cuboid(0.052 * scale, 0.43 * scale, 0.04 * scale)
           .setTranslation(position.x, position.y, position.z)
           .setRotation(rotation)
           .setFriction(0.02)
@@ -153,8 +162,9 @@ export function createMachine(
 
   // Sliding discharge gate near depth 2.58 (EXIT_DEPTH = 2.70 guarantees single-file closure).
   const gatePosition = outletPoint(2.58 * scale)
+  const gateHalf = throatInner + 0.06 * scale
   const gate = world.createCollider(
-    rapier.ColliderDesc.cuboid(0.42 * scale, 0.045 * scale, 0.42 * scale)
+    rapier.ColliderDesc.cuboid(gateHalf, 0.045 * scale, gateHalf)
       .setTranslation(gatePosition.x, gatePosition.y, gatePosition.z)
       .setRestitution(0.15),
   )
@@ -312,6 +322,7 @@ export function afterStep(m: Machine) {
   if (!isRunning(m)) return
   const crossings: { ball: MachineBall; fraction: number }[] = []
   const scale = m.config.radius / RADIUS
+  const throatInner = throatInnerRadius(scale, m.config.ballRadius)
   for (const ball of m.balls) {
     if (ball.captured) continue
     const p = ball.body.translation()
@@ -321,7 +332,11 @@ export function afterStep(m: Machine) {
     if (
       ![p.x, p.y, p.z].every(Number.isFinite) ||
       (Math.hypot(p.x, p.y, p.z) > m.config.radius + 0.15 &&
-        !(radial < 0.45 * scale && local.depth > 2.25 * scale && local.depth < 3.6 * scale))
+        !(
+          radial < throatInner + 0.09 * scale &&
+          local.depth > 2.25 * scale &&
+          local.depth < 3.6 * scale
+        ))
     ) {
       m.status = 'error'
       m.error = 'Ball escaped chamber wall. Please start a new session.'
@@ -336,7 +351,7 @@ export function afterStep(m: Machine) {
       const fraction = (EXIT_DEPTH * scale - previous.depth) / (local.depth - previous.depth)
       const x = previous.x + (local.x - previous.x) * fraction
       const side = previous.side + (local.side - previous.side) * fraction
-      if (Math.hypot(x, side) < 0.31 * scale) crossings.push({ ball, fraction })
+      if (Math.hypot(x, side) < throatInner - 0.05 * scale) crossings.push({ ball, fraction })
     }
   }
   // If two crossings share a physics step, their interpolated crossing time wins.
