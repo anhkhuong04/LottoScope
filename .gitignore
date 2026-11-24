@@ -33,3 +33,9 @@ test-results/
 .vscode/
 .DS_Store
 Thumbs.db
+
+# Local docs, task tracking, and workflows excluded from remote
+task.md
+task-deloy.md
+docs/
+.github/workflows/
