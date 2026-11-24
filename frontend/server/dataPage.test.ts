@@ -38,6 +38,8 @@ function mockGamesFetch() {
     }
     if (p.endsWith('/draws')) {
       const isLotto = p.includes('lotto_535')
+      const page = Number(url.searchParams.get('page') ?? '1')
+      const pageSize = Number(url.searchParams.get('page_size') ?? '20')
       return Response.json({
         items: [
           {
@@ -48,6 +50,9 @@ function mockGamesFetch() {
             special_number: isLotto ? 7 : null,
           },
         ],
+        page,
+        page_size: pageSize,
+        total: 150,
       })
     }
     if (p.endsWith('/analytics/numbers')) {
@@ -55,8 +60,16 @@ function mockGamesFetch() {
       return Response.json({
         context: {
           game: p.includes('lotto_535') ? 'lotto_535' : 'mega_645',
-          analysis_window: { kind: 'last_draws', count: 30 },
-          as_of_draw_id: p.includes('lotto_535') ? '00900' : '01200',
+          analysis_window:
+            url.searchParams.get('window') === 'date_range'
+              ? {
+                  kind: 'date_range',
+                  from_date: url.searchParams.get('from_date'),
+                  to_date: url.searchParams.get('to_date'),
+                }
+              : { kind: 'last_draws', count: Number(url.searchParams.get('count') ?? '30') },
+          as_of_draw_id:
+            url.searchParams.get('as_of_draw_id') ?? (p.includes('lotto_535') ? '00900' : '01200'),
           actual_draw_count: 30,
           data_version: 42,
         },
@@ -75,6 +88,8 @@ function mockGamesFetch() {
       })
     }
     if (p.endsWith('/analytics/pairs')) {
+      const page = Number(url.searchParams.get('page') ?? '1')
+      const pageSize = Number(url.searchParams.get('page_size') ?? '25')
       return Response.json({
         context: {
           game: p.includes('lotto_535') ? 'lotto_535' : 'mega_645',
@@ -93,6 +108,9 @@ function mockGamesFetch() {
             frequency_rank: 1,
           },
         ],
+        page,
+        page_size: pageSize,
+        total: 80,
       })
     }
     return new Response('not found', { status: 404 })
@@ -100,39 +118,85 @@ function mockGamesFetch() {
 }
 
 describe('static AI data page handler', () => {
-  it('renders semantic HTML with Edge Cache headers for all games', async () => {
+  it('renders semantic HTML with Edge Cache headers and pagination links', async () => {
     const upstream = mockGamesFetch()
     const handler = createDataHandler(config, upstream)
-    const response = await handler(new Request('https://lottoscope-sable.vercel.app/data'))
+    const response = await handler(
+      new Request(
+        'https://lottoscope-sable.vercel.app/data/mega_645?count=30&draw_limit=50&draw_page=2&pair_limit=20&pair_page=2',
+      ),
+    )
     expect(response.status).toBe(200)
     expect(response.headers.get('Content-Type')).toContain('text/html')
     expect(response.headers.get('Cache-Control')).toContain('s-maxage=300')
     expect(response.headers.get('Vary')).toContain('User-Agent')
     const html = await response.text()
-    expect(html).toContain('Lotto 5/35')
     expect(html).toContain('Mega 6/45')
-    expect(html).toContain('01 05 12 23 35')
-    expect(html).toContain('Special Number Frequency')
+    expect(html).toContain('Page 2/3, Total: 150')
+    expect(html).toContain('Page 2/4, Total: 80')
+    expect(html).toContain('Previous draws')
+    expect(html).toContain('Next draws')
+    expect(html).toContain('Previous pairs')
+    expect(html).toContain('Next pairs')
     const [, init] = upstream.mock.calls[0]!
     expect(init?.headers).toMatchObject({ 'X-Lotto-Origin-Token': config.token })
   })
 
-  it('supports single-game markdown format and preserves special separation', async () => {
+  it('separates count from draw_limit and forwards date_range and as_of_draw_id', async () => {
     const upstream = mockGamesFetch()
     const handler = createDataHandler(config, upstream)
     const response = await handler(
-      new Request('https://lottoscope-sable.vercel.app/data/lotto_535?format=md&count=10'),
+      new Request(
+        'https://lottoscope-sable.vercel.app/data/lotto_535?from_date=2026-01-01&to_date=2026-11-23&as_of_draw_id=00888&draw_limit=100&draw_sort=asc&format=md',
+      ),
     )
     expect(response.status).toBe(200)
     expect(response.headers.get('Content-Type')).toContain('text/markdown')
     const md = await response.text()
-    expect(md).toContain('# LottoScope — Historical Vietlott Analysis')
-    expect(md).toContain('Analysis window: Last 10 draws')
-    expect(md).toContain('Special Number Frequency & Gaps (01-12, Last 10 draws)')
+    expect(md).toContain('2026-01-01 to 2026-11-23 (through 00888)')
+    expect(md).toContain('Draws slice: page 1, limit 100, sort asc')
+    expect(md).toContain(
+      'Special Number Frequency & Gaps (01-12, 2026-01-01 to 2026-11-23 (through 00888))',
+    )
     expect(md).not.toContain('## Mega 6/45')
+
+    const calledUrls = upstream.mock.calls.map(([u]) => String(u))
+    expect(calledUrls).toContainEqual(
+      expect.stringContaining(
+        '/draws?page=1&page_size=100&sort=asc&from_date=2026-01-01&to_date=2026-11-23',
+      ),
+    )
+    expect(calledUrls).toContainEqual(
+      expect.stringContaining(
+        '/analytics/numbers?window=date_range&from_date=2026-01-01&to_date=2026-11-23&as_of_draw_id=00888',
+      ),
+    )
   })
 
-  it('rejects invalid methods, unknown games, and unconfigured origin without caching errors', async () => {
+  it('supports CSV format for draws, numbers, special, and pairs', async () => {
+    const upstream = mockGamesFetch()
+    const handler = createDataHandler(config, upstream)
+
+    const drawsCsv = await handler(
+      new Request('https://lottoscope-sable.vercel.app/data/lotto_535?format=csv&section=draws'),
+    )
+    expect(drawsCsv.status).toBe(200)
+    expect(drawsCsv.headers.get('Content-Type')).toContain('text/csv')
+    expect(drawsCsv.headers.get('Content-Disposition')).toContain('lottoscope-lotto_535-draws.csv')
+    expect(await drawsCsv.text()).toBe(
+      'game,draw_id,draw_date,draw_time,main_numbers,special_number\nlotto_535,00900,2026-11-23,18:00:00,01 05 12 23 35,07',
+    )
+
+    const pairsCsv = await handler(
+      new Request('https://lottoscope-sable.vercel.app/data/mega_645?format=csv&section=pairs'),
+    )
+    expect(pairsCsv.status).toBe(200)
+    expect(await pairsCsv.text()).toBe(
+      'game,rank,pair,frequency,percent_of_draws,current_gap,last_seen_draw_id\nmega_645,1,05-12,4,13.3,1,00899',
+    )
+  })
+
+  it('rejects invalid methods, malformed dates, unknown games, and unconfigured origin without caching errors', async () => {
     const upstream = mockGamesFetch()
     const handler = createDataHandler(config, upstream)
     expect(
@@ -142,6 +206,22 @@ describe('static AI data page handler', () => {
     expect(
       (await handler(new Request('https://lottoscope-sable.vercel.app/data/unknown_game'))).status,
     ).toBe(404)
+    expect(
+      (
+        await handler(
+          new Request('https://lottoscope-sable.vercel.app/data/mega_645?from_date=not-a-date'),
+        )
+      ).status,
+    ).toBe(400)
+    expect(
+      (
+        await handler(
+          new Request(
+            'https://lottoscope-sable.vercel.app/data/mega_645?window=date_range&from_date=2026-01-01',
+          ),
+        )
+      ).status,
+    ).toBe(400)
     expect(upstream).not.toHaveBeenCalled()
 
     const badUpstream = vi.fn<typeof fetch>().mockResolvedValue(
