@@ -5,6 +5,16 @@ và database chạy trên cloud, không phụ thuộc máy cá nhân đang bật
 Runbook: [DEPLOYMENT_FREE.md](DEPLOYMENT_FREE.md), quyết định:
 [ADR 0011](DECISIONS/0011-free-cloud-deployment.md).
 
+## Cập nhật AI Access Upgrade (/data pagination, date_range, CSV) — 24/11/2026
+
+- Release frontend: commit **`143b482`**, branch **`deploy/free-cloud`**.
+- Vercel: **`dpl_HzHafzr219c53B7RbNwHf7EEPZTn` READY**, production URL `https://lottoscope-sable.vercel.app` đã gán alias.
+- Nội dung cập nhật:
+  - Tách `count` (cửa sổ thống kê) khỏi `draw_limit` / `draw_page` / `draw_sort` (phân trang lịch sử kỳ quay `1..100`) và `pair_limit` / `pair_page` (phân trang cặp số `1..100`).
+  - Nối `window=date_range` (`from_date`, `to_date`), `as_of_draw_id`, và `draw_id` trên `/data` và `/data/{game}`.
+  - Hỗ trợ xuất CSV (`?format=csv&section=draws|numbers|special|pairs`) kèm header `Content-Type: text/csv; charset=utf-8`.
+  - Cập nhật `frontend/public/llms.txt` và `docs/API.md`; kiểm chứng **13/13 test files / 104/104 tests pass**, `oxlint`, `prettier`, `tsc`, `vite build`, Docker local (`http://127.0.0.1:8088`), và smoke test live trên Vercel (`format=csv`, `draw_page=2`, `from_date/to_date`, `pair_page=2`).
+
 ## Cập nhật AI Access (Static SSR + Edge Cache + WebMCP) & Vercel — 24/11/2026
 
 - Release frontend: commit **`43d348c`**, branch **`deploy/free-cloud`**.
