@@ -1,36 +1,22 @@
-# Ảnh minh họa LottoScope
+# LottoScope Screenshots
 
-Chụp từ https://lottoscope-sable.vercel.app ngày **30/10/2026 (giờ Việt Nam)**,
-không dùng dữ liệu mock hoặc chỉnh sửa nội dung ảnh. Dữ liệu trong ảnh là
-snapshot tại thời điểm chụp; không dùng để xác định kỳ mới nhất hiện tại.
+Captured from the local Docker production build (`http://127.0.0.1:8088`) on **2026-11-24** against recorded PostgreSQL data (no mocked responses or post-capture image edits). Data values reflect the snapshot at capture time rather than live future draws.
 
-| File | Màn hình / trạng thái | Kích thước viewport |
-| --- | --- | --- |
-| `dashboard.png` | Tổng quan Mega 6/45, 30 kỳ gần nhất, nguồn cộng đồng hiển thị rõ | 1440 × 1040 |
-| `numbers.png` | Lưới tần suất Mega 6/45 trong 30 kỳ | 1440 × 1040 |
-| `checker.png` | Đối chiếu main `01 09 11 28 33 42`, một lần trùng chính xác trong lịch sử | 1440 × 1040, chụp toàn trang |
-| `draw-machine.png` | Lồng Lotto 5/35 và vùng special, sẵn sàng trước khi quay | 1440 × 1040 |
-| `mobile-dashboard.png` | Tổng quan Mega 6/45, menu di động | 390 × 844 |
+| File                                           | View & State                                                                                                     | Viewport      |
+| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ------------- |
+| [`dashboard.png`](dashboard.png)               | Mega 6/45 Overview, last 30 draws window, latest draw `#01592`, top 6 numbers & top 5 pairs                      | `1440 × 1020` |
+| [`numbers.png`](numbers.png)                   | Lotto 5/35 main-number (`01–35`) frequency & rank grid over the last 30 draws                                    | `1440 × 900`  |
+| [`checker.png`](checker.png)                   | Mega 6/45 Combination Checker (`01 09 11 28 33 42`) with exact match & overlap distribution across `1,592` draws | `1440 × 1400` |
+| [`draw-machine.png`](draw-machine.png)         | Lotto 5/35 3D Draw Simulator after completing a full 5-main + 1-special-ball local physics draw                  | `1440 × 900`  |
+| [`mobile-dashboard.png`](mobile-dashboard.png) | Mega 6/45 Overview mobile layout with bottom navigation bar                                                      | `390 × 844`   |
 
-Khi cập nhật ảnh, dùng cùng tên file để giữ link trong [README chính](../../../README.md).
-Chờ dữ liệu và lồng cầu tải xong trước khi chụp; giữ game và phạm vi áp dụng.
-Ảnh hiện tại là snapshot UI cũ; UI từ 03/11/2026 ẩn tên nhà cung cấp theo ADR 0013,
-cầu xanh/đỏ chữ trắng và thống kê special theo ADR 0014. Không sửa ảnh cũ để
-giả lập giao diện mới; chỉ thay ảnh sau khi chụp lại bản đã triển khai.
-Không đưa secrets, dashboard quản trị hoặc dữ liệu cá nhân vào ảnh.
+## Guidelines
 
-## Thiết kế lồng cầu local — 03/11/2026
+- Keep existing filenames when refreshing screenshots so relative links in [README.md](../../../README.md) remain valid.
+- Wait for charts, frequency data, and the WebGL/Rapier 3D canvas to settle before capturing.
+- Never include credentials, admin dashboards, or sensitive environment details.
 
-`machine-preview-static.png`: chụp canvas thật từ source local tại
-`/generator/preview?game=power_655`, góc phối cảnh, 55 bóng teal bố trí tĩnh,
-khung trắng/acrylic. Đây là bản duyệt thiết kế, **chưa tích hợp Rapier**, không
-phải ảnh website online hoặc kết quả quay. Không thay ảnh `draw-machine.png`
-của bản đang triển khai. Phân tích và phạm vi ở [DRAW_MACHINE_REDESIGN](../../DRAW_MACHINE_REDESIGN.md).
+## Historical Design Snapshots (03/11/2026)
 
-`machine-integrated.png`: bản Docker local sau khi tích hợp Rapier, viewport
-1365 × 900, chụp toàn trang Power 6/55 hoàn tất 6 số chính. Phối cảnh cố định,
-khung trắng/acrylic và bóng teal; kết quả do phiên mô phỏng thật trong browser,
-không phải kỳ quay chính thức. Mẫu đã được duyệt; ảnh tĩnh phía trên giữ làm
-mốc lịch sử. Public cùng phiên bản được cập nhật ngày 04/11/2026 theo
-[biên bản cloud](../../DEPLOYMENT_ACCEPTANCE.md); ảnh này vẫn có nguồn từ Docker
-local, không thay các ảnh online cũ.
+- [`machine-preview-static.png`](machine-preview-static.png): Early `/generator/preview` design reference (55 teal spheres, static framing prior to Rapier physics integration and Y-rotor redesign).
+- [`machine-integrated.png`](machine-integrated.png): Previous Rapier 3D acrylic-frame drum build captured at `1365 × 900` before the spherical Y-blade rotor and flat-canvas redesign.
