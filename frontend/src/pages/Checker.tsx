@@ -140,17 +140,16 @@ export function Checker() {
     <>
       <PageHead
         title="Combination Checker"
-        description="Compare your selected main numbers against recorded draws; excludes special number."
+        description="Compare selected main numbers against recorded draws."
       />
       <WindowSelector />
       <div className="grid cols-2">
         <Card
-          title={`Select ${game!.main_count} main numbers`}
-          subtitle={`Range ${game!.main_min}–${game!.main_max}; multiple numbers can be separated by spaces.`}
+          title={`Select ${game!.main_count} main numbers (${game!.main_min}–${game!.main_max})`}
         >
-          <div className="token-box">
-            {selected.length ? (
-              selected.map((number) => (
+          {selected.length > 0 && (
+            <div className="token-box">
+              {selected.map((number) => (
                 <button
                   key={number}
                   className="btn ghost"
@@ -159,11 +158,9 @@ export function Checker() {
                 >
                   <Ball value={number} /> ×
                 </button>
-              ))
-            ) : (
-              <span className="muted">No numbers selected</span>
-            )}
-          </div>
+              ))}
+            </div>
+          )}
           <div className="toolbar checker-input-toolbar">
             <label className="field">
               Enter numbers
@@ -251,10 +248,6 @@ export function Checker() {
                   <p className="muted">
                     {selected.length}/{game!.main_count} main numbers selected. Select full set to
                     check.
-                  </p>
-                  <p className="muted">
-                    View exact matches, match distribution, and statistical metrics across the
-                    selected window.
                   </p>
                 </div>
               )}

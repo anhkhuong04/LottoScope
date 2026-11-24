@@ -285,46 +285,18 @@ h3 {
 }
 @media (hover: hover) {
   .number-tile:hover {
-    transform: translateY(-2px);
     border-color: #77aaa2;
-    box-shadow: 0 5px 12px #102b3610;
+    box-shadow: 0 4px 10px #102b360d;
   }
 }
 .data-table td {
   transition: background-color var(--motion-fast) ease;
-}
-.page-head,
-.latest-card .data-content {
-  animation: content-arrive var(--motion-normal) var(--motion-ease) both;
-}
-.bar-fill,
-.frequency-meter > span {
-  transform-origin: left;
-  animation: bar-arrive var(--motion-normal) var(--motion-ease) both;
 }
 .skeleton-content {
   animation: skeleton-breathe 1.8s ease-in-out infinite;
 }
 .is-loading svg {
   animation: busy-turn 1s linear infinite;
-}
-@keyframes content-arrive {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-@keyframes bar-arrive {
-  from {
-    transform: scaleX(0);
-  }
-  to {
-    transform: scaleX(1);
-  }
 }
 @keyframes skeleton-breathe {
   0%,
@@ -582,8 +554,59 @@ h3 {
   padding: 8px 0;
 }
 @media (max-width: 767px) {
+  .scope-summary {
+    font-size: 0.74rem;
+    gap: 2px 10px;
+    line-height: 1.35;
+    margin-bottom: 10px;
+  }
+  .numbers-page-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .numbers-page-grid .frequency-tile {
+    padding: 7px 3px 6px;
+    min-height: 0;
+    gap: 3px;
+    border-radius: 8px;
+  }
+  .numbers-page-grid .ball {
+    min-width: 28px;
+    height: 28px;
+    font-size: 0.78rem;
+  }
+  .numbers-page-grid .frequency-value {
+    font-size: 0.76rem;
+  }
+  .numbers-page-grid .frequency-value small {
+    font-size: 0.62rem;
+  }
+  .numbers-page-grid .rank-label {
+    font-size: 0.62rem;
+  }
   .special-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .special-grid .frequency-tile {
+    padding: 7px 2px 6px;
+    min-height: 0;
+    gap: 3px;
+    border-radius: 8px;
+  }
+  .special-grid .ball {
+    min-width: 26px;
+    height: 26px;
+    font-size: 0.74rem;
+  }
+  .special-grid .frequency-value {
+    font-size: 0.74rem;
+  }
+  .special-grid .frequency-value small {
+    display: none;
+  }
+  .special-grid .rank-label {
+    font-size: 0.6rem;
   }
   .page-head {
     align-items: flex-start;
@@ -596,17 +619,18 @@ h3 {
   }
   .window-toolbar {
     padding: 0;
-    gap: 12px;
+    gap: 8px 10px;
+    margin-bottom: 12px;
   }
   .checker-empty {
-    padding: 20px 0;
+    padding: 16px 0;
   }
   .topbar-actions {
     gap: 8px;
   }
   .game-select select {
     max-width: 130px;
-    padding-left: 10px;
+    padding: 0 30px 0 10px;
   }
   .sync-trigger {
     padding: 0;
@@ -624,23 +648,54 @@ h3 {
   .page-skeleton .skeleton-content {
     padding: var(--card-padding);
   }
-  .dashboard-hero,
+  .dashboard-hero {
+    margin-bottom: 12px;
+  }
   .dashboard-sections {
     grid-template-columns: 1fr;
-    gap: 16px;
-    margin-bottom: 16px;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+  .dashboard-sections + .card {
+    margin-top: 14px;
+    padding-top: 14px;
+  }
+  .dashboard-sections .frequency-tile {
+    padding: 9px 6px 8px;
+    min-height: 0;
+    gap: 4px;
+  }
+  .pairs-summary .draw-row {
+    flex-wrap: nowrap;
+    padding: 6px 0;
+  }
+  .pairs-summary .draw-row .balls {
+    order: 0;
+    flex-basis: auto;
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
+  }
+  .latest-card {
+    padding-bottom: 14px;
+  }
+  .latest-meta {
+    margin-bottom: 8px;
+    font-size: 0.8rem;
   }
   .latest-card .ball.large {
-    min-width: clamp(34px, 9vw, 48px);
-    height: clamp(34px, 9vw, 48px);
-    font-size: 1rem;
+    min-width: 36px;
+    height: 36px;
+    font-size: 0.92rem;
   }
   .latest-card .balls {
-    gap: 6px;
+    gap: 5px;
   }
   .latest-card .draw-special {
-    flex-basis: 100%;
-    margin-top: 8px;
+    flex-basis: auto;
+    margin-top: 0;
+    margin-left: 2px;
+    padding-left: 7px;
+    border-left: 1px solid var(--line);
   }
   .dashboard-actions {
     width: 100%;
@@ -675,15 +730,10 @@ h3 {
     --motion-fast: 0ms;
     --motion-normal: 0ms;
   }
-  .page-head,
-  .latest-card .data-content,
-  .bar-fill,
-  .frequency-meter > span,
   .skeleton-content,
   .is-loading svg {
     animation: none;
   }
-  .number-tile:hover,
   .btn:active:not(:disabled),
   .picker button:active:not(:disabled) {
     transform: none;

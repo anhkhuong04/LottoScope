@@ -41,11 +41,7 @@ export function DrawPrizes({ gameId, drawId }: { gameId: string; drawId: string 
     (prize, index) => index === 0 || /^Jackpot(?: [12])?$/.test(prize.name),
   )
   return (
-    <Card
-      title="Prize Breakdown"
-      subtitle="Number of winners and prize amounts for this draw."
-      className="prize-card"
-    >
+    <Card title="Prize Breakdown" className="prize-card">
       <DataState
         {...result}
         error={prizeError ? new Error(prizeError) : result.error}

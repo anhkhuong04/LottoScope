@@ -61,14 +61,11 @@ export function Dashboard() {
         description="Historical statistics from recorded draws."
       />
       <WindowSelector />
-      {numbers.data && (
-        <ScopeSummary context={numbers.data.context} subject="Main numbers statistics" />
-      )}
+      {numbers.data && <ScopeSummary context={numbers.data.context} subject="Main numbers" />}
       <div className="dashboard-hero">
         <Card
           className="latest-card"
           title="Latest Result"
-          subtitle="Most recently published draw in recorded history"
           action={
             <Link className="link-arrow" to={`/history${search}`}>
               History <ArrowRight size={14} aria-hidden="true" />
@@ -100,7 +97,6 @@ export function Dashboard() {
       <div className="dashboard-sections">
         <Card
           title="Number Frequency"
-          subtitle="Top 6 most frequent numbers in selected window"
           action={
             <Link className="link-arrow" to={`/numbers${search}`}>
               View all <ArrowRight size={14} />
@@ -113,26 +109,18 @@ export function Dashboard() {
             empty="No number analysis data available."
           >
             {numbers.data && (
-              <>
-                <div className="number-grid">
-                  {frequent.map((item) => (
-                    <FrequencyTile
-                      key={item.number}
-                      to={`/numbers/${item.number}${search}`}
-                      number={item.number}
-                      frequency={item.frequency}
-                      maximum={max}
-                      rank={
-                        numbers.data?.context.actual_draw_count ? item.frequency_rank : undefined
-                      }
-                    />
-                  ))}
-                </div>
-                <p className="chart-caption">
-                  Longer bar indicates higher frequency. Max {max} draws. Ties share rank; top 6
-                  numbers shown sorted ascending on ties.
-                </p>
-              </>
+              <div className="number-grid">
+                {frequent.map((item) => (
+                  <FrequencyTile
+                    key={item.number}
+                    to={`/numbers/${item.number}${search}`}
+                    number={item.number}
+                    frequency={item.frequency}
+                    maximum={max}
+                    rank={numbers.data?.context.actual_draw_count ? item.frequency_rank : undefined}
+                  />
+                ))}
+              </div>
             )}
           </DataState>
         </Card>
@@ -148,7 +136,6 @@ export function Dashboard() {
           <DataState {...pairs} hasData={!!pairs.data} empty="No pairs found in selected window.">
             {pairs.data && (
               <div className="stack">
-                <ScopeSummary context={pairs.data.context} subject="Main number pairs" />
                 {pairs.data.items.map((pair) => (
                   <div className="draw-row" key={pair.numbers.join('-')}>
                     <PairLink pair={pair} />
@@ -161,17 +148,12 @@ export function Dashboard() {
                 {pairs.data.items.length === 0 && (
                   <p className="muted">No pairs found in selected window.</p>
                 )}
-                <p className="chart-caption">
-                  Top 5 pairs shown. Ties share rank; ties sorted ascending. View pairs for complete
-                  list.
-                </p>
               </div>
             )}
           </DataState>
         </Card>
         <Card
           title="Longest Current Gaps"
-          subtitle="Consecutive draws without appearance"
           action={
             <Link className="link-arrow" to={`/numbers${search}`}>
               Number analysis <ArrowRight size={14} />
@@ -205,7 +187,6 @@ export function Dashboard() {
         </Card>
         <Card
           title="Recent Draws"
-          subtitle="3 latest draws from all-time history, independent of analysis window"
           action={
             <Link className="link-arrow" to={`/history${search}`}>
               All-time history <ArrowRight size={14} />
@@ -219,8 +200,12 @@ export function Dashboard() {
       </div>
       {game!.id === 'lotto_535' && (
         <Card
-          title="Lotto 5/35 Special Number Statistics"
-          subtitle="Range 01–12, tracked independently from main numbers."
+          title="Lotto 5/35 Special Numbers (01–12)"
+          action={
+            <Link className="link-arrow" to={`/numbers${search}&number_kind=special`}>
+              Details <ArrowRight size={14} aria-hidden="true" />
+            </Link>
+          }
         >
           <DataState {...special} hasData={!!special.data}>
             {special.data && (
@@ -241,9 +226,6 @@ export function Dashboard() {
                     />
                   ))}
                 </div>
-                <Link className="link-arrow" to={`/numbers${search}&number_kind=special`}>
-                  Special number analysis <ArrowRight size={14} aria-hidden="true" />
-                </Link>
               </>
             )}
           </DataState>

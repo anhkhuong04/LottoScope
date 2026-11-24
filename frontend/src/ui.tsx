@@ -138,7 +138,8 @@ export function Balls({
       ))}
       {special !== null && special !== undefined && (
         <span className="draw-special">
-          Special <Ball value={special} special large={large} />
+          <span className="draw-special-label">Special</span>{' '}
+          <Ball value={special} special large={large} />
         </span>
       )}
     </div>
@@ -326,7 +327,7 @@ export function ScopeSummary({ context, subject }: { context: Context; subject?:
   return (
     <p className="scope-summary">
       {subject && <strong>{subject}</strong>}
-      <span>Window: {formatWindow(context.analysis_window)}</span>
+      <span>{formatWindow(context.analysis_window)}</span>
       <span>Actual: {context.actual_draw_count} draws</span>
       <span>
         {context.as_of_draw_id ? `Through draw ${context.as_of_draw_id}` : 'No draws recorded'}

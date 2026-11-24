@@ -313,6 +313,7 @@ small,
   position: relative;
 }
 .game-select select {
+  -webkit-appearance: none;
   appearance: none;
   background: #f6f9fa;
   border: 1px solid var(--line);
@@ -321,7 +322,9 @@ small,
   font-weight: 700;
   letter-spacing: 0;
   text-transform: none;
-  padding: 12px 37px 12px 15px;
+  height: 44px;
+  line-height: 1.2;
+  padding: 0 36px 0 14px;
   min-height: 44px;
 }
 .game-select svg {
@@ -411,6 +414,17 @@ small,
   border-radius: 9px;
   background: #fff;
   color: var(--ink);
+  line-height: 1.25;
+}
+.filter-extra {
+  display: contents;
+}
+.filter-toggle {
+  display: none;
+}
+.field-compact input {
+  min-width: 88px;
+  width: 96px;
 }
 .field input[type='date'] {
   min-width: 155px;
@@ -911,12 +925,21 @@ small,
     font-size: 0.75rem;
   }
   .content {
-    padding: 22px 15px 104px;
+    padding: 14px 14px 86px;
   }
   .page-head {
     align-items: flex-start;
     flex-direction: column;
-    margin-bottom: 19px;
+    margin-bottom: 10px;
+  }
+  .page-head h1 {
+    font-size: 1.35rem;
+    margin-bottom: 0;
+  }
+  .page-head .page-intro,
+  .card-subtitle,
+  .chart-caption {
+    display: none;
   }
   .cols-2,
   .cols-3,
@@ -930,27 +953,65 @@ small,
   .card {
     padding: 0;
   }
+  .card-head {
+    margin-bottom: 8px;
+  }
   .toolbar {
     align-items: stretch;
+    gap: 8px 10px;
+    margin-bottom: 12px;
+  }
+  .field {
+    gap: 4px;
+    font-size: 0.72rem;
+  }
+  .field input,
+  .field select,
+  .text-input {
+    height: 40px;
+    padding: 0 10px;
+    font-size: 0.88rem;
+    line-height: 1.25;
+  }
+  .filter-extra {
+    display: none;
+    flex-basis: 100%;
+    gap: 8px 10px;
+    flex-wrap: wrap;
+  }
+  .filter-extra.open {
+    display: flex;
+  }
+  .filter-toggle {
+    display: inline-flex;
+    align-self: flex-end;
+    min-height: 40px;
+    height: 40px;
+    padding: 0 12px;
+    font-size: 0.84rem;
   }
   .checker-input-toolbar {
     align-items: flex-end;
   }
   .checker-input-actions {
     display: inline-flex;
-    gap: 8px;
+    gap: 6px;
     align-items: center;
     width: auto;
   }
   .checker-input-actions .btn-sm {
-    min-height: 34px;
-    height: 34px;
-    padding: 0 10px;
-    font-size: 0.8rem;
+    min-height: 44px;
+    height: 44px;
+    padding: 0 11px;
+    font-size: 0.82rem;
   }
   .toolbar .field {
-    flex: 1;
-    min-width: 135px;
+    flex: 1 1 145px;
+    min-width: 145px;
+  }
+  .toolbar .field-compact {
+    flex: 0 1 92px;
+    min-width: 82px;
   }
   .toolbar .field select,
   .toolbar .field input {
@@ -958,15 +1019,87 @@ small,
     min-width: 0;
   }
   .draw-row {
-    align-items: flex-start;
+    align-items: center;
+    justify-content: space-between;
     flex-wrap: wrap;
+    gap: 4px 10px;
+    padding: 8px 0;
+  }
+  .draw-meta {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    min-width: 0;
+  }
+  .draw-date {
+    margin-top: 0;
+  }
+  .draw-row .link-arrow {
+    margin-left: auto;
   }
   .draw-row .balls {
     order: 3;
     flex-basis: 100%;
+    gap: 5px;
+  }
+  .draw-row .ball {
+    min-width: 32px;
+    height: 32px;
+    font-size: 0.8rem;
   }
   .draw-row .draw-special {
     order: 4;
+    margin-left: 2px;
+    padding-left: 7px;
+    border-left: 1px solid var(--line);
+  }
+  .draw-special-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .pair-mobile-list {
+    display: grid;
+  }
+  .pair-mobile-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 0;
+    border-top: 1px solid var(--line);
+    min-height: 50px;
+  }
+  .pair-mobile-row:first-child {
+    border-top: 0;
+  }
+  .pair-mobile-row .balls {
+    flex-wrap: nowrap;
+    gap: 5px;
+  }
+  .pair-mobile-row .ball {
+    min-width: 32px;
+    height: 32px;
+    font-size: 0.8rem;
+  }
+  .pair-mobile-stats {
+    display: grid;
+    gap: 1px;
+    min-width: 0;
+    flex: 1;
+    font-size: 0.82rem;
+  }
+  .pair-mobile-stats .muted {
+    font-size: 0.74rem;
+  }
+  .pair-mobile-draw a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    font-weight: 700;
+    font-size: 0.82rem;
   }
   .desktop-only {
     display: none;
@@ -1091,18 +1224,31 @@ small,
   .picker {
     width: 100%;
     min-width: 0;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 5px;
+  }
+  .picker button {
+    min-height: 44px;
+    padding: 0;
+    font-size: 0.86rem;
   }
   .toolbar {
     min-width: 0;
   }
   .checker-input-toolbar {
     display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
+    flex-wrap: nowrap;
+    gap: 6px;
     align-items: flex-end;
   }
   .checker-input-toolbar .field {
-    flex: 1 1 100%;
+    flex: 1 1 auto;
     min-width: 0;
+  }
+  .checker-input-toolbar .field input {
+    height: 44px;
+  }
+  .checker-input-actions {
+    flex: none;
   }
 }
