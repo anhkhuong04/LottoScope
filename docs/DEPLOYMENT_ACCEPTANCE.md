@@ -5,6 +5,17 @@ và database chạy trên cloud, không phụ thuộc máy cá nhân đang bật
 Runbook: [DEPLOYMENT_FREE.md](DEPLOYMENT_FREE.md), quyết định:
 [ADR 0011](DECISIONS/0011-free-cloud-deployment.md).
 
+## Cập nhật Draw Simulator 3D & UI/UX — 24/11/2026
+
+- Release frontend: commit **`a5d8f5d`**, branch **`deploy/free-cloud`**.
+- Vercel: **`dpl_4M4MN9RQpvvbE8SeeeuKMJ7M4qVC` READY**, production URL `https://lottoscope-sable.vercel.app` đã gán alias (bundle `index-HfDyetCD.js`, `index-CfzZT3by.css`, `DrawScene-C18cAZb4.js`).
+- Local Docker: Image `vietlottanalytics-frontend:latest` đã build lại và chạy trên container `vietlottanalytics-frontend-1` (`http://127.0.0.1:8088`) với cùng bundle.
+- Nội dung cập nhật:
+  - Mô hình 3D & vật lý Rapier mới: lồng cầu tròn đều 3D, viền kim loại bạc, trục khuấy chữ Y 3 nhánh 120° quay quanh trục Z, cửa thoát bóng vị trí **6 giờ** đáy cầu + gate trượt + máng hứng xám đen 2 cánh trái/phải.
+  - Màu sắc & Studio: nền trắng thuần `#ffffff` trực tiếp (không phủ nền/box), bóng chính `#22cc44` chữ trắng có viền nét, lượt Special 01–12 của Lotto 5/35 đổi màu bóng 3D sang đỏ `#b91c1c`.
+  - UI/UX: Desktop 2 cột phẳng trực tiếp trên nền trắng (sân khấu 3D lớn bên trái + nút điều khiển nổi gọn; khay kết quả/Copy/Checker bên phải bỏ viền card); Mobile thu gọn tối ưu để toàn bộ lồng cầu + nút + khay bóng kết quả hiển thị gọn trong 1 màn hình đầu tiên.
+  - Kiểm chứng: `oxlint`, `prettier`, `tsc`, **13/13 test files / 104/104 unit tests pass**, Playwright E2E trên Desktop & Mobile với Rapier thật & Axe WCAG 2.1 AA đạt 100%, đã kiểm tra ảnh chụp màn hình thực tế.
+
 ## Cập nhật AI Access Upgrade (/data pagination, date_range, CSV) — 24/11/2026
 
 - Release frontend: commit **`143b482`**, branch **`deploy/free-cloud`**.
