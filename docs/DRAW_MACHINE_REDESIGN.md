@@ -2,7 +2,7 @@
 
 Ngày 24/11/2026: nâng cấp mô hình 3D và UI/UX `/generator` theo đặc tả mới:
 - Hình học & cơ chế: lồng cầu tròn đều 3D (`radius = 2.5`) với viền tròn kim loại bạc, trục khuấy chữ Y 3 nhánh 120° quay quanh trục Z, cửa thoát bóng nằm ở vị trí **6 giờ** (đáy cầu) kèm gate trượt và máng hứng xám đen mở rộng hai phía trái/phải.
-- Vật liệu & màu sắc: nền studio trắng thuần `#ffffff` đặt lồng cầu trực tiếp không bọc nền/card; bóng 3D main màu xanh lá `#22cc44` chữ trắng, lượt Special 01–12 của Lotto 5/35 đổi màu bóng 3D sang đỏ `#b91c1c` tương ứng khay Special.
+- Vật liệu & màu sắc: nền studio trắng thuần `#ffffff` đặt lồng cầu trực tiếp không bọc nền/card; bóng 3D main màu xanh lá `#22cc44` chữ trắng có viền nét, lượt Special 01–12 của Lotto 5/35 đổi màu bóng 3D sang đỏ `#b91c1c` tương ứng khay Special. Riêng Lotto 5/35 sử dụng kích thước bóng 3D tăng +50% (`ballRadius = 0.285`) cùng cổ thoát co giãn tương ứng; Mega 6/45 và Power 6/55 giữ `ballRadius = 0.19`.
 - Bố cục UI/UX: 2 cột phẳng trên Desktop (sân khấu 3D bên trái + nút điều khiển nổi gọn; khay kết quả/Copy/Checker bên phải trực tiếp trên nền trắng) và thu gọn tối ưu 1 màn hình trên Mobile để hạn chế cuộn trang.
 
 Ngày 03/11/2026: người dùng duyệt mẫu từ `lc1.png`/`lc2.png`, yêu cầu **chỉ giữ

@@ -5,6 +5,15 @@ và database chạy trên cloud, không phụ thuộc máy cá nhân đang bật
 Runbook: [DEPLOYMENT_FREE.md](DEPLOYMENT_FREE.md), quyết định:
 [ADR 0011](DECISIONS/0011-free-cloud-deployment.md).
 
+## Cập nhật kích thước bi 3D Lotto 5/35 (+50%) — 24/11/2026
+
+- Release frontend: commit **`b4c0104`**, branch **`deploy/free-cloud`**.
+- Vercel: **`dpl_HQiA28bACFz2CGR62xiN7VTb5zFq` READY**, production URL `https://lottoscope-sable.vercel.app` đã gán alias (`index-C6Wlwuvt.js`).
+- Local Docker: Image `vietlottanalytics-frontend:latest` đã build lại và chạy trên container `vietlottanalytics-frontend-1` (`http://127.0.0.1:8088`) với cùng bundle.
+- Nội dung cập nhật:
+  - Tăng kích thước bóng 3D riêng cho **Lotto 5/35 thêm +50%** (`ballRadius = 0.285`, cho cả 35 bi main và 12 bi special), tự động nới phễu & cổ ống 6 giờ theo tỉ lệ giữ nguyên single-file trong Rapier; giữ nguyên `ballRadius = 0.19` cho Mega 6/45 và Power 6/55.
+  - Kiểm chứng: **13/13 test files / 105/105 unit tests pass** (gồm vật lý Rapier cho `0.285`), **4/4 ca Playwright E2E thật** (Lotto 5/35 & Mega 6/45 trên Desktop & Mobile + Axe WCAG), đã kiểm tra ảnh chụp màn hình thực tế.
+
 ## Cập nhật Draw Simulator 3D & UI/UX — 24/11/2026
 
 - Release frontend: commit **`a5d8f5d`**, branch **`deploy/free-cloud`**.
