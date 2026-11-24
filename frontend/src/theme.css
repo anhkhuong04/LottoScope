@@ -553,6 +553,14 @@ h3 {
 .pairs-summary .draw-row {
   padding: 8px 0;
 }
+.frequency-tile.compact-tile {
+  padding: 12px 8px;
+  min-height: 0;
+  gap: 7px;
+  background: #f8fafb;
+  border-color: #dce6ea;
+  border-radius: 11px;
+}
 @media (max-width: 767px) {
   .scope-summary {
     font-size: 0.74rem;
@@ -565,10 +573,10 @@ h3 {
     gap: 6px;
   }
   .numbers-page-grid .frequency-tile {
-    padding: 7px 3px 6px;
+    padding: 8px 4px;
     min-height: 0;
-    gap: 3px;
-    border-radius: 8px;
+    gap: 4px;
+    border-radius: 9px;
   }
   .numbers-page-grid .ball {
     min-width: 28px;
@@ -579,9 +587,6 @@ h3 {
     font-size: 0.76rem;
   }
   .numbers-page-grid .frequency-value small {
-    font-size: 0.62rem;
-  }
-  .numbers-page-grid .rank-label {
     font-size: 0.62rem;
   }
   .special-grid {

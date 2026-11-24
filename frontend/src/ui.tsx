@@ -100,6 +100,7 @@ export function FrequencyTile({
   to,
   special = false,
   rank,
+  showMeter = true,
 }: {
   number: number
   frequency: number
@@ -107,17 +108,20 @@ export function FrequencyTile({
   to: string
   special?: boolean
   rank?: number
+  showMeter?: boolean
 }) {
   return (
-    <Link className="number-tile frequency-tile" to={to}>
+    <Link className={`number-tile frequency-tile${showMeter ? '' : ' compact-tile'}`} to={to}>
       <Ball value={number} special={special} />
       <span className="frequency-value">
         {frequency} <small>draws</small>
       </span>
       {rank !== undefined && <span className="rank-label">Rank {rank}</span>}
-      <span className="frequency-meter" aria-hidden="true">
-        <span style={{ width: `${(100 * frequency) / Math.max(1, maximum)}%` }} />
-      </span>
+      {showMeter && (
+        <span className="frequency-meter" aria-hidden="true">
+          <span style={{ width: `${(100 * frequency) / Math.max(1, maximum)}%` }} />
+        </span>
+      )}
     </Link>
   )
 }
@@ -388,19 +392,19 @@ export function Pager({
       <span className="pagination-summary" aria-live="polite">
         Page {page}/{pages} · {total} items
       </span>
-      <PageJump key={`${page}:${pages}:${total}`} page={page} pages={pages} setPage={setPage} />
-      <div className="pagination-arrows">
+      <div className="pagination-bar">
         <button
           aria-label="Previous page"
-          className="btn"
+          className="btn pagination-arrow"
           disabled={page <= 1}
           onClick={() => setPage(page - 1)}
         >
           <ArrowLeft size={16} />
         </button>
+        <PageJump key={`${page}:${pages}:${total}`} page={page} pages={pages} setPage={setPage} />
         <button
           aria-label="Next page"
-          className="btn"
+          className="btn pagination-arrow"
           disabled={page >= pages}
           onClick={() => setPage(page + 1)}
         >
@@ -441,12 +445,17 @@ function PageJump({
       }}
     >
       <div className="page-jump-controls">
-        <label htmlFor={id}>Go to page</label>
+        <label htmlFor={id} className="page-jump-label">
+          Page
+        </label>
         <input
           id={id}
+          aria-label="Go to page"
           className="text-input"
           type="text"
           inputMode="numeric"
+          enterKeyHint="go"
+          title="Enter page number and press Enter"
           value={draft}
           disabled={pages <= 1}
           aria-invalid={!!error}
@@ -462,12 +471,9 @@ function PageJump({
             }
           }}
         />
-        <span id={`${id}-hint`} className="muted">
+        <span id={`${id}-hint`} className="page-jump-total">
           / {pages}
         </span>
-        <button className="btn" type="submit" disabled={pages <= 1}>
-          Go
-        </button>
       </div>
       {error && (
         <span id={`${id}-error`} className="page-jump-error" role="alert">

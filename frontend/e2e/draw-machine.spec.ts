@@ -114,7 +114,6 @@ for (const [game, max, count] of [
     }
     await page.getByRole('link', { name: 'Check history' }).click()
     await expect(page.getByText(`${count}/${count} numbers selected`)).toBeVisible()
-    await page.getByRole('button', { name: 'Check history' }).click()
     await expect(page.getByRole('heading', { name: /Exact Matches/ })).toBeVisible()
     expect(errors).toEqual([])
   })

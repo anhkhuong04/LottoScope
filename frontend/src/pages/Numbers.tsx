@@ -26,7 +26,7 @@ import {
 export function Numbers() {
   const { game, window } = useApp()
   const location = useLocation()
-  const [sort, setSort] = useUrlField('sort', 'number')
+  const [sort, setSort] = useUrlField('sort', 'frequency_desc')
   const [kind, setKind] = useUrlField('number_kind', 'main')
   const special = game!.id === 'lotto_535' && kind === 'special'
   const path = `/games/${game!.id}/analytics/numbers?${params({ ...windowQuery(window), sort, number_kind: special ? 'special' : 'main' })}`
@@ -58,9 +58,9 @@ export function Numbers() {
         <label className="field">
           Sort by
           <select value={sort} onChange={(event) => setSort(event.target.value)}>
-            <option value="number">Number order</option>
             <option value="frequency_desc">Frequency (desc)</option>
             <option value="frequency_asc">Frequency (asc)</option>
+            <option value="number">Number order</option>
             <option value="gap_desc">Gap (desc)</option>
           </select>
         </label>
@@ -82,7 +82,7 @@ export function Numbers() {
                     frequency={item.frequency}
                     maximum={max}
                     special={special}
-                    rank={result.data?.context.actual_draw_count ? item.frequency_rank : undefined}
+                    showMeter={false}
                   />
                 ))}
               </div>

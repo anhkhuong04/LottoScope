@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { api, globalSearch, type CheckResponse } from '../api'
 import { useApp } from '../state'
@@ -28,19 +28,56 @@ export function Checker() {
   const [input, setInput] = useState('')
   const [inputError, setInputError] = useState<string | null>(null)
   const [similarPage, setSimilarPage] = useState(1)
+  const [attempt, setAttempt] = useState(0)
   const [result, setResult] = useState<{ key: string; data: CheckResponse } | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<{ key: string; message: string } | null>(null)
   const [loadingKey, setLoadingKey] = useState<string | null>(null)
-  const controller = useRef<AbortController | null>(null)
-  const resultFocus = useRef<HTMLDivElement>(null)
-  const focusOnResult = useRef(false)
-  const contextKey = `${game!.id}:${JSON.stringify(window)}:${[...selected].sort((a, b) => a - b).join(',')}`
+  const sortedSelected = [...selected].sort((a, b) => a - b)
+  const contextKey = `${game!.id}:${JSON.stringify(window)}:${sortedSelected.join(',')}`
   const key = `${contextKey}:${similarPage}`
-  const loading = loadingKey?.startsWith(`${contextKey}:`) ?? false
-  useEffect(() => () => controller.current?.abort(), [])
+  const validation = validateNumbers(
+    sortedSelected,
+    game!.main_min,
+    game!.main_max,
+    game!.main_count,
+  )
+  const loading = !validation && (loadingKey?.startsWith(`${contextKey}:`) ?? false)
+
   useEffect(() => {
-    controller.current?.abort()
-  }, [key])
+    if (validation) return
+    const controller = new AbortController()
+    const requestKey = key
+    const numbers = [...sortedSelected]
+    const page = similarPage
+    const gameId = game!.id
+    setLoadingKey(requestKey)
+    setError(null)
+    api<CheckResponse>(`/games/${gameId}/combinations/check`, controller.signal, {
+      main_numbers: numbers,
+      analysis_window: window,
+      similar_page: page,
+      similar_page_size: 10,
+    })
+      .then((data) => {
+        if (!controller.signal.aborted) {
+          setResult({ key: requestKey, data })
+          setError(null)
+        }
+      })
+      .catch((cause) => {
+        if (!controller.signal.aborted)
+          setError({
+            key: requestKey,
+            message: cause instanceof Error ? cause.message : 'Failed to check combination.',
+          })
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoadingKey(null)
+      })
+    return () => controller.abort()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key, validation, attempt])
+
   const addInput = () => {
     const parts = input
       .trim()
@@ -68,14 +105,12 @@ export function Checker() {
       setInputError(`Select up to ${game!.main_count} main numbers.`)
       return
     }
-    controller.current?.abort()
     setSelected([...selected, ...parsed].sort((a, b) => a - b))
     setInput('')
     setInputError(null)
     setSimilarPage(1)
   }
   const toggle = (number: number) => {
-    controller.current?.abort()
     setSelected((values) =>
       values.includes(number)
         ? values.filter((value) => value !== number)
@@ -87,55 +122,15 @@ export function Checker() {
     setSimilarPage(1)
   }
   const clear = () => {
-    controller.current?.abort()
     setSelected([])
     setInput('')
     setInputError(null)
     setSimilarPage(1)
   }
-  const validation = validateNumbers(selected, game!.main_min, game!.main_max, game!.main_count)
-  const run = async (page = similarPage) => {
-    if (validation) {
-      setInputError(validation)
-      return
-    }
-    controller.current?.abort()
-    const request = new AbortController()
-    focusOnResult.current = page === 1
-    controller.current = request
-    const requestKey = `${game!.id}:${JSON.stringify(window)}:${selected.join(',')}:${page}`
-    setLoadingKey(requestKey)
-    setError(null)
-    try {
-      const data = await api<CheckResponse>(
-        `/games/${game!.id}/combinations/check`,
-        request.signal,
-        {
-          main_numbers: selected,
-          analysis_window: window,
-          similar_page: page,
-          similar_page_size: 10,
-        },
-      )
-      if (!request.signal.aborted) {
-        setResult({ key: requestKey, data })
-        setSimilarPage(page)
-      }
-    } catch (cause) {
-      if (!request.signal.aborted)
-        setError(cause instanceof Error ? cause.message : 'Failed to check combination.')
-    } finally {
-      if (!request.signal.aborted) setLoadingKey(null)
-    }
-  }
   const data = result?.key === key ? result.data : null
-  const visibleError = result?.key === key ? error : null
-  useEffect(() => {
-    if (data && focusOnResult.current) {
-      resultFocus.current?.focus()
-      focusOnResult.current = false
-    }
-  }, [data])
+  const visibleError = error?.key === key ? error.message : null
+  const matchCounts = Array.from({ length: Math.max(0, game!.main_count - 2) }, (_, i) => i + 3)
+
   return (
     <>
       <PageHead
@@ -147,20 +142,6 @@ export function Checker() {
         <Card
           title={`Select ${game!.main_count} main numbers (${game!.main_min}–${game!.main_max})`}
         >
-          {selected.length > 0 && (
-            <div className="token-box">
-              {selected.map((number) => (
-                <button
-                  key={number}
-                  className="btn ghost"
-                  aria-label={`Remove number ${number}`}
-                  onClick={() => toggle(number)}
-                >
-                  <Ball value={number} /> ×
-                </button>
-              ))}
-            </div>
-          )}
           <div className="toolbar checker-input-toolbar">
             <label className="field">
               Enter numbers
@@ -213,21 +194,12 @@ export function Checker() {
               </button>
             ))}
           </div>
-          <p className="muted" style={{ marginTop: 15 }}>
+          <p className="muted checker-picker-count">
             {selected.length}/{game!.main_count} numbers selected
           </p>
-          <div className="toolbar" style={{ marginTop: 15, marginBottom: 0 }}>
-            <button
-              className="btn primary"
-              disabled={loading || !!validation}
-              onClick={() => run()}
-            >
-              {loading ? 'Checking…' : 'Check history'}
-            </button>
-          </div>
         </Card>
         <Card title="Check Results">
-          <div className="result-focus" ref={resultFocus} tabIndex={-1} aria-label="Check Results">
+          <div className="result-focus" aria-label="Check Results">
             <div aria-live="polite">
               {!data && !loading && !visibleError && (
                 <div className="checker-empty">
@@ -240,22 +212,17 @@ export function Checker() {
                       </span>
                     ))}
                   </div>
-                  <h3>
-                    {selected.length === game!.main_count
-                      ? 'Combination ready'
-                      : 'Start with your combination'}
-                  </h3>
+                  <h3>Start with your combination</h3>
                   <p className="muted">
-                    {selected.length}/{game!.main_count} main numbers selected. Select full set to
-                    check.
+                    {selected.length}/{game!.main_count} main numbers selected. Checking runs
+                    automatically once all {game!.main_count} numbers are chosen.
                   </p>
                 </div>
               )}
-              {loading && <p className="muted">Comparing with history…</p>}
+              {loading && !data && <p className="muted">Comparing with history…</p>}
               {visibleError && (
                 <div className="notice error" role="alert">
-                  {data ? 'Previous result in same window. ' : ''}
-                  {visibleError} <button onClick={() => run()}>Retry</button>
+                  {visibleError} <button onClick={() => setAttempt((v) => v + 1)}>Retry</button>
                 </div>
               )}
             </div>
@@ -270,9 +237,10 @@ export function Checker() {
                   <div>
                     Latest match:{' '}
                     <Link
+                      className="inline-link"
                       to={`/history/${data.last_exact_match.draw_id}${globalSearch(game!.id, window)}`}
                     >
-                      {data.last_exact_match.draw_id}
+                      Draw {data.last_exact_match.draw_id}
                     </Link>
                   </div>
                 ) : (
@@ -285,12 +253,9 @@ export function Checker() {
       </div>
       {data && (
         <div className="stack result-group">
-          <Card
-            title="Match Distribution"
-            subtitle="Number of draws matching exact number of main balls"
-          >
-            <div className="grid cols-3">
-              {Array.from({ length: game!.main_count + 1 }, (_, count) => (
+          <Card title="Match Distribution" subtitle="Draws matching 3 or more main balls">
+            <div className={`grid cols-${matchCounts.length}`}>
+              {matchCounts.map((count) => (
                 <div className="result-item" key={count}>
                   <strong>{count} matched</strong>
                   <div>{data.overlap_histogram[`match_${count}`] ?? 0} draws</div>
@@ -314,7 +279,7 @@ export function Checker() {
               page={data.similar_draws.page}
               total={data.similar_draws.total}
               pageSize={data.similar_draws.page_size}
-              setPage={(page) => run(page)}
+              setPage={(page) => setSimilarPage(page)}
             />
           </Card>
           <Card title="Individual Number Stats">

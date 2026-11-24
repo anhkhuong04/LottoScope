@@ -71,10 +71,11 @@ describe('data loading presentation', () => {
 })
 
 describe('Pager', () => {
-  it('jumps directly on Enter or the Go button without navigating while typing', async () => {
+  it('jumps directly on Enter without rendering a Go button or navigating while typing', async () => {
     const user = userEvent.setup()
     const setPage = vi.fn()
     render(<Pager page={1} total={944} pageSize={25} setPage={setPage} />)
+    expect(screen.queryByRole('button', { name: 'Go' })).toBeNull()
     const input = screen.getByLabelText('Go to page')
     await user.clear(input)
     await user.type(input, '15')
@@ -82,19 +83,18 @@ describe('Pager', () => {
     await user.keyboard('{Enter}')
     expect(setPage).toHaveBeenLastCalledWith(15)
     await user.clear(input)
-    await user.type(input, '38')
-    await user.click(screen.getByRole('button', { name: 'Go' }))
+    await user.type(input, '38{Enter}')
     expect(setPage).toHaveBeenLastCalledWith(38)
   })
 
   it.each(['', '0', '-1', '39', '1.5', '1e1', 'abc', '99999999999999999999'])(
-    'rejects invalid page %j without calling navigation',
+    'rejects invalid page %j on Enter without calling navigation',
     (value) => {
       const setPage = vi.fn()
       render(<Pager page={1} total={944} pageSize={25} setPage={setPage} />)
       const input = screen.getByLabelText('Go to page')
       fireEvent.change(input, { target: { value } })
-      fireEvent.click(screen.getByRole('button', { name: 'Go' }))
+      fireEvent.submit(input.closest('form')!)
       expect(screen.getByRole('alert')).toHaveTextContent('Enter page number from 1 to 38.')
       expect(input).toHaveAttribute('aria-invalid', 'true')
       expect(setPage).not.toHaveBeenCalled()
@@ -126,7 +126,7 @@ describe('Pager', () => {
   it('does not request the current page again', () => {
     const setPage = vi.fn()
     render(<Pager page={15} total={944} pageSize={25} setPage={setPage} />)
-    fireEvent.click(screen.getByRole('button', { name: 'Go' }))
+    fireEvent.submit(screen.getByLabelText('Go to page').closest('form')!)
     expect(setPage).not.toHaveBeenCalled()
   })
 })
