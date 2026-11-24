@@ -4,10 +4,10 @@
   <p><strong>Historical Vietlott draw archive, statistical analytics, combination checker, and 3D physics draw simulator</strong></p>
   <p>
     <a href="https://lottoscope-sable.vercel.app">Live Demo</a> •
-    <a href="docs/API.md">API Reference</a> •
-    <a href="docs/ARCHITECTURE.md">Architecture</a> •
-    <a href="docs/LOCAL_OPERATIONS.md">Operations Guide</a> •
-    <a href="docs/DEPLOYMENT_FREE.md">Cloud Deployment</a>
+    <a href="#api-reference">API Reference</a> •
+    <a href="#system-architecture">Architecture</a> •
+    <a href="#getting-started">Getting Started</a> •
+    <a href="#deployment">Deployment</a>
   </p>
   <p>
     <img src="https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white" alt="Python 3.12" />
@@ -18,7 +18,7 @@
   </p>
 </div>
 
-![LottoScope Dashboard Overview](docs/images/screenshots/dashboard.png)
+![LottoScope Dashboard Overview](assets/screenshots/dashboard.png)
 
 ---
 
@@ -49,15 +49,13 @@ Official lottery pages publish draws one result at a time without aggregated fre
 
 ## Product Preview
 
-|              Number Frequency & Gaps (`Lotto 5/35`)               |                   Combination Checker (`Mega 6/45`)                   |
-| :---------------------------------------------------------------: | :-------------------------------------------------------------------: |
-| ![Lotto 5/35 Frequency Grid](docs/images/screenshots/numbers.png) | ![Mega 6/45 Combination Checker](docs/images/screenshots/checker.png) |
+|            Number Frequency & Gaps (`Lotto 5/35`)            |                Combination Checker (`Mega 6/45`)                 |
+| :----------------------------------------------------------: | :--------------------------------------------------------------: |
+| ![Lotto 5/35 Frequency Grid](assets/screenshots/numbers.png) | ![Mega 6/45 Combination Checker](assets/screenshots/checker.png) |
 
-|             3D Draw Simulator (`Lotto 5/35` Special Chamber)              |                                       Mobile Dashboard (`390×844`)                                       |
-| :-----------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------: |
-| ![Lotto 5/35 3D Draw Simulator](docs/images/screenshots/draw-machine.png) | <img src="docs/images/screenshots/mobile-dashboard.png" width="280" alt="LottoScope Mobile Dashboard" /> |
-
-Additional screenshot notes and earlier design references are cataloged in [docs/images/screenshots/README.md](docs/images/screenshots/README.md).
+|           3D Draw Simulator (`Lotto 5/35` Special Chamber)           |                                    Mobile Dashboard (`390×844`)                                     |
+| :------------------------------------------------------------------: | :-------------------------------------------------------------------------------------------------: |
+| ![Lotto 5/35 3D Draw Simulator](assets/screenshots/draw-machine.png) | <img src="assets/screenshots/mobile-dashboard.png" width="280" alt="LottoScope Mobile Dashboard" /> |
 
 ---
 
@@ -229,7 +227,7 @@ docker compose run --rm --no-deps -e LOTTO_SCHEDULER_ENABLED=false backend pytho
 docker compose run --rm --no-deps backend python -m app.commands.ingestion_status
 ```
 
-Additional maintenance CLIs (`sync_games`, `apply_correction`, `import_power_file`) and PostgreSQL backup/restore procedures are documented in [docs/LOCAL_OPERATIONS.md](docs/LOCAL_OPERATIONS.md).
+Additional maintenance CLIs (`sync_games`, `apply_correction`, `import_power_file`) are located under `backend/app/commands/`.
 
 ### AI-Readable Static Data Endpoints
 
@@ -248,7 +246,7 @@ Supported query parameters: `window` (`last_draws` | `date_range` | `all_time`),
 
 ```text
 .
-├── .github/workflows/          # CI pipelines for backend (uv/pytest) and frontend (Vite/Vitest)
+├── assets/screenshots/         # Product screenshots displayed in this README
 ├── backend/
 │   ├── app/
 │   │   ├── analytics/          # Pure statistical metrics and service orchestration
@@ -282,7 +280,6 @@ Supported query parameters: `window` (`last_draws` | `date_range` | `all_time`),
 │   ├── middleware.ts           # Edge middleware routing AI crawlers to /api/data
 │   ├── nginx.conf & Dockerfile # Production Nginx SPA + reverse proxy image
 │   └── vercel.json
-├── docs/                       # Domain specs, ADRs, API contract, deployment runbooks, screenshots
 ├── scripts/                    # Cloud smoke checks and optional Windows local sync scripts
 ├── compose.yaml                # Local PostgreSQL + FastAPI + Nginx stack
 ├── compose.lan.yaml            # Opt-in Wi-Fi LAN frontend binding overlay
@@ -293,7 +290,7 @@ Supported query parameters: `window` (`last_draws` | `date_range` | `all_time`),
 
 ## API Reference
 
-All HTTP JSON endpoints live under `/api/v1` (except health probes). Detailed request/response schemas and error contracts are maintained in [docs/API.md](docs/API.md).
+All HTTP JSON endpoints live under `/api/v1` (except health probes). Interactive OpenAPI schemas are available at `/docs` when running in local mode.
 
 | Method & Path                                         | Description                                                                   |
 | ----------------------------------------------------- | ----------------------------------------------------------------------------- |
@@ -317,7 +314,7 @@ All HTTP JSON endpoints live under `/api/v1` (except health probes). Detailed re
 
 ## Testing
 
-All verification commands match [`.github/workflows/backend.yml`](.github/workflows/backend.yml) and [`.github/workflows/frontend.yml`](.github/workflows/frontend.yml).
+All verification commands follow the repository's backend (`uv` / `pytest`) and frontend (`npm` / `vitest` / `playwright`) quality checks.
 
 > [!CAUTION]
 > Backend integration tests **truncate tables** in the database targeted by `LOTTO_TEST_DATABASE_URL`. Always point `LOTTO_TEST_DATABASE_URL` to a dedicated test database (e.g., `lotto_test`), never your application database.
@@ -368,11 +365,9 @@ npm run test:e2e
   node scripts/cloud-smoke.mjs https://your-site.vercel.app https://your-api.onrender.com
   ```
 
-See [docs/DEPLOYMENT_FREE.md](docs/DEPLOYMENT_FREE.md) for environment variable checklists, migration steps, and operational constraints.
-
 ### Local Wi-Fi Sharing (Opt-In)
 
-To expose the local Docker frontend over trusted LAN Wi-Fi without opening PostgreSQL or FastAPI ports publicly, bind `FRONTEND_LAN_IP` in `.env` and layer [`compose.lan.yaml`](compose.lan.yaml). Full instructions and firewall notes live in [docs/LOCAL_OPERATIONS.md](docs/LOCAL_OPERATIONS.md).
+To expose the local Docker frontend over trusted LAN Wi-Fi without opening PostgreSQL or FastAPI ports publicly, bind `FRONTEND_LAN_IP` in `.env` and layer [`compose.lan.yaml`](compose.lan.yaml).
 
 ---
 
@@ -387,7 +382,7 @@ To expose the local Docker frontend over trusted LAN Wi-Fi without opening Postg
 
 ### Documented Roadmap (Out of MVP Scope)
 
-Per [`docs/MVP.md`](docs/MVP.md) and [`docs/AI_ANALYTICS_CHAT.md`](docs/AI_ANALYTICS_CHAT.md), items beyond the completed MVP scope include:
+Items beyond the completed MVP scope include:
 
 - **Phase 2 Analytics**: Saved strategy definitions, strict pre-cutoff historical backtesting, and random-baseline comparisons.
 - **AI Analytics Chat V1** _(design specification only — not yet implemented)_: Evidence-grounded Vietnamese Q&A interface backed by read-only analytics tool calls over immutable turn snapshots.
