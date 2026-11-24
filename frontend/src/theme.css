@@ -109,6 +109,11 @@ h3 {
   background: var(--ball-special);
   color: var(--ball-text);
 }
+.ball.dimmed {
+  background: #edf2f4;
+  color: #526574;
+  border: 1px solid #d4dfe4;
+}
 .scope-summary {
   display: flex;
   flex-wrap: wrap;
@@ -226,14 +231,184 @@ h3 {
 }
 .checker-empty {
   text-align: center;
-  padding: 32px 4px;
+  padding: 28px 4px;
 }
 .checker-empty h3 {
-  margin: 24px 0 12px;
+  margin: 20px 0 10px;
 }
 .checker-empty p {
   font-size: 0.9rem;
-  line-height: 1.6;
+  line-height: 1.55;
+}
+.checker-top-grid {
+  align-items: start;
+}
+.checker-picker-header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.checker-count-pill {
+  font-variant-numeric: tabular-nums;
+}
+.checker-input-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.checker-quick-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid #d0dce1;
+  border-radius: 9px;
+  background: #fff;
+  color: var(--ink);
+  font-size: 0.88rem;
+}
+.checker-input-bar .btn-sm {
+  min-height: 40px;
+  height: 40px;
+}
+.checker-results-wrap {
+  scroll-margin-top: 76px;
+}
+.checker-summary {
+  gap: 14px;
+}
+.checker-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.checker-exact-pill {
+  background: #e6f4ec;
+  color: #116236;
+}
+.checker-distribution {
+  display: grid;
+  gap: 8px;
+  margin-top: 2px;
+}
+.checker-section-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.checker-stat-grid {
+  display: grid;
+  gap: 8px;
+}
+.checker-stat-box {
+  display: grid;
+  gap: 3px;
+  padding: 10px 8px;
+  border: 1px solid #dce6ea;
+  border-radius: 10px;
+  background: #f8fafb;
+  text-align: center;
+}
+.checker-stat-label {
+  font-size: 0.74rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+.checker-stat-value {
+  font-size: 1.05rem;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.checker-detail-tabs {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+.checker-tablist {
+  display: flex;
+  gap: 6px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 14px;
+  overflow-x: auto;
+}
+.checker-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 0.88rem;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.checker-tab:hover {
+  color: var(--ink);
+}
+.checker-tab.active {
+  color: var(--teal-strong);
+  border-bottom-color: var(--teal);
+}
+.checker-tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #eef2f5;
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-variant-numeric: tabular-nums;
+}
+.checker-tab.active .checker-tab-count {
+  background: var(--pale);
+  color: var(--teal-strong);
+}
+.checker-similar-list {
+  display: grid;
+}
+.checker-similar-row {
+  display: grid;
+  gap: 8px;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+.checker-similar-row:first-child {
+  border-top: 0;
+  padding-top: 4px;
+}
+.checker-similar-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.checker-similar-head .draw-meta {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+.checker-similar-head .draw-date {
+  margin-top: 0;
+}
+.checker-match-pill {
+  font-size: 0.76rem;
+  padding: 3px 8px;
+}
+.checker-similar-head .link-arrow {
+  margin-left: auto;
 }
 .checker-slots {
   display: flex;
@@ -629,6 +804,25 @@ h3 {
   }
   .checker-empty {
     padding: 16px 0;
+  }
+  .checker-tab {
+    flex: 1 1 0;
+    padding: 0 8px;
+    font-size: 0.8rem;
+  }
+  .checker-stat-box {
+    padding: 8px 4px;
+  }
+  .checker-stat-label {
+    font-size: 0.68rem;
+  }
+  .checker-similar-row .ball {
+    min-width: 32px;
+    height: 32px;
+    font-size: 0.8rem;
+  }
+  .checker-similar-row .balls {
+    gap: 5px;
   }
   .topbar-actions {
     gap: 8px;

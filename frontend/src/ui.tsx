@@ -82,13 +82,17 @@ export function Ball({
   value,
   special = false,
   large = false,
+  dimmed = false,
 }: {
   value: number
   special?: boolean
   large?: boolean
+  dimmed?: boolean
 }) {
   return (
-    <span className={`ball${special ? ' special' : ''}${large ? ' large' : ''}`}>
+    <span
+      className={`ball${special ? ' special' : ''}${large ? ' large' : ''}${dimmed ? ' dimmed' : ''}`}
+    >
       {String(value).padStart(2, '0')}
     </span>
   )
@@ -130,15 +134,22 @@ export function Balls({
   values,
   special,
   large = false,
+  highlighted,
 }: {
   values: number[]
   special?: number | null
   large?: boolean
+  highlighted?: ReadonlySet<number>
 }) {
   return (
     <div className="balls">
       {values.map((value) => (
-        <Ball key={value} value={value} large={large} />
+        <Ball
+          key={value}
+          value={value}
+          large={large}
+          dimmed={highlighted !== undefined && !highlighted.has(value)}
+        />
       ))}
       {special !== null && special !== undefined && (
         <span className="draw-special">
