@@ -23,9 +23,12 @@ checker/generator hoặc định nghĩa cặp main-only.
   deadline 270 giây trả 504 `gateway_timeout`, outcome sync có thể chưa biết.
   Cloud tắt docs/OpenAPI. Website Vercel công khai theo yêu cầu người dùng.
   Ngoài ra tầng Vercel cung cấp `/robots.txt`, `/llms.txt`, trang dữ liệu tĩnh
-  read-only `/data` và `/data/{game}` (HTML hoặc `?format=md`, hỗ trợ Edge Cache
-  `s-maxage=300` với `Vary: User-Agent, Accept`; tự động phục vụ qua Edge
-  Middleware cho AI crawler ở `/`), cùng WebMCP tools read-only phía browser.
+  read-only `/data` và `/data/{game}` (hỗ trợ `HTML`, `?format=md`, `?format=csv`
+  với `section=draws|numbers|special|pairs`, tách riêng `count`/`window=date_range`/
+  `from_date`/`to_date`/`as_of_draw_id` khỏi `draw_limit`/`draw_page`/`pair_limit`/
+  `pair_page`, Edge Cache `s-maxage=300` với `Vary: User-Agent, Accept`; tự động
+  phục vụ qua Edge Middleware cho AI crawler ở `/`), cùng WebMCP tools read-only
+  phía browser.
 
 - Path `game` là `lotto_535`, `mega_645` hoặc `power_655`. Game lạ → 404 `unknown_game`.
   Dates dùng `YYYY-MM-DD` theo Việt Nam; timestamps dùng RFC 3339 có `Z`.

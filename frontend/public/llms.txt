@@ -12,9 +12,15 @@ All statistics are purely historical and descriptive; LottoScope does not predic
 - [Power 6/55 Statistics](https://lottoscope-sable.vercel.app/data/power_655): Recent draws, main number frequencies & gaps (01-55), and top pairs.
 
 Query parameters supported on `/data` and `/data/{game}`:
-- `count`: `10`, `20`, `30` (default), `50`, or `100` recent draws.
-- `window`: `last_draws` (default) or `all_time`.
-- `format`: `html` (default) or `md` (plain Markdown).
+- `window`: `last_draws` (default), `date_range`, or `all_time`.
+- `count`: `10`, `20`, `30` (default), `50`, or `100` recent draws (analytics window only).
+- `from_date` & `to_date`: `YYYY-MM-DD` range (max 3650 days; filters both `date_range` analytics and raw draws).
+- `as_of_draw_id`: optional cutoff draw ID for historical analytics snapshot.
+- `draw_limit` & `draw_page` & `draw_sort`: raw draw history pagination (`1..100` rows per page, `desc` or `asc`), independent of `count`.
+- `draw_id`: optional exact draw ID lookup in raw draw history.
+- `pair_limit` & `pair_page`: co-occurring pair pagination (`1..100` pairs per page).
+- `format`: `html` (default), `md` (Markdown), or `csv` (RFC-4180 CSV).
+- `section` (when `format=csv`): `draws` (default), `numbers`, `special` (`lotto_535` only), or `pairs`.
 
 ## Read-Only JSON API Endpoints
 
