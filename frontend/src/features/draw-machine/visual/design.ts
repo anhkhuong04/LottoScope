@@ -11,14 +11,16 @@ export type Design = {
 export type View = 'isometric' | 'front' | 'right' | 'top'
 export type Point = [number, number, number]
 
+export const SPECIAL_BALL_COLOR = '#b91c1c'
+
 export const defaultDesign: Design = {
   radius: 2.5,
   ballRadius: 0.28,
   scale: 1,
-  frameColor: '#f2f4f5',
-  ballColor: '#008c82',
+  frameColor: '#cfd6dc',
+  ballColor: '#22cc44',
   digitColor: '#ffffff',
-  acrylicOpacity: 0.07,
+  acrylicOpacity: 0.16,
   quality: 'standard',
 }
 

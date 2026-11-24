@@ -152,56 +152,28 @@ export default function DrawMachine({
     (supported === false
       ? 'Browser does not support WebGL 2. Please enable hardware acceleration or use a supported browser.'
       : null)
+
   return (
-    <>
+    <div className="draw-page">
       <PageHead
         title="Draw Simulator"
         description={`${game.label} · Physical exit determines result. ${countWordCap} main numbers${hasSpecial ? ` and 1 special number (${game.special_min}–${specialMax})` : ''}, without applying historical filters.`}
       />
       <div className="draw-machine-layout">
         <section className="draw-stage" aria-label={`${game.label} Draw Chamber`}>
-          <div className="draw-stage-head">
-            <span className="draw-stage-brand">
-              LOTTOSCOPE <span>DRAW LAB</span>
-            </span>
-            <span className="draw-stage-badge">
+          <div className="draw-stage-overlay-top">
+            <span className={`draw-stage-badge${snapshot.phase === 'special' ? ' special' : ''}`}>
               {snapshot.phase === 'special' ? specialMax : game.main_max} BALLS
             </span>
+            <span className="draw-stage-pill-status">
+              <span className={`draw-led${running ? ' active' : ''}`} />
+              <span className="draw-stage-count">
+                {snapshot.drawn.length} / {game.main_count}
+                {hasSpecial && ` · SP ${snapshot.specialNumber === null ? 0 : 1} / 1`}
+              </span>
+            </span>
           </div>
-          <div className="draw-controls">
-            {snapshot.status === 'ready' && (
-              <button
-                className="btn primary"
-                disabled={!ready || Boolean(failure)}
-                onClick={() => send('start')}
-              >
-                <Play size={18} />
-                Start Draw
-              </button>
-            )}
-            {running && (
-              <button className="btn primary" onClick={() => send('pause')}>
-                <Pause size={18} />
-                Pause
-              </button>
-            )}
-            {(snapshot.status === 'paused' || snapshot.status === 'stalled') && !failure && (
-              <button
-                className="btn primary"
-                onClick={() => {
-                  setMessage('')
-                  send('resume')
-                }}
-              >
-                <Play size={18} />
-                {snapshot.status === 'stalled' ? 'Keep mixing' : 'Resume'}
-              </button>
-            )}
-            <button className="btn" onClick={reset}>
-              <RotateCcw size={17} />
-              New session
-            </button>
-          </div>
+
           <div className="draw-viewport">
             {supported && !fatal && (
               <div
@@ -225,7 +197,7 @@ export default function DrawMachine({
             )}
             {hidden && !failure && (
               <div className="draw-concealed-note">
-                <Pause size={30} />
+                <Pause size={26} />
                 <p>
                   3D motion rendering hidden.
                   <br />
@@ -238,91 +210,121 @@ export default function DrawMachine({
               <div className="draw-failure" role="alert">
                 <MachineFallback />
                 {failure}
-                <button className="btn" onClick={reset}>
-                  Retry 3D scene
-                </button>
-                {fatal && (
-                  <button className="btn" onClick={() => window.location.reload()}>
-                    Reload page
+                <div className="draw-failure-actions">
+                  <button className="btn" onClick={reset}>
+                    Retry 3D scene
                   </button>
-                )}
+                  {fatal && (
+                    <button className="btn" onClick={() => window.location.reload()}>
+                      Reload page
+                    </button>
+                  )}
+                </div>
               </div>
             )}
           </div>
-          <div className="draw-stage-foot">
-            <span className={`draw-led${running ? ' active' : ''}`} />
-            {failure
-              ? 'Scene not ready'
-              : !ready
-                ? 'Initializing'
-                : statusLabel(snapshot, game.main_count, hasSpecial)}
-            <span className="draw-stage-count">
-              {snapshot.drawn.length} / {game.main_count}
-              {hasSpecial && ` · SP ${snapshot.specialNumber === null ? 0 : 1} / 1`}
-            </span>
+
+          <div className="draw-controls-floating">
+            {snapshot.status === 'ready' && (
+              <button
+                className="btn primary"
+                disabled={!ready || Boolean(failure)}
+                onClick={() => send('start')}
+              >
+                <Play size={17} />
+                Start Draw
+              </button>
+            )}
+            {running && (
+              <button className="btn primary" onClick={() => send('pause')}>
+                <Pause size={17} />
+                Pause
+              </button>
+            )}
+            {(snapshot.status === 'paused' || snapshot.status === 'stalled') && !failure && (
+              <button
+                className="btn primary"
+                onClick={() => {
+                  setMessage('')
+                  send('resume')
+                }}
+              >
+                <Play size={17} />
+                {snapshot.status === 'stalled' ? 'Keep mixing' : 'Resume'}
+              </button>
+            )}
+            <button className="btn" onClick={reset}>
+              <RotateCcw size={16} />
+              New session
+            </button>
           </div>
         </section>
-        <section className="card draw-console" aria-label="Draw controls and results">
-          <p className="draw-eyebrow">LOCAL DRAW SESSION</p>
-          <h2>
-            {hasSpecial
-              ? `${countWordCap} main numbers + one special number.`
-              : `${countWordCap} balls. One combination.`}
-          </h2>
-          <p className="muted">
-            Each ball has identical size and mass. Numbers are recorded only after passing through
-            the outlet gate.
-          </p>
-          <div className="draw-status" role="status" aria-live="polite">
-            {statusLabel(snapshot, game.main_count, hasSpecial)}
+
+        <section className="draw-console" aria-label="Draw controls and results">
+          <div className="draw-console-head">
+            <p className="draw-eyebrow">LOCAL DRAW SESSION</p>
+            <h2>
+              {hasSpecial
+                ? `${countWordCap} main numbers + one special number.`
+                : `${countWordCap} balls. One combination.`}
+            </h2>
+            <p className="muted">
+              Each ball has identical size and mass. Numbers are recorded only after passing through
+              the 6-o&apos;clock discharge gate.
+            </p>
           </div>
-          <ol
-            className="draw-result-slots"
-            aria-label="Draw sequence"
-            style={{ gridTemplateColumns: `repeat(${game.main_count}, minmax(0, 1fr))` }}
-          >
-            {Array.from({ length: game.main_count }, (_, i) => (
-              <li key={i}>
-                <span className={`draw-slot${snapshot.drawn[i] !== undefined ? ' filled' : ''}`}>
-                  {snapshot.drawn[i] === undefined
-                    ? '—'
-                    : String(snapshot.drawn[i]).padStart(2, '0')}
-                </span>
-                <small>Ball {i + 1}</small>
-              </li>
-            ))}
-          </ol>
-          {hasSpecial && (
-            <div className="draw-special-result" aria-label="Special Number">
-              <span
-                className={`draw-slot special${snapshot.specialNumber !== null ? ' filled' : ''}`}
-              >
-                {snapshot.specialNumber === null
-                  ? '—'
-                  : String(snapshot.specialNumber).padStart(2, '0')}
-              </span>
-              <div>
-                <strong>Special Number</strong>
-                <small>
-                  Separate chamber · {game.special_min}–{specialMax}
-                </small>
-              </div>
+
+          <div className="draw-status-bar">
+            <span className={`draw-led${running ? ' active' : ''}`} />
+            <div className="draw-status" role="status" aria-live="polite">
+              {statusLabel(snapshot, game.main_count, hasSpecial)}
             </div>
-          )}
-          <label className="draw-motion-option">
-            <input
-              type="checkbox"
-              checked={hidden}
-              onChange={(event) => setHidden(event.target.checked)}
-            />
-            Hide motion rendering
-          </label>
+          </div>
+
+          <div className={`draw-tray${hasSpecial ? ' has-special' : ''}`}>
+            <ol
+              className="draw-result-slots"
+              aria-label="Draw sequence"
+              style={{ gridTemplateColumns: `repeat(${game.main_count}, minmax(0, 1fr))` }}
+            >
+              {Array.from({ length: game.main_count }, (_, i) => (
+                <li key={i}>
+                  <span className={`draw-slot${snapshot.drawn[i] !== undefined ? ' filled' : ''}`}>
+                    {snapshot.drawn[i] === undefined
+                      ? '—'
+                      : String(snapshot.drawn[i]).padStart(2, '0')}
+                  </span>
+                  <small>Ball {i + 1}</small>
+                </li>
+              ))}
+            </ol>
+
+            {hasSpecial && (
+              <div className="draw-special-result" aria-label="Special Number">
+                <span
+                  className={`draw-slot special${snapshot.specialNumber !== null ? ' filled' : ''}`}
+                >
+                  {snapshot.specialNumber === null
+                    ? '—'
+                    : String(snapshot.specialNumber).padStart(2, '0')}
+                </span>
+                <div>
+                  <strong>Special Number</strong>
+                  <small>
+                    Red chamber · {game.special_min}–{specialMax}
+                  </small>
+                </div>
+              </div>
+            )}
+          </div>
+
           {snapshot.status === 'stalled' && (
             <p className="notice">
               Waited 30 seconds of active simulation without an exit. You can keep mixing; already
               drawn balls are preserved.
             </p>
           )}
+
           {finished && !failure && (
             <div className="draw-finished">
               <h3>Sorted Combination</h3>
@@ -344,20 +346,30 @@ export default function DrawMachine({
               </div>
             </div>
           )}
+
           {message && (
             <p className="notice" role="status">
               {message}
             </p>
           )}
-          <div className="draw-explainer">
-            <CircleHelp size={19} />
-            <p>
-              This is a physical simulation, not an official draw or prediction. Physical mechanism
-              is not certified for uniform distribution.
-            </p>
+
+          <div className="draw-footer-options">
+            <label className="draw-motion-option">
+              <input
+                type="checkbox"
+                checked={hidden}
+                onChange={(event) => setHidden(event.target.checked)}
+              />
+              Hide motion rendering
+            </label>
+
+            <div className="draw-explainer">
+              <CircleHelp size={16} />
+              <p>Local physics simulation only — not an official draw or prediction.</p>
+            </div>
           </div>
         </section>
       </div>
-    </>
+    </div>
   )
 }

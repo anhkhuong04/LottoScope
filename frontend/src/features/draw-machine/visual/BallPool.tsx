@@ -33,7 +33,9 @@ export function BallPool({
     context.fillStyle = design.ballColor
     context.fillRect(0, 0, canvas.width, canvas.height)
     context.fillStyle = design.digitColor
-    context.font = `bold ${tileHeight * 0.43}px Arial`
+    context.strokeStyle = 'rgba(0, 0, 0, 0.25)'
+    context.lineWidth = Math.max(2, tileHeight * 0.04)
+    context.font = `900 ${tileHeight * 0.44}px Arial`
     context.textAlign = 'center'
     context.textBaseline = 'middle'
     const offsets: number[] = []
@@ -42,16 +44,16 @@ export function BallPool({
       const row = Math.floor(i / 8)
       offsets.push(column / 8, row / 8)
       for (const half of [0.25, 0.75]) {
-        context.fillText(
-          String(i + 1).padStart(2, '0'),
-          (column + half) * tileWidth,
-          (7 - row + 0.51) * tileHeight,
-        )
+        const label = String(i + 1).padStart(2, '0')
+        const tx = (column + half) * tileWidth
+        const ty = (7 - row + 0.51) * tileHeight
+        context.strokeText(label, tx, ty)
+        context.fillText(label, tx, ty)
       }
     }
     const texture = new CanvasTexture(canvas)
     texture.colorSpace = SRGBColorSpace
-    const material = new MeshStandardMaterial({ map: texture, roughness: 0.34, metalness: 0 })
+    const material = new MeshStandardMaterial({ map: texture, roughness: 0.26, metalness: 0.14 })
     // One atlas and draw call for the pool. Each instance samples its own numbered tile.
     material.onBeforeCompile = (shader) => {
       shader.vertexShader =

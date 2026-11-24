@@ -2,10 +2,10 @@ import { describe, expect, it } from 'vitest'
 import { defaultSimulation, validateSimulation, outletPoint, outletCoordinates } from './config'
 
 describe('mechanical configuration', () => {
-  it('places the exit below and in front of the sphere and round trips its coordinates', () => {
+  it('places the 6-o-clock exit at the bottom of the sphere and round trips its coordinates', () => {
     const point = outletPoint(2.9, 0.1, -0.05)
-    expect(point.z).toBeGreaterThan(2)
-    expect(point.y).toBeLessThan(-1.5)
+    expect(point.y).toBeLessThan(-2.5)
+    expect(Math.abs(point.z)).toBeLessThan(0.2)
     const local = outletCoordinates(point)
     expect(local.depth).toBeCloseTo(2.9)
     expect(local.x).toBeCloseTo(0.1)

@@ -15,28 +15,25 @@ export const defaultSimulation: Readonly<SimulationConfig> = Object.freeze({
   radius: 2.5,
   ballRadius: 0.19,
   mass: 1,
-  rotationSpeed: 1.1,
-  friction: 0.06,
-  restitution: 0.65,
+  rotationSpeed: 1.65,
+  friction: 0.05,
+  restitution: 0.62,
   linearDamping: 0.12,
   maxSpeed: 9,
   gravity: -9.81,
   angularDamping: 0.15,
 })
-export const OUTLET_ANGLE = -Math.acos(0.64)
-const cosine = Math.cos(OUTLET_ANGLE)
-const sine = Math.sin(OUTLET_ANGLE)
-// Close to the gate: when the leading center crosses, the next ball is still
-// behind the gate. A downstream sensor leaves a second ball trapped outside it.
-export const EXIT_DEPTH = 2.65
+// Straight downward 6-o'clock discharge outlet (-Y axis).
+export const OUTLET_ANGLE = 0
+export const EXIT_DEPTH = 2.7
 export function outletPoint(depth: number, x = 0, side = 0): Point {
-  return { x, y: -depth * cosine - side * sine, z: -depth * sine + side * cosine }
+  return { x, y: -depth, z: side }
 }
 export function outletCoordinates(point: Point) {
   return {
     x: point.x,
-    depth: -point.y * cosine - point.z * sine,
-    side: -point.y * sine + point.z * cosine,
+    depth: -point.y,
+    side: point.z,
   }
 }
 export function validateSimulation(config: SimulationConfig) {
@@ -49,7 +46,7 @@ export function validateSimulation(config: SimulationConfig) {
     config.mass <= 0 ||
     config.mass > 5 ||
     config.rotationSpeed <= 0 ||
-    config.rotationSpeed > 2 ||
+    config.rotationSpeed > 4 ||
     config.friction < 0 ||
     config.friction > 1 ||
     config.restitution < 0 ||

@@ -1,25 +1,17 @@
 import { useEffect, useMemo, type RefObject } from 'react'
-import {
-  CanvasTexture,
-  DoubleSide,
-  MeshPhysicalMaterial,
-  MeshStandardMaterial,
-  SRGBColorSpace,
-  Group,
-  Mesh,
-} from 'three'
+import { DoubleSide, Group, Mesh, MeshPhysicalMaterial, MeshStandardMaterial } from 'three'
 import { BallPool } from './BallPool'
 import { validateDesign, type Design } from './design'
-import { bandGeometry, housingGeometry, shellGeometry } from './geometry'
-import { GateAndChute, Supports, type Materials } from './MachineHardware'
-import { OUTLET_ANGLE, outletPoint } from '../config'
+import { bandGeometry, shellGeometry } from './geometry'
+import { BaseAndChute, type Materials } from './MachineHardware'
+import { ROTOR_ARM_ANGLES } from '../physics'
 
-function CageFrame({ materials, cutaway }: { materials: Materials; cutaway: boolean }) {
+function DrumFrame({ materials }: { materials: Materials }) {
   const resource = useMemo(
     () => ({
-      band: bandGeometry(2.53, 0.1, 0.04),
-      portBand: bandGeometry(2.53, 0.105, 0.045, -0.45, 2 * Math.PI - 1.05),
-      equator: bandGeometry(2.54, 0.105, 0.04),
+      frontRing: bandGeometry(2.55, 0.16, 0.14),
+      trimRing: bandGeometry(2.49, 0.06, 0.06),
+      sideRing: bandGeometry(2.53, 0.06, 0.04, 0.18, Math.PI * 2 - 0.18),
     }),
     [],
   )
@@ -29,88 +21,50 @@ function CageFrame({ materials, cutaway }: { materials: Materials; cutaway: bool
   )
   return (
     <group>
-      {[0, -Math.PI / 4, (-3 * Math.PI) / 4].map((angle) => (
-        <mesh
-          key={angle}
-          geometry={resource.band}
-          rotation={[0, angle, 0]}
-          material={materials.white}
-        />
-      ))}
-      {!cutaway && (
-        <mesh
-          geometry={resource.portBand}
-          rotation={[0, -Math.PI / 2, 0]}
-          material={materials.white}
-        />
-      )}
-      <mesh geometry={resource.equator} rotation={[Math.PI / 2, 0, 0]} material={materials.white} />
-      {[-1, 1].map((side) => (
-        <group key={side} position={[0, side * 2.51, 0]}>
-          <mesh material={materials.white}>
-            <cylinderGeometry args={[0.33, 0.33, 0.09, 32]} />
-          </mesh>
-          {Array.from({ length: 8 }, (_, i) => (
-            <mesh
-              key={i}
-              position={[
-                0.25 * Math.cos((i * Math.PI) / 4),
-                side * 0.062,
-                0.25 * Math.sin((i * Math.PI) / 4),
-              ]}
-              material={materials.silver}
-            >
-              <cylinderGeometry args={[0.027, 0.027, 0.035, 6]} />
-            </mesh>
-          ))}
-        </group>
-      ))}
+      {/* Prominent silver circular front ring silhouette */}
+      <mesh geometry={resource.frontRing} position={[0, 0, 0.06]} material={materials.silver} />
+      <mesh geometry={resource.trimRing} position={[0, 0, 0.16]} material={materials.chrome} />
+      {/* Subtle vertical arch reinforcing the sphere while keeping bottom 6-o'clock clear */}
+      <mesh
+        geometry={resource.sideRing}
+        rotation={[0, Math.PI / 2, Math.PI / 2]}
+        material={materials.silver}
+      />
+      {/* Top crown cap detail */}
+      <mesh position={[0, 2.54, 0]} material={materials.silver}>
+        <cylinderGeometry args={[0.24, 0.28, 0.1, 24]} />
+      </mesh>
     </group>
   )
 }
 
-function Housing({ materials }: { materials: Materials }) {
-  const { geometry, brand } = useMemo(() => {
-    const canvas = document.createElement('canvas')
-    canvas.width = 512
-    canvas.height = 100
-    const context = canvas.getContext('2d')
-    if (!context) throw new Error('Failed to create draw machine label.')
-    context.fillStyle = '#00877f'
-    context.font = 'italic bold 70px Arial'
-    context.textAlign = 'center'
-    context.textBaseline = 'middle'
-    context.fillText('LottoScope', 256, 52)
-    const brand = new CanvasTexture(canvas)
-    brand.colorSpace = SRGBColorSpace
-    return { geometry: housingGeometry(), brand }
-  }, [])
-  useEffect(
-    () => () => {
-      geometry.dispose()
-      brand.dispose()
-    },
-    [geometry, brand],
-  )
+function YRotor({
+  materials,
+  rotorRef,
+}: {
+  materials: Materials
+  rotorRef?: RefObject<Group | null>
+}) {
   return (
-    <group>
-      <mesh geometry={geometry} material={materials.white} castShadow receiveShadow />
-      <mesh position={[0, -3.16, 1.9]} rotation={[-0.4, 0, 0]}>
-        <planeGeometry args={[2.25, 0.44]} />
-        <meshBasicMaterial map={brand} transparent depthWrite={false} toneMapped={false} />
+    <group ref={rotorRef}>
+      {/* Central metallic hub */}
+      <mesh rotation={[Math.PI / 2, 0, 0]} material={materials.chrome}>
+        <cylinderGeometry args={[0.17, 0.17, 0.36, 28]} />
       </mesh>
-      {[-1, 1].flatMap((x) =>
-        [-1, 1].map((z) => (
-          <group key={`${x}-${z}`} position={[x * 2.72, -3.63, z * 1.5]}>
-            <mesh material={materials.dark} castShadow>
-              <cylinderGeometry args={[0.18, 0.2, 0.12, 24]} />
-            </mesh>
-            <mesh position={[0, -0.075, 0]} material={materials.silver}>
-              <cylinderGeometry args={[0.21, 0.21, 0.045, 24]} />
-            </mesh>
-          </group>
-        )),
-      )}
+      <mesh position={[0, 0, 0.19]} rotation={[Math.PI / 2, 0, 0]} material={materials.silver}>
+        <cylinderGeometry args={[0.09, 0.12, 0.06, 24]} />
+      </mesh>
+      {/* 3 arms at 120-degree intervals matching physics colliders */}
+      {ROTOR_ARM_ANGLES.map((armAngle) => (
+        <group key={armAngle} rotation={[0, 0, armAngle - Math.PI / 2]}>
+          <mesh position={[0, 1.15, 0]} material={materials.silver}>
+            <boxGeometry args={[0.11, 1.9, 0.26]} />
+          </mesh>
+          <mesh position={[0, 1.15, 0.14]} material={materials.chrome}>
+            <cylinderGeometry args={[0.025, 0.025, 1.92, 12]} />
+          </mesh>
+        </group>
+      ))}
     </group>
   )
 }
@@ -135,24 +89,33 @@ export function MachineModel({
   validateDesign(design)
   const materials = useMemo<Materials>(
     () => ({
-      white: new MeshStandardMaterial({
+      silver: new MeshStandardMaterial({
         color: design.frameColor,
-        metalness: 0.25,
-        roughness: 0.3,
+        metalness: 0.9,
+        roughness: 0.2,
       }),
-      silver: new MeshStandardMaterial({ color: '#b6c0c6', metalness: 0.85, roughness: 0.23 }),
-      dark: new MeshStandardMaterial({ color: '#263338', roughness: 0.85 }),
+      chrome: new MeshStandardMaterial({
+        color: '#e5eaee',
+        metalness: 0.96,
+        roughness: 0.12,
+      }),
+      darkBase: new MeshStandardMaterial({
+        color: '#373d42',
+        metalness: 0.1,
+        roughness: 0.68,
+      }),
       acrylic: new MeshPhysicalMaterial({
-        color: '#e0f1f3',
+        color: '#c9e2e7',
         transparent: true,
         opacity: design.acrylicOpacity,
         depthWrite: false,
         side: DoubleSide,
-        roughness: 0.1,
-        metalness: 0,
+        roughness: 0.07,
+        metalness: 0.04,
         clearcoat: 1,
-        clearcoatRoughness: 0.06,
-        envMapIntensity: 1.3,
+        clearcoatRoughness: 0.04,
+        ior: 1.48,
+        envMapIntensity: 1.65,
       }),
     }),
     [design.frameColor, design.acrylicOpacity],
@@ -166,34 +129,23 @@ export function MachineModel({
     [materials],
   )
   useEffect(() => () => shell.dispose(), [shell])
+
   const normalized = {
     ...design,
     radius: 2.5,
     ballRadius: (design.ballRadius * 2.5) / design.radius,
   }
-  const funnel = outletPoint(2.2)
+
   return (
     <group scale={(design.scale * design.radius) / 2.5}>
-      <Housing materials={materials} />
-      <Supports materials={materials} />
+      <BaseAndChute materials={materials} open={gateOpen} hatchRef={hatchRef} />
       {showBalls && <BallPool count={count} design={normalized} />}
+      <YRotor materials={materials} rotorRef={rotorRef} />
       <mesh geometry={shell} material={materials.acrylic} renderOrder={3} />
-      <CageFrame materials={materials} cutaway={cutaway} />
-      <group ref={rotorRef}>
-        {[-0.9, 0.9].map((x) => (
-          <mesh key={x} position={[x, 0, 0]} material={materials.white}>
-            <boxGeometry args={[0.11, 3.7, 0.24]} />
-          </mesh>
-        ))}
-      </group>
-      <GateAndChute materials={materials} open={gateOpen} hatchRef={hatchRef} />
-      <mesh
-        position={[funnel.x, funnel.y, funnel.z]}
-        rotation={[OUTLET_ANGLE, 0, 0]}
-        material={materials.acrylic}
-        renderOrder={2}
-      >
-        <cylinderGeometry args={[0.8, 0.37, 0.7, 24, 1, true]} />
+      <DrumFrame materials={materials} />
+      {/* Inner 6-o'clock acrylic discharge funnel */}
+      <mesh position={[0, -2.36, 0]} material={materials.acrylic} renderOrder={2}>
+        <cylinderGeometry args={[0.66, 0.36, 0.45, 24, 1, true]} />
       </mesh>
     </group>
   )
