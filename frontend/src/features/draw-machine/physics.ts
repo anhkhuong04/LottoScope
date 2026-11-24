@@ -4,16 +4,21 @@ import {
   defaultSimulation,
   validateSimulation,
   EXIT_DEPTH,
-  OUTLET_ANGLE,
-  outletPoint,
   outletCoordinates,
+  outletPoint,
   type SimulationConfig,
 } from './config'
 
 export const STEP = 1 / 60
 export const RADIUS = 2.5
 export const BALL_RADIUS = 0.19
-export const OPENING_ANGLE = 0.16
+export const OPENING_ANGLE = 0.21
+export const ROTOR_ARM_ANGLES = [
+  Math.PI / 2,
+  Math.PI / 2 + (2 * Math.PI) / 3,
+  Math.PI / 2 + (4 * Math.PI) / 3,
+] as const
+
 export type Status = 'ready' | 'mixing' | 'drawing' | 'paused' | 'stalled' | 'complete' | 'error'
 type Point = { x: number; y: number; z: number }
 export type MachineBall = {
@@ -40,6 +45,25 @@ export type Machine = {
   rotor: RAPIER.RigidBody
 }
 
+function insideYRotor(x: number, y: number, z: number, scale: number, ballRadius: number): boolean {
+  if (Math.hypot(x, y) < 0.15 * scale + ballRadius + 0.04) return true
+  if (Math.abs(z) > 0.14 * scale + ballRadius + 0.03) return false
+  for (const armAngle of ROTOR_ARM_ANGLES) {
+    const ux = Math.cos(armAngle)
+    const uy = Math.sin(armAngle)
+    const along = x * ux + y * uy
+    const perp = Math.abs(-x * uy + y * ux)
+    if (
+      along > 0.12 * scale - ballRadius &&
+      along < 2.15 * scale + ballRadius + 0.03 &&
+      perp < 0.055 * scale + ballRadius + 0.03
+    ) {
+      return true
+    }
+  }
+  return false
+}
+
 export function createMachine(
   world: RAPIER.World,
   rapier: typeof RAPIER,
@@ -56,21 +80,21 @@ export function createMachine(
   const scale = config.radius / RADIUS
   const positions: Point[] = []
   const spacing = 2 * config.ballRadius + 0.05
-  for (let x = -1.72 * scale; x <= 1.73 * scale; x += spacing)
-    for (let y = -1.72 * scale; y <= 1.73 * scale; y += spacing)
-      for (let z = -1.72 * scale; z <= 1.73 * scale; z += spacing) {
-        const insideRotor =
-          Math.abs(Math.abs(x) - 0.9 * scale) < 0.055 * scale + config.ballRadius &&
-          Math.abs(y) < 1.85 * scale + config.ballRadius &&
-          Math.abs(z) < 0.12 * scale + config.ballRadius
+  for (let x = -1.78 * scale; x <= 1.78 * scale; x += spacing) {
+    for (let y = -1.78 * scale; y <= 1.78 * scale; y += spacing) {
+      for (let z = -1.78 * scale; z <= 1.78 * scale; z += spacing) {
         if (
-          !insideRotor &&
-          Math.hypot(x, y, z) < 1.95 * scale &&
-          Math.hypot(y, z) > 0.105 * scale + config.ballRadius + 0.04
-        )
+          Math.hypot(x, y, z) < 2.02 * scale &&
+          !insideYRotor(x, y, z, scale, config.ballRadius)
+        ) {
           positions.push({ x, y, z })
+        }
       }
+    }
+  }
   if (positions.length < max) throw new Error('Insufficient space for this ball pool.')
+
+  // Bottom 6-o'clock circular opening (thetaLength = PI - OPENING_ANGLE sits at -Y).
   const geometry = new SphereGeometry(
     config.radius,
     48,
@@ -80,7 +104,6 @@ export function createMachine(
     0,
     Math.PI - OPENING_ANGLE,
   )
-  geometry.rotateX(OUTLET_ANGLE)
   const shell = world.createCollider(
     rapier.ColliderDesc.trimesh(
       new Float32Array(geometry.attributes.position.array),
@@ -91,9 +114,10 @@ export function createMachine(
   )
   geometry.dispose()
   const fixed = [shell]
-  const funnel = new CylinderGeometry(0.8 * scale, 0.37 * scale, 0.7 * scale, 24, 1, true)
-  funnel.rotateX(OUTLET_ANGLE)
-  const funnelCenter = outletPoint(2.2 * scale)
+
+  // Inner funnel guiding balls smoothly into the single-file vertical 6-o'clock neck.
+  const funnel = new CylinderGeometry(0.68 * scale, 0.36 * scale, 0.45 * scale, 24, 1, true)
+  const funnelCenter = outletPoint(2.38 * scale)
   funnel.translate(funnelCenter.x, funnelCenter.y, funnelCenter.z)
   fixed.push(
     world.createCollider(
@@ -106,18 +130,16 @@ export function createMachine(
     ),
   )
   funnel.dispose()
-  const portRotation = new Quaternion().setFromAxisAngle(new Vector3(1, 0, 0), OUTLET_ANGLE)
-  // A hollow throat, not a solid cylinder. Its width only permits a single file.
+
+  // Single-file vertical throat walls below the bottom aperture.
   for (let i = 0; i < 24; i++) {
     const angle = (i * Math.PI * 2) / 24
     const position = outletPoint(
-      2.87 * scale,
-      Math.cos(angle) * 0.42 * scale,
-      Math.sin(angle) * 0.42 * scale,
+      2.88 * scale,
+      Math.cos(angle) * 0.41 * scale,
+      Math.sin(angle) * 0.41 * scale,
     )
-    const rotation = portRotation
-      .clone()
-      .multiply(new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), -angle))
+    const rotation = new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), -angle)
     fixed.push(
       world.createCollider(
         rapier.ColliderDesc.cuboid(0.047 * scale, 0.43 * scale, 0.04 * scale)
@@ -128,34 +150,45 @@ export function createMachine(
       ),
     )
   }
-  const gatePosition = outletPoint(2.55 * scale)
+
+  // Sliding discharge gate near depth 2.58 (EXIT_DEPTH = 2.70 guarantees single-file closure).
+  const gatePosition = outletPoint(2.58 * scale)
   const gate = world.createCollider(
-    rapier.ColliderDesc.cuboid(0.43 * scale, 0.045 * scale, 0.43 * scale)
+    rapier.ColliderDesc.cuboid(0.42 * scale, 0.045 * scale, 0.42 * scale)
       .setTranslation(gatePosition.x, gatePosition.y, gatePosition.z)
-      .setRotation(portRotation)
       .setRestitution(0.15),
   )
   fixed.push(gate)
+
+  // Central Z-axis shaft supporting the 3-arm Y-rotor (last fixed collider for clearance checks).
   fixed.push(
     world.createCollider(
-      rapier.ColliderDesc.cylinder(2.6 * scale, 0.105 * scale)
-        .setRotation({ x: 0, y: 0, z: Math.SQRT1_2, w: Math.SQRT1_2 })
+      rapier.ColliderDesc.cylinder(1.8 * scale, 0.14 * scale)
+        .setRotation({ x: Math.SQRT1_2, y: 0, z: 0, w: Math.SQRT1_2 })
         .setFriction(config.friction),
     ),
   )
+
+  // Kinematic 3-blade Y-rotor spinning around the Z-axis.
   const rotor = world.createRigidBody(rapier.RigidBodyDesc.kinematicPositionBased())
-  for (const x of [-0.9, 0.9])
+  for (const armAngle of ROTOR_ARM_ANGLES) {
+    const rMid = 1.15 * scale
+    const rotation = new Quaternion().setFromAxisAngle(new Vector3(0, 0, 1), armAngle - Math.PI / 2)
     world.createCollider(
-      rapier.ColliderDesc.cuboid(0.055 * scale, 1.85 * scale, 0.12 * scale)
-        .setTranslation(x * scale, 0, 0)
+      rapier.ColliderDesc.cuboid(0.055 * scale, 0.95 * scale, 0.14 * scale)
+        .setTranslation(Math.cos(armAngle) * rMid, Math.sin(armAngle) * rMid, 0)
+        .setRotation(rotation)
         .setRestitution(0.25)
         .setFriction(config.friction),
       rotor,
     )
+  }
+
   for (let i = positions.length - 1; i > 0; i--) {
     const j = Math.floor(random() * (i + 1))
     ;[positions[i], positions[j]] = [positions[j], positions[i]]
   }
+
   const balls = Array.from({ length: max }, (_, index) => {
     const position = positions[index]
     const body = world.createRigidBody(
@@ -174,6 +207,7 @@ export function createMachine(
     )
     return { number: index + 1, body, previous: { ...position }, captured: false }
   })
+
   return {
     world,
     balls,
@@ -230,9 +264,9 @@ export function beforeStep(m: Machine) {
   m.elapsed += STEP
   m.sinceCapture += STEP
   m.phaseTime += STEP
-  const angle = -m.elapsed * m.config.rotationSpeed
-  m.rotor.setNextKinematicRotation({ x: Math.sin(angle / 2), y: 0, z: 0, w: Math.cos(angle / 2) })
-  if (m.status === 'mixing' && m.phaseTime >= (m.drawn.length ? 1.5 : 3)) {
+  const angle = m.elapsed * m.config.rotationSpeed
+  m.rotor.setNextKinematicRotation({ x: 0, y: 0, z: Math.sin(angle / 2), w: Math.cos(angle / 2) })
+  if (m.status === 'mixing' && m.phaseTime >= (m.drawn.length ? 1.4 : 2.6)) {
     m.status = 'drawing'
     m.phaseTime = 0
     m.gate.setEnabled(false)
@@ -242,24 +276,26 @@ export function beforeStep(m: Machine) {
     const p = ball.body.translation()
     ball.previous = { ...p }
     const noise = () => m.random() * 2 - 1
-    // These stirring forces depend on position/time, never the printed number.
-    // Alternate tumbling and release: continuous upward forcing holds balls against
-    // the aperture lip. This is a global mechanical cycle, never a number selection.
-    const stirring = m.status === 'mixing' || m.phaseTime % 1.8 < 0.9
-    const circulation = (7 * m.config.rotationSpeed) / defaultSimulation.rotationSpeed
+    // Global mechanical air/rotor stirring around Z + gentle gravity settling window during drawing.
+    const stirring = m.status === 'mixing' || m.phaseTime % 1.8 < 0.75
+    const swirl = (6.2 * m.config.rotationSpeed) / defaultSimulation.rotationSpeed
     ball.body.applyImpulse(
       stirring
         ? {
-            x: (p.x * 3 + noise() * 12) * STEP,
-            y: (p.z * circulation + p.y * 3 + 11 + noise() * 12) * STEP,
-            z: (-p.y * circulation + p.z * 3 + Math.sin(m.elapsed * 2) * 8 + noise() * 15) * STEP,
+            x: (-p.y * swirl + p.x * 2.2 + noise() * 11) * STEP,
+            y: (p.x * swirl + p.y * 2.2 + 9.5 + noise() * 11) * STEP,
+            z: (Math.sin(m.elapsed * 2.4 + p.x) * 7 + noise() * 13) * STEP,
           }
-        : { x: noise() * 3 * STEP, y: 0, z: noise() * 3 * STEP },
+        : {
+            x: (noise() * 4 - p.x * 0.6) * STEP,
+            y: 0,
+            z: (noise() * 4 - p.z * 0.6) * STEP,
+          },
       true,
     )
     const v = ball.body.linvel()
     const speed = Math.hypot(v.x, v.y, v.z)
-    if (speed > m.config.maxSpeed)
+    if (speed > m.config.maxSpeed) {
       ball.body.setLinvel(
         {
           x: (v.x * m.config.maxSpeed) / speed,
@@ -268,6 +304,7 @@ export function beforeStep(m: Machine) {
         },
         true,
       )
+    }
   }
 }
 
@@ -284,7 +321,7 @@ export function afterStep(m: Machine) {
     if (
       ![p.x, p.y, p.z].every(Number.isFinite) ||
       (Math.hypot(p.x, p.y, p.z) > m.config.radius + 0.15 &&
-        !(radial < 0.45 * scale && local.depth > 2.3 * scale && local.depth < 3.5 * scale))
+        !(radial < 0.45 * scale && local.depth > 2.25 * scale && local.depth < 3.6 * scale))
     ) {
       m.status = 'error'
       m.error = 'Ball escaped chamber wall. Please start a new session.'

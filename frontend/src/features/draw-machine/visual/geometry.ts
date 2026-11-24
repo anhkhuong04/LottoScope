@@ -1,4 +1,11 @@
-import { BufferGeometry, Float32BufferAttribute, SphereGeometry, Vector3 } from 'three'
+import {
+  BufferGeometry,
+  ExtrudeGeometry,
+  Float32BufferAttribute,
+  Shape,
+  SphereGeometry,
+  Vector3,
+} from 'three'
 
 export function bandGeometry(
   radius: number,
@@ -39,9 +46,9 @@ export function bandGeometry(
   return geometry
 }
 
-// Remove front-port triangles from the visual shell only; never use this as a collider.
+// Visual sphere shell with 6-o'clock bottom discharge port removed; collider is in physics.ts.
 export function shellGeometry(radius: number, economy: boolean, cutaway: boolean) {
-  const source = new SphereGeometry(radius, economy ? 40 : 72, economy ? 28 : 48)
+  const source = new SphereGeometry(radius, economy ? 44 : 76, economy ? 30 : 52)
   const position = source.attributes.position
   const indices: number[] = []
   const point = new Vector3()
@@ -51,50 +58,58 @@ export function shellGeometry(radius: number, economy: boolean, cutaway: boolean
     const center = triangle
       .reduce((sum, vertex) => sum.add(point.fromBufferAttribute(position, vertex)), new Vector3())
       .multiplyScalar(1 / 3)
-    const port =
-      Math.abs(center.x) < 0.45 * boundary &&
-      center.y < -1.13 * boundary &&
-      center.y > -2.15 * boundary &&
-      center.z > 1.4 * boundary
-    if (!port && !(cutaway && center.z > 0)) indices.push(...triangle)
+    const bottomPort =
+      center.y < -2.35 * boundary && Math.hypot(center.x, center.z) < 0.56 * boundary
+    if (!bottomPort && !(cutaway && center.z > 0)) indices.push(...triangle)
   }
   source.setIndex(indices)
   return source
 }
 
-export function housingGeometry() {
-  const positions: number[] = []
-  const indices: number[] = []
-  const levels = [
-    [-3.5, 3.08, 1.9],
-    [-3.43, 3.18, 1.98],
-    [-2.83, 2.88, 1.72],
-    [-2.76, 2.78, 1.62],
-  ]
-  const segments = 32
-  for (const [y, halfWidth, halfDepth] of levels) {
-    for (let i = 0; i < segments; i++) {
-      const corner = Math.floor(i / 8)
-      const angle = (corner * Math.PI) / 2 + ((i % 8) * Math.PI) / 14
-      const x = (corner === 0 || corner === 3 ? 1 : -1) * (halfWidth - 0.2)
-      const z = (corner < 2 ? 1 : -1) * (halfDepth - 0.2)
-      positions.push(x + 0.2 * Math.cos(angle), y, z + 0.2 * Math.sin(angle))
-    }
-  }
-  for (let layer = 0; layer < levels.length - 1; layer++)
-    for (let i = 0; i < segments; i++) {
-      const a = layer * segments + i
-      const b = layer * segments + ((i + 1) % segments)
-      indices.push(a, a + segments, b, b, a + segments, b + segments)
-    }
-  for (let i = 1; i < segments - 1; i++) {
-    indices.push(0, i, i + 1)
-    const last = (levels.length - 1) * segments
-    indices.push(last, last + i + 1, last + i)
-  }
-  const geometry = new BufferGeometry()
-  geometry.setAttribute('position', new Float32BufferAttribute(positions, 3))
-  geometry.setIndex(indices)
+// Dark gray wide dual-wing sloped base matching the 6-o'clock bottom outlet design.
+export function dualChuteBaseGeometry() {
+  const shape = new Shape()
+  shape.moveTo(-3.1, -3.65)
+  shape.lineTo(3.1, -3.65)
+  shape.lineTo(3.1, -3.38)
+  shape.lineTo(0.68, -2.98)
+  shape.lineTo(-0.68, -2.98)
+  shape.lineTo(-3.1, -3.38)
+  shape.closePath()
+  const geometry = new ExtrudeGeometry(shape, {
+    depth: 1.5,
+    bevelEnabled: true,
+    bevelSize: 0.04,
+    bevelThickness: 0.04,
+    bevelSegments: 2,
+    steps: 1,
+  })
+  geometry.translate(0, 0, -0.75)
+  geometry.computeVertexNormals()
+  return geometry
+}
+
+// Raised chute side rails sloping gently outward to guide exiting balls left and right.
+export function chuteRailGeometry() {
+  const shape = new Shape()
+  shape.moveTo(-3.1, -3.38)
+  shape.lineTo(-3.1, -3.14)
+  shape.lineTo(-0.55, -2.86)
+  shape.lineTo(0.55, -2.86)
+  shape.lineTo(3.1, -3.14)
+  shape.lineTo(3.1, -3.38)
+  shape.lineTo(0.68, -2.98)
+  shape.lineTo(-0.68, -2.98)
+  shape.closePath()
+  const geometry = new ExtrudeGeometry(shape, {
+    depth: 0.09,
+    bevelEnabled: true,
+    bevelSize: 0.015,
+    bevelThickness: 0.015,
+    bevelSegments: 1,
+    steps: 1,
+  })
+  geometry.translate(0, 0, -0.045)
   geometry.computeVertexNormals()
   return geometry
 }

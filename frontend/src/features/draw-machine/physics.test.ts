@@ -43,19 +43,27 @@ function tick(machine: Machine, seconds: number) {
 }
 
 describe('real Rapier draw machine', () => {
-  it.each([17, 209, 4231])('spawns balls clear of the axle and rotor (seed %s)', (seed) => {
-    const m = setup(55, seed)
-    m.world.propagateModifiedBodyPositionsToColliders()
-    const obstacles = [m.fixed[m.fixed.length - 1], m.rotor.collider(0), m.rotor.collider(1)]
-    for (const ball of m.balls)
-      for (const obstacle of obstacles) {
-        const contact = ball.body.collider(0).contactCollider(obstacle, 0)
-        expect(
-          contact?.distance ?? 0,
-          `ball ${ball.number} starts inside the mechanism`,
-        ).toBeGreaterThanOrEqual(-0.0001)
-      }
-  })
+  it.each([17, 209, 4231])(
+    'spawns balls clear of the axle and Y-rotor blades (seed %s)',
+    (seed) => {
+      const m = setup(55, seed)
+      m.world.propagateModifiedBodyPositionsToColliders()
+      const obstacles = [
+        m.fixed[m.fixed.length - 1],
+        m.rotor.collider(0),
+        m.rotor.collider(1),
+        m.rotor.collider(2),
+      ]
+      for (const ball of m.balls)
+        for (const obstacle of obstacles) {
+          const contact = ball.body.collider(0).contactCollider(obstacle, 0)
+          expect(
+            contact?.distance ?? 0,
+            `ball ${ball.number} starts inside the mechanism`,
+          ).toBeGreaterThanOrEqual(-0.0001)
+        }
+    },
+  )
 
   it('requires an explicit result count instead of inferring it from the ball pool', () => {
     const world = new RAPIER.World({ x: 0, y: -9.81, z: 0 })

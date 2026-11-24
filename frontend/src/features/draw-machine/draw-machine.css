@@ -1,58 +1,84 @@
 .draw-machine-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.3fr) minmax(310px, 1fr);
-  gap: 22px;
+  grid-template-columns: minmax(0, 1.45fr) minmax(300px, 0.95fr);
+  gap: 28px;
   align-items: start;
 }
+
 .draw-stage {
+  position: relative;
   color: #173b47;
-  background: #e7ecef;
-  border-radius: 18px;
-  overflow: hidden;
-  border: 1px solid #cbd8df;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
   min-width: 0;
+  padding-bottom: 18px;
 }
-.draw-stage-head,
-.draw-stage-foot {
+
+.draw-stage-overlay-top {
+  position: absolute;
+  top: 4px;
+  left: 0;
+  right: 0;
+  z-index: 2;
   display: flex;
   align-items: center;
-  gap: 9px;
-  padding: 20px 22px;
-  font-size: 0.8rem;
-}
-.draw-stage-head {
   justify-content: space-between;
+  gap: 10px;
+  pointer-events: none;
 }
-.draw-stage-brand {
-  font-weight: 800;
-  letter-spacing: 0.08em;
-}
-.draw-stage-brand span {
-  display: block;
-  color: #466674;
-  font-size: 0.64rem;
-  letter-spacing: 0.22em;
-  margin-top: 4px;
-}
+
 .draw-stage-badge {
-  color: #ffffff;
-  border: 1px solid #006e66;
-  background: #006e66;
-  padding: 6px 9px;
-  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.72rem;
   font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #11662b;
+  background: #eaf8ee;
+  border: 1px solid #bbe5c7;
+  padding: 5px 10px;
+  border-radius: 999px;
 }
+
+.draw-stage-badge.special {
+  color: #991b1b;
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.draw-stage-pill-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #355466;
+  background: #f5f8fa;
+  border: 1px solid var(--line);
+  padding: 5px 11px;
+  border-radius: 999px;
+}
+
+.draw-stage-count {
+  font-variant-numeric: tabular-nums;
+}
+
 .draw-viewport {
-  height: 520px;
+  height: clamp(460px, 60vh, 560px);
   position: relative;
+  background: transparent;
 }
+
 .draw-canvas {
   height: 100%;
   width: 100%;
 }
+
 .draw-canvas.is-concealed {
   visibility: hidden;
 }
+
 .draw-concealed-note,
 .draw-failure,
 .draw-loading {
@@ -62,75 +88,138 @@
   align-items: center;
   justify-content: center;
   flex-direction: column;
-  gap: 14px;
-  padding: 28px;
+  gap: 12px;
+  padding: 20px;
   text-align: center;
 }
+
 .draw-failure {
   color: #8c351a;
 }
+
+.draw-failure-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
 .draw-failure .machine-fallback {
-  width: min(100%, 260px);
-  max-height: 220px;
+  width: min(100%, 240px);
+  max-height: 200px;
 }
-.draw-stage-foot {
-  border-top: 1px solid #cbd8df;
-  color: #355466;
+
+.draw-controls-floating {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: fit-content;
+  max-width: 100%;
+  margin: -18px auto 0;
+  padding: 6px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  box-shadow: 0 8px 24px rgba(16, 43, 54, 0.08);
 }
-.draw-stage-count {
-  margin-left: auto;
-  font-variant-numeric: tabular-nums;
+
+.draw-controls-floating .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 999px;
+  white-space: nowrap;
 }
+
+.draw-controls-floating .btn.primary {
+  min-width: 138px;
+}
+
 .draw-led {
-  width: 7px;
-  height: 7px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  background: #8ca2b2;
+  background: #9eb0bc;
   flex: 0 0 auto;
 }
+
 .draw-led.active {
-  background: #7edcb6;
-  box-shadow: 0 0 12px #7edcb688;
+  background: #22cc44;
+  box-shadow: 0 0 10px rgba(34, 204, 68, 0.55);
 }
+
 .draw-console {
-  padding: 0;
+  padding: 4px 0 0;
+  background: transparent;
+  border: 0;
 }
+
 .draw-eyebrow {
   font-size: 0.68rem;
   letter-spacing: 0.14em;
   color: #526b79;
   font-weight: 700;
-  margin: 0 0 10px;
+  margin: 0 0 6px;
 }
-.draw-console h2 {
-  font-size: 1.5rem;
-  margin: 0 0 12px;
+
+.draw-console-head h2 {
+  font-size: 1.35rem;
+  line-height: 1.3;
+  margin: 0 0 8px;
 }
-.draw-console > .muted {
-  line-height: 1.6;
+
+.draw-console-head > .muted {
+  font-size: 0.88rem;
+  line-height: 1.55;
+  margin: 0;
 }
+
+.draw-status-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 18px 0 14px;
+}
+
 .draw-status {
-  font-size: 0.9rem;
+  font-size: 0.92rem;
   font-weight: 600;
-  margin-top: 24px;
+  color: var(--ink);
 }
+
+.draw-tray {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
 .draw-result-slots {
   list-style: none;
   padding: 0;
-  margin: 18px 0 26px;
+  margin: 0;
   display: grid;
-  gap: 7px;
+  gap: 8px;
 }
+
 .draw-result-slots li {
   display: grid;
   justify-items: center;
-  gap: 9px;
+  gap: 6px;
 }
+
 .draw-result-slots small {
-  font-size: 0.65rem;
+  font-size: 0.68rem;
   color: #5c6d7c;
   white-space: nowrap;
 }
+
 .draw-slot {
   width: 100%;
   max-width: 48px;
@@ -139,127 +228,271 @@
   justify-content: center;
   align-items: center;
   border: 1px dashed #b8c5ce;
-  background: #f5f7f8;
+  background: #f6f8fa;
   border-radius: 50%;
   color: #6b7985;
   font-size: 1rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
+
 .draw-slot.filled {
   color: var(--ball-text);
   border: 1px solid var(--ball-main);
   background: var(--ball-main);
-  box-shadow: 0 3px 5px #213d4312;
+  box-shadow: 0 4px 10px rgba(21, 128, 61, 0.22);
 }
+
 .draw-special-result {
   display: flex;
   align-items: center;
-  gap: 14px;
-  margin: 0 0 22px;
+  gap: 12px;
 }
+
 .draw-special-result .draw-slot {
-  width: 48px;
-  flex: 0 0 48px;
-  border-color: #ad7b26;
-  background: #fff4d8;
-  color: #6d4200;
+  width: 46px;
+  flex: 0 0 46px;
+  border-color: #d9776c;
+  background: #fef2f2;
+  color: #991b1b;
 }
+
 .draw-special-result .draw-slot.filled {
   border-color: var(--ball-special);
   background: var(--ball-special);
   color: var(--ball-text);
+  box-shadow: 0 4px 10px rgba(185, 28, 28, 0.22);
 }
+
 .draw-special-result strong,
 .draw-special-result small {
   display: block;
 }
+
+.draw-special-result strong {
+  font-size: 0.9rem;
+}
+
 .draw-special-result small {
-  margin-top: 4px;
+  margin-top: 2px;
+  font-size: 0.76rem;
   color: #5c6d7c;
 }
-.draw-controls,
+
+.draw-finished {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.draw-finished h3 {
+  font-size: 0.85rem;
+  margin: 0 0 10px;
+}
+
 .draw-result-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 9px;
+  gap: 8px;
+  margin-top: 14px;
 }
-.draw-stage > .draw-controls {
-  margin: 0 22px;
-}
-.draw-controls .btn,
+
 .draw-result-actions .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 7px;
   min-height: 44px;
 }
-.draw-controls .primary {
-  flex: 1;
-}
-.draw-motion-option {
+
+.draw-footer-options {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
   display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.draw-motion-option {
+  display: inline-flex;
   align-items: center;
   gap: 8px;
-  min-height: 44px;
-  font-size: 0.8rem;
-  color: #536674;
-  margin: 12px 0;
+  min-height: 40px;
+  font-size: 0.82rem;
+  color: #4b5e6c;
   cursor: pointer;
 }
+
 .draw-motion-option input {
-  width: 18px;
-  height: 18px;
+  width: 17px;
+  height: 17px;
 }
-.draw-finished {
-  border-top: 1px solid var(--line);
-  padding: 20px 0 4px;
-}
-.draw-finished h3 {
-  font-size: 0.85rem;
-  margin: 0 0 14px;
-}
-.draw-result-actions {
-  margin-top: 18px;
-}
+
 .draw-explainer {
   display: flex;
-  gap: 9px;
+  align-items: flex-start;
+  gap: 7px;
   color: #596e7e;
-  margin-top: 20px;
-  padding-top: 18px;
-  border-top: 1px solid var(--line);
 }
+
 .draw-explainer svg {
   flex: 0 0 auto;
   margin-top: 2px;
 }
+
 .draw-explainer p {
   font-size: 0.75rem;
-  line-height: 1.6;
+  line-height: 1.5;
   margin: 0;
 }
-@media (max-width: 1100px) {
+
+@media (max-width: 1080px) {
   .draw-machine-layout {
     grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
   }
+
   .draw-viewport {
-    height: 480px;
+    height: 400px;
   }
 }
+
 @media (max-width: 767px) {
-  .draw-viewport {
-    height: 420px;
+  .draw-page .page-head {
+    margin-bottom: 6px;
   }
-  .draw-console {
-    padding: 20px;
+
+  .draw-page .page-head .page-intro {
+    display: none;
   }
-  .draw-stage-head,
-  .draw-stage-foot {
-    padding: 16px;
-  }
+
   .draw-machine-layout {
-    gap: 16px;
+    gap: 8px;
+  }
+
+  .draw-stage {
+    padding-bottom: 6px;
+  }
+
+  .draw-stage-overlay-top {
+    top: 2px;
+  }
+
+  .draw-viewport {
+    height: clamp(235px, 34dvh, 285px);
+  }
+
+  .draw-controls-floating {
+    width: 100%;
+    margin-top: -12px;
+    padding: 4px;
+    justify-content: stretch;
+  }
+
+  .draw-controls-floating .btn {
+    flex: 1;
+    min-height: 44px;
+    padding: 0 12px;
+    font-size: 0.84rem;
+  }
+
+  .draw-console {
+    padding: 2px 0 0;
+  }
+
+  .draw-eyebrow,
+  .draw-console-head > .muted {
+    display: none;
+  }
+
+  .draw-console-head h2 {
+    font-size: 0.94rem;
+    margin: 0 0 6px;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  .draw-status-bar {
+    margin: 4px 0 10px;
+  }
+
+  .draw-status {
+    font-size: 0.84rem;
+  }
+
+  .draw-tray.has-special {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .draw-tray.has-special .draw-result-slots {
+    flex: 1;
+  }
+
+  .draw-result-slots {
+    gap: 5px;
+  }
+
+  .draw-result-slots li {
+    gap: 3px;
+  }
+
+  .draw-result-slots small {
+    font-size: 0.62rem;
+  }
+
+  .draw-slot {
+    max-width: 40px;
+    font-size: 0.88rem;
+  }
+
+  .draw-special-result {
+    flex-direction: column;
+    gap: 3px;
+    padding-left: 10px;
+    border-left: 1px solid var(--line);
+    text-align: center;
+  }
+
+  .draw-special-result .draw-slot {
+    width: 40px;
+    flex: 0 0 40px;
+    height: 40px;
+  }
+
+  .draw-special-result strong {
+    font-size: 0.62rem;
+    color: #991b1b;
+  }
+
+  .draw-special-result small {
+    display: none;
+  }
+
+  .draw-finished {
+    margin-top: 10px;
+    padding-top: 10px;
+  }
+
+  .draw-result-actions {
+    margin-top: 10px;
+  }
+
+  .draw-result-actions .btn {
+    flex: 1;
+    min-height: 44px;
+  }
+
+  .draw-footer-options {
+    margin-top: 10px;
+    padding-top: 8px;
+    gap: 2px;
+  }
+
+  .draw-motion-option {
+    min-height: 44px;
+    font-size: 0.78rem;
   }
 }

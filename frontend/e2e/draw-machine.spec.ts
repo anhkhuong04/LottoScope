@@ -18,11 +18,10 @@ for (const [game, max, count] of [
       if (request.url().includes('/combinations/generate')) generated.push(request.url())
     })
     await page.goto(`/generator?game=${game}`)
-    await expect(page.getByRole('button', { name: 'Bắt đầu quay' })).toBeEnabled({
+    await expect(page.getByRole('button', { name: 'Start Draw' })).toBeEnabled({
       timeout: 30_000,
     })
     await expect(page.locator('.draw-slot.filled')).toHaveCount(0)
-    await expect(page.getByRole('checkbox', { name: 'Giới hạn trùng kỳ trước' })).toHaveCount(0)
     await expect
       .poll(() =>
         page
@@ -30,21 +29,29 @@ for (const [game, max, count] of [
           .evaluate((element) => getComputedStyle(element).gridTemplateColumns.split(' ').length),
       )
       .toBe(count)
-    await page.getByRole('button', { name: 'Bắt đầu quay' }).click()
+    await page.screenshot({
+      path: `test-results/draw-ready-${game}-${test.info().project.name}.png`,
+      fullPage: false,
+    })
+    await page.getByRole('button', { name: 'Start Draw' }).click()
     if (game === 'lotto_535') {
-      await expect(page.locator('.draw-stage-badge')).toHaveText('12 BÓNG', { timeout: 90_000 })
+      await expect(page.locator('.draw-stage-badge')).toHaveText('12 BALLS', { timeout: 90_000 })
+      await page.screenshot({
+        path: `test-results/draw-special-${game}-${test.info().project.name}.png`,
+        fullPage: false,
+      })
       await expect(page.locator('.draw-result-slots .draw-slot.filled')).toHaveCount(5)
       const mainBeforePause = await page.locator('.draw-result-slots .draw-slot').allTextContents()
-      await page.getByRole('button', { name: 'Tạm dừng', exact: true }).click()
-      await expect(page.locator('.draw-status')).toHaveText('Đã tạm dừng')
+      await page.getByRole('button', { name: 'Pause', exact: true }).click()
+      await expect(page.locator('.draw-status')).toHaveText('Paused')
       expect(await page.locator('.draw-result-slots .draw-slot').allTextContents()).toEqual(
         mainBeforePause,
       )
-      await expect(page.getByRole('link', { name: 'Kiểm tra lịch sử' })).toHaveCount(0)
-      await page.getByRole('button', { name: 'Tiếp tục' }).click()
+      await expect(page.getByRole('link', { name: 'Check history' })).toHaveCount(0)
+      await page.getByRole('button', { name: 'Resume' }).click()
     }
     await expect(page.locator('.draw-status')).toHaveText(
-      `Hoàn tất · ${count} số chính${game === 'lotto_535' ? ' + 1 số đặc biệt' : ''}`,
+      `Complete · ${count} main numbers${game === 'lotto_535' ? ' + 1 special number' : ''}`,
       {
         timeout: 110_000,
       },
@@ -79,7 +86,7 @@ for (const [game, max, count] of [
       )
       expect(special).toBeGreaterThanOrEqual(1)
       expect(special).toBeLessThanOrEqual(12)
-      await expect(page.locator('.draw-stage-badge')).toHaveText('12 BÓNG')
+      await expect(page.locator('.draw-stage-badge')).toHaveText('12 BALLS')
     }
     await expect(page.locator('.draw-finished .ball.special')).toHaveCount(
       game === 'lotto_535' ? 1 : 0,
@@ -97,18 +104,18 @@ for (const [game, max, count] of [
     })
     if (test.info().project.name === 'desktop') {
       await context.grantPermissions(['clipboard-read', 'clipboard-write'])
-      await page.getByRole('button', { name: 'Sao chép', exact: true }).click()
+      await page.getByRole('button', { name: 'Copy', exact: true }).click()
       expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
         [...drawn]
           .sort((a, b) => a - b)
           .map((n) => String(n).padStart(2, '0'))
-          .join(' ') + (special !== null ? ` | ĐB: ${String(special).padStart(2, '0')}` : ''),
+          .join(' ') + (special !== null ? ` | SP: ${String(special).padStart(2, '0')}` : ''),
       )
     }
-    await page.getByRole('link', { name: 'Kiểm tra lịch sử' }).click()
-    await expect(page.getByText(`${count}/${count} số đã chọn`)).toBeVisible()
-    await page.getByRole('button', { name: 'Kiểm tra lịch sử' }).click()
-    await expect(page.getByRole('heading', { name: /Trùng chính xác/ })).toBeVisible()
+    await page.getByRole('link', { name: 'Check history' }).click()
+    await expect(page.getByText(`${count}/${count} numbers selected`)).toBeVisible()
+    await page.getByRole('button', { name: 'Check history' }).click()
+    await expect(page.getByRole('heading', { name: /Exact Matches/ })).toBeVisible()
     expect(errors).toEqual([])
   })
 }
@@ -118,46 +125,46 @@ test('pause, reset and game change discard the old physical session', async ({ p
   const errors: string[] = []
   page.on('pageerror', (error) => errors.push(error.message))
   await page.goto('/generator?game=power_655')
-  await expect(page.getByRole('button', { name: 'Bắt đầu quay' })).toBeEnabled({ timeout: 30_000 })
-  await page.getByRole('button', { name: 'Bắt đầu quay' }).click()
-  await page.getByRole('button', { name: 'Tạm dừng', exact: true }).click()
-  await expect(page.locator('.draw-status')).toHaveText('Đã tạm dừng')
+  await expect(page.getByRole('button', { name: 'Start Draw' })).toBeEnabled({ timeout: 30_000 })
+  await page.getByRole('button', { name: 'Start Draw' }).click()
+  await page.getByRole('button', { name: 'Pause', exact: true }).click()
+  await expect(page.locator('.draw-status')).toHaveText('Paused')
   const values = await page.locator('.draw-slot').allTextContents()
-  await expect(page.getByRole('button', { name: 'Tiếp tục' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Resume' })).toBeVisible()
   expect(await page.locator('.draw-slot').allTextContents()).toEqual(values)
-  await page.getByRole('button', { name: 'Tiếp tục' }).click()
+  await page.getByRole('button', { name: 'Resume' }).click()
   await page.evaluate(() => {
     Object.defineProperty(document, 'hidden', { configurable: true, get: () => true })
     document.dispatchEvent(new Event('visibilitychange'))
   })
-  await expect(page.locator('.draw-status')).toHaveText('Đã tạm dừng')
-  await page.getByRole('button', { name: 'Phiên mới' }).click()
+  await expect(page.locator('.draw-status')).toHaveText('Paused')
+  await page.getByRole('button', { name: 'New session' }).click()
   await expect(page.locator('.draw-slot.filled')).toHaveCount(0)
-  await page.getByLabel('Chọn game').selectOption('mega_645')
-  await expect(page.locator('.draw-stage-badge')).toHaveText('45 BÓNG')
+  await page.getByLabel('Select game').selectOption('mega_645')
+  await expect(page.locator('.draw-stage-badge')).toHaveText('45 BALLS')
   await expect(page.locator('.draw-slot.filled')).toHaveCount(0)
-  await page.getByLabel('Chọn game').selectOption('lotto_535')
-  await expect(page.locator('.draw-stage-badge')).toHaveText('35 BÓNG')
+  await page.getByLabel('Select game').selectOption('lotto_535')
+  await expect(page.locator('.draw-stage-badge')).toHaveText('35 BALLS')
   await expect(page.locator('.draw-result-slots li')).toHaveCount(5)
   await expect(page.locator('.draw-slot.filled')).toHaveCount(0)
   await page.evaluate(() => {
     Object.defineProperty(document, 'hidden', { configurable: true, get: () => false })
   })
-  await expect(page.getByRole('button', { name: 'Bắt đầu quay' })).toBeEnabled()
-  await page.getByRole('button', { name: 'Bắt đầu quay' }).click()
+  await expect(page.getByRole('button', { name: 'Start Draw' })).toBeEnabled()
+  await page.getByRole('button', { name: 'Start Draw' }).click()
   await expect(page.locator('.draw-slot.filled').first()).toBeVisible({ timeout: 30_000 })
-  await expect(page.getByRole('button', { name: 'Tạm dừng', exact: true })).toBeVisible()
-  await page.getByLabel('Chọn game').selectOption('mega_645')
-  await expect(page.locator('.draw-stage-badge')).toHaveText('45 BÓNG')
+  await expect(page.getByRole('button', { name: 'Pause', exact: true })).toBeVisible()
+  await page.getByLabel('Select game').selectOption('mega_645')
+  await expect(page.locator('.draw-stage-badge')).toHaveText('45 BALLS')
   await expect(page.locator('.draw-result-slots li')).toHaveCount(6)
   await expect(page.locator('.draw-slot.filled')).toHaveCount(0)
-  await expect(page.getByRole('button', { name: 'Bắt đầu quay' })).toBeEnabled()
-  await page.getByLabel('Chọn game').selectOption('lotto_535')
-  await expect(page.locator('.draw-stage-badge')).toHaveText('35 BÓNG')
+  await expect(page.getByRole('button', { name: 'Start Draw' })).toBeEnabled()
+  await page.getByLabel('Select game').selectOption('lotto_535')
+  await expect(page.locator('.draw-stage-badge')).toHaveText('35 BALLS')
   await expect(page.locator('.draw-result-slots li')).toHaveCount(5)
   await expect(page.locator('.draw-slot.filled')).toHaveCount(0)
-  await expect(page.getByRole('button', { name: 'Bắt đầu quay' })).toBeEnabled()
-  await expect(page.locator('.draw-status')).toHaveText('Sẵn sàng')
+  await expect(page.getByRole('button', { name: 'Start Draw' })).toBeEnabled()
+  await expect(page.locator('.draw-status')).toHaveText('Ready')
   expect(errors).toEqual([])
 })
 
@@ -166,7 +173,7 @@ test('WebGL failure is explicit; reduced motion hides the scene without auto-run
 }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto('/generator?game=mega_645')
-  await expect(page.getByLabel('Ẩn hình ảnh chuyển động')).toBeChecked()
+  await expect(page.getByLabel('Hide motion rendering')).toBeChecked()
   await expect(page.locator('.draw-slot.filled')).toHaveCount(0)
   await page.addInitScript(() => {
     const getContext = HTMLCanvasElement.prototype.getContext
@@ -177,7 +184,7 @@ test('WebGL failure is explicit; reduced motion hides the scene without auto-run
   })
   await page.reload()
   await expect(page.getByRole('alert')).toContainText('WebGL 2')
-  await expect(page.getByRole('button', { name: 'Bắt đầu quay' })).toBeDisabled()
+  await expect(page.getByRole('button', { name: 'Start Draw' })).toBeDisabled()
   await expect(page.locator('.draw-slot.filled')).toHaveCount(0)
 })
 
@@ -186,18 +193,18 @@ test('reset alone reinitializes the scene and an actual context loss can recover
 }) => {
   test.setTimeout(60_000)
   await page.goto('/generator?game=mega_645')
-  const start = page.getByRole('button', { name: 'Bắt đầu quay' })
+  const start = page.getByRole('button', { name: 'Start Draw' })
   await expect(start).toBeEnabled({ timeout: 30_000 })
-  await page.getByRole('button', { name: 'Phiên mới' }).click()
+  await page.getByRole('button', { name: 'New session' }).click()
   await expect(start).toBeEnabled({ timeout: 20_000 })
-  await page.getByRole('button', { name: 'Bắt đầu quay' }).click()
-  await expect(page.getByRole('button', { name: 'Tạm dừng', exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'Start Draw' }).click()
+  await expect(page.getByRole('button', { name: 'Pause', exact: true })).toBeVisible()
   await page.evaluate(() => {
     const canvas = document.querySelector<HTMLCanvasElement>('.draw-canvas canvas')!
     canvas.getContext('webgl2')!.getExtension('WEBGL_lose_context')!.loseContext()
   })
-  await expect(page.getByRole('alert')).toContainText('Không tải được cảnh 3D')
-  await page.getByRole('button', { name: 'Thử lại cảnh 3D' }).click()
+  await expect(page.getByRole('alert')).toContainText('Failed to load 3D scene')
+  await page.getByRole('button', { name: 'Retry 3D scene' }).click()
   await expect(start).toBeEnabled({ timeout: 20_000 })
   await expect(page.getByRole('alert')).toHaveCount(0)
   await expect(page.locator('.draw-slot.filled')).toHaveCount(0)
