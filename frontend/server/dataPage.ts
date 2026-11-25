@@ -1,7 +1,7 @@
 import { parseOptions } from './dataQuery.js'
 import { renderCsv, renderHtml, renderMarkdown } from './dataRender.js'
 import { textError } from './dataResponse.js'
-import { loadGames, loadSnapshot } from './dataSnapshot.js'
+import { loadCsvSnapshot, loadGames, loadSnapshot } from './dataSnapshot.js'
 import { validateOriginConfig, type OriginConfig } from './originConfig.js'
 
 type Fetch = typeof fetch
@@ -45,16 +45,21 @@ export function createDataHandler(
         return textError(404, 'No matching games found.')
       }
 
-      const snapshots = await Promise.all(
-        targetGames.map((game) => loadSnapshot(origin, token, game, parsed, fetchOrigin, signal)),
-      )
-
-      const body =
-        parsed.format === 'csv'
-          ? renderCsv(snapshots, parsed)
-          : parsed.format === 'md'
-            ? renderMarkdown(snapshots, parsed)
-            : renderHtml(snapshots, parsed)
+      let body: string
+      if (parsed.format === 'csv') {
+        const snapshots = await Promise.all(
+          targetGames.map((game) =>
+            loadCsvSnapshot(origin, token, game, parsed, fetchOrigin, signal),
+          ),
+        )
+        body = renderCsv(snapshots, parsed)
+      } else {
+        const snapshots = await Promise.all(
+          targetGames.map((game) => loadSnapshot(origin, token, game, parsed, fetchOrigin, signal)),
+        )
+        body =
+          parsed.format === 'md' ? renderMarkdown(snapshots, parsed) : renderHtml(snapshots, parsed)
+      }
 
       const contentType =
         parsed.format === 'csv'
@@ -81,7 +86,9 @@ export function createDataHandler(
     } catch {
       return textError(
         503,
-        'Data service is starting or temporarily unavailable. Please retry shortly.',
+        request.method === 'HEAD'
+          ? null
+          : 'Data service is starting or temporarily unavailable. Please retry shortly.',
         '30',
       )
     }

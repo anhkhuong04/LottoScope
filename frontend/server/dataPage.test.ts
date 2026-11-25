@@ -8,9 +8,11 @@ const config = {
   token: 'not-a-real-origin-token-for-tests-123456',
 }
 
-function mockGamesFetch() {
+function mockGamesFetch(override?: (url: URL) => Response | undefined) {
   return vi.fn<typeof fetch>().mockImplementation(async (input) => {
     const url = new URL(String(input))
+    const overridden = override?.(url)
+    if (overridden) return overridden
     const p = url.pathname
     if (p === '/api/v1/games') {
       return Response.json({
@@ -220,6 +222,90 @@ describe('static AI data page handler', () => {
     expect(await pairsCsv.text()).toBe(
       'game,rank,pair,frequency,percent_of_draws,current_gap,last_seen_draw_id\nmega_645,1,05-12,4,13.3,1,00899',
     )
+  })
+
+  it.each([
+    ['GET', 'draws', '/draws', null],
+    ['HEAD', 'draws', '/draws', null],
+    ['GET', 'numbers', '/analytics/numbers', 'main'],
+    ['HEAD', 'numbers', '/analytics/numbers', 'main'],
+    ['GET', 'pairs', '/analytics/pairs', null],
+    ['GET', 'special', '/analytics/numbers', 'special'],
+  ])(
+    'returns an uncached 503 for %s CSV %s when its source fails',
+    async (method, section, path, kind) => {
+      const upstream = mockGamesFetch((url) =>
+        url.pathname.endsWith(path) && url.searchParams.get('number_kind') === kind
+          ? Response.json({ error: 'source failure' }, { status: 500 })
+          : undefined,
+      )
+      const response = await createDataHandler(
+        config,
+        upstream,
+      )(
+        new Request(
+          `https://lottoscope-sable.vercel.app/data/lotto_535?format=csv&section=${section}`,
+          {
+            method,
+          },
+        ),
+      )
+      expect(response.status).toBe(503)
+      expect(response.headers.get('Cache-Control')).toBe('no-store')
+      expect(response.headers.get('Retry-After')).toBe('30')
+      expect(response.headers.get('Content-Disposition')).toBeNull()
+      const body = await response.text()
+      if (method === 'HEAD') expect(body).toBe('')
+      else expect(body).toContain('temporarily unavailable')
+    },
+  )
+
+  it('exports a legitimately empty CSV without reading other sections', async () => {
+    const upstream = mockGamesFetch((url) =>
+      url.pathname.endsWith('/analytics/pairs')
+        ? Response.json({ items: [] })
+        : url.pathname.endsWith('/games')
+          ? undefined
+          : Response.json({ error: 'unrelated failure' }, { status: 500 }),
+    )
+    const response = await createDataHandler(
+      config,
+      upstream,
+    )(new Request('https://lottoscope-sable.vercel.app/data/lotto_535?format=csv&section=pairs'))
+    expect(response.status).toBe(200)
+    expect(response.headers.get('Cache-Control')).toContain('public')
+    expect(await response.text()).toBe(
+      'game,rank,pair,frequency,percent_of_draws,current_gap,last_seen_draw_id',
+    )
+    expect(upstream.mock.calls.map(([url]) => new URL(String(url)).pathname)).toEqual([
+      '/api/v1/games',
+      '/api/v1/games/lotto_535/analytics/pairs',
+    ])
+  })
+
+  it('returns an empty special CSV for Power without reading any draw or analytics data', async () => {
+    const upstream = mockGamesFetch()
+    const response = await createDataHandler(
+      config,
+      upstream,
+    )(new Request('https://lottoscope-sable.vercel.app/data/power_655?format=csv&section=special'))
+    expect(response.status).toBe(200)
+    expect((await response.text()).split('\n')).toHaveLength(1)
+    expect(upstream).toHaveBeenCalledTimes(1)
+  })
+
+  it('rejects an all-games CSV if the requested section fails for one game', async () => {
+    const upstream = mockGamesFetch((url) =>
+      url.pathname.endsWith('/mega_645/analytics/pairs')
+        ? Response.json({ error: 'source failure' }, { status: 500 })
+        : undefined,
+    )
+    const response = await createDataHandler(
+      config,
+      upstream,
+    )(new Request('https://lottoscope-sable.vercel.app/data?format=csv&section=pairs'))
+    expect(response.status).toBe(503)
+    expect(response.headers.get('Cache-Control')).toBe('no-store')
   })
 
   it('rejects invalid methods, malformed dates, unknown games, and unconfigured origin without caching errors', async () => {

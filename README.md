@@ -240,6 +240,10 @@ curl "https://lottoscope-sable.vercel.app/data/lotto_535?window=last_draws&count
 
 Supported query parameters: `window` (`last_draws` | `date_range` | `all_time`), `count` (`10|20|30|50|100`), `from_date`, `to_date`, `as_of_draw_id`, `draw_limit`, `draw_page`, `draw_sort`, `pair_limit`, `pair_page`, `format` (`html|md|csv`), and `section` (`draws|numbers|special|pairs`).
 
+CSV exports load the requested section. If its data source is unavailable,
+`GET` and `HEAD` return `503` with `Cache-Control: no-store`. A successful
+empty section returns a CSV header with no data rows.
+
 ---
 
 ## Project Structure

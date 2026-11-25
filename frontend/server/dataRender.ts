@@ -1,5 +1,5 @@
 import { buildPageHref, type DataQueryOptions } from './dataQuery.js'
-import type { GameSnapshot } from './dataSnapshot.js'
+import type { CsvSnapshot, GameSnapshot } from './dataSnapshot.js'
 
 function escapeHtml(value: unknown): string {
   return String(value ?? '')
@@ -42,12 +42,12 @@ function formatWindowLabel(opts: DataQueryOptions): string {
   return opts.asOfDrawId ? `${base} (through ${opts.asOfDrawId})` : base
 }
 
-export function renderCsv(snapshots: GameSnapshot[], opts: DataQueryOptions): string {
+export function renderCsv(snapshots: CsvSnapshot[], opts: DataQueryOptions): string {
   const rows: string[][] = []
   if (opts.section === 'draws') {
     rows.push(['game', 'draw_id', 'draw_date', 'draw_time', 'main_numbers', 'special_number'])
     for (const snap of snapshots) {
-      for (const d of snap.draws.items) {
+      for (const d of snap.draws?.items ?? []) {
         rows.push([
           snap.game.id,
           d.draw_id,

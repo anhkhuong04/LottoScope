@@ -1,4 +1,4 @@
-export function textError(status: number, body: string, retryAfter?: string): Response {
+export function textError(status: number, body: string | null, retryAfter?: string): Response {
   const headers: Record<string, string> = {
     'Content-Type': 'text/plain; charset=utf-8',
     'Cache-Control': 'no-store',

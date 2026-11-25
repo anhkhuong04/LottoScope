@@ -17,6 +17,8 @@ export type GameSnapshot = {
   pairs: ({ context: Context } & Page<PairMetricItem>) | null
 }
 
+export type CsvSnapshot = Pick<GameSnapshot, 'game'> & Partial<Omit<GameSnapshot, 'game'>>
+
 async function fetchOriginJson<T>(
   origin: URL,
   token: string,
@@ -47,6 +49,32 @@ export function loadGames(origin: URL, token: string, fetchOrigin: Fetch, signal
   return fetchOriginJson<{ items: Game[] }>(origin, token, '/games', fetchOrigin, signal)
 }
 
+function gameDataSource(
+  origin: URL,
+  token: string,
+  game: Game,
+  opts: DataQueryOptions,
+  fetchOrigin: Fetch,
+  signal: AbortSignal,
+) {
+  const windowQuery = buildAnalyticsQuery(opts)
+  const drawsQuery = buildDrawsQuery(opts)
+  const read = <T>(path: string) =>
+    fetchOriginJson<T>(origin, token, `/games/${game.id}${path}`, fetchOrigin, signal)
+
+  return {
+    draws: () => read<Page<DrawItem>>(`/draws?${drawsQuery}`),
+    numbers: (kind: 'main' | 'special') =>
+      read<NonNullable<GameSnapshot['numbers']>>(
+        `/analytics/numbers?${windowQuery}&number_kind=${kind}&sort=frequency_desc`,
+      ),
+    pairs: () =>
+      read<NonNullable<GameSnapshot['pairs']>>(
+        `/analytics/pairs?${windowQuery}&page=${opts.pairPage}&page_size=${opts.pairLimit}&sort=frequency_desc`,
+      ),
+  }
+}
+
 export async function loadSnapshot(
   origin: URL,
   token: string,
@@ -55,40 +83,12 @@ export async function loadSnapshot(
   fetchOrigin: Fetch,
   signal: AbortSignal,
 ): Promise<GameSnapshot> {
-  const windowQuery = buildAnalyticsQuery(opts)
-  const drawsQuery = buildDrawsQuery(opts)
-
+  const source = gameDataSource(origin, token, game, opts, fetchOrigin, signal)
   const [drawsRes, numbersRes, pairsRes, specialRes] = await Promise.allSettled([
-    fetchOriginJson<Page<DrawItem>>(
-      origin,
-      token,
-      `/games/${game.id}/draws?${drawsQuery}`,
-      fetchOrigin,
-      signal,
-    ),
-    fetchOriginJson<{ context: Context; items: NumberMetric[] }>(
-      origin,
-      token,
-      `/games/${game.id}/analytics/numbers?${windowQuery}&number_kind=main&sort=frequency_desc`,
-      fetchOrigin,
-      signal,
-    ),
-    fetchOriginJson<{ context: Context } & Page<PairMetricItem>>(
-      origin,
-      token,
-      `/games/${game.id}/analytics/pairs?${windowQuery}&page=${opts.pairPage}&page_size=${opts.pairLimit}&sort=frequency_desc`,
-      fetchOrigin,
-      signal,
-    ),
-    game.id === 'lotto_535'
-      ? fetchOriginJson<{ context: Context; items: NumberMetric[] }>(
-          origin,
-          token,
-          `/games/${game.id}/analytics/numbers?${windowQuery}&number_kind=special&sort=frequency_desc`,
-          fetchOrigin,
-          signal,
-        )
-      : Promise.resolve(null),
+    source.draws(),
+    source.numbers('main'),
+    source.pairs(),
+    game.id === 'lotto_535' ? source.numbers('special') : Promise.resolve(null),
   ])
 
   if (drawsRes.status === 'rejected') {
@@ -101,5 +101,34 @@ export async function loadSnapshot(
     numbers: numbersRes.status === 'fulfilled' ? numbersRes.value : null,
     pairs: pairsRes.status === 'fulfilled' ? pairsRes.value : null,
     specialNumbers: specialRes.status === 'fulfilled' ? specialRes.value : null,
+  }
+}
+
+async function requireItems<T extends { items: unknown[] }>(request: Promise<T>): Promise<T> {
+  const data = await request
+  if (!Array.isArray(data?.items)) throw new Error('upstream_missing_items')
+  return data
+}
+
+export async function loadCsvSnapshot(
+  origin: URL,
+  token: string,
+  game: Game,
+  opts: DataQueryOptions,
+  fetchOrigin: Fetch,
+  signal: AbortSignal,
+): Promise<CsvSnapshot> {
+  const source = gameDataSource(origin, token, game, opts, fetchOrigin, signal)
+  switch (opts.section) {
+    case 'draws':
+      return { game, draws: await requireItems(source.draws()) }
+    case 'numbers':
+      return { game, numbers: await requireItems(source.numbers('main')) }
+    case 'special':
+      return game.id === 'lotto_535'
+        ? { game, specialNumbers: await requireItems(source.numbers('special')) }
+        : { game }
+    case 'pairs':
+      return { game, pairs: await requireItems(source.pairs()) }
   }
 }
