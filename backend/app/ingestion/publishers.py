@@ -198,49 +198,7 @@ class _Page(HTMLParser):
             self.card.table_stack.append(_TableState())
             return
         if self.card.table_stack:
-            table = self.card.table_stack[-1]
-            if tag == "tbody":
-                table.in_body = True
-            elif tag == "thead":
-                table.in_body = False
-            elif tag == "tr":
-                table.row = _TableRow()
-            elif tag in {"td", "th"} and table.row is not None:
-                table.row.cell = _TableCell(is_header=(tag == "th"))
-            elif (
-                table.row is not None
-                and table.row.cell is not None
-                and not table.row.cell.is_header
-                and len(table.row.cells) == 1
-            ):
-                cell = table.row.cell
-                if tag == "span" and "ball" in classes and cell.line_depth is not None:
-                    if "ball_lotto_2" in classes:
-                        if cell.ball_zone == "normal" or cell.line_special:
-                            cell.invalid_match = True
-                        else:
-                            cell.line_special = True
-                    elif "ball_lotto" in classes:
-                        if cell.ball_zone == "special":
-                            cell.invalid_match = True
-                        else:
-                            cell.line_main += 1
-                elif tag == "i" and not cell.saw_line_circle:
-                    cell.saw_italic = True
-                    if "number_device_i" in classes:
-                        if cell.has_sep or cell.line_special or cell.line_main == 0:
-                            cell.invalid_match = True
-                        else:
-                            cell.has_sep = True
-                    elif "number_special_i" in classes:
-                        if cell.line_special or (cell.line_main > 0 and not cell.has_sep):
-                            cell.invalid_match = True
-                        else:
-                            cell.line_special = True
-                    elif cell.has_sep or cell.line_special:
-                        cell.invalid_match = True
-                    else:
-                        cell.line_main += 1
+            self._start_prize_tag(self.card.table_stack[-1], tag, classes)
             return
         if tag == "ul" and "result-number" in classes:
             self.number_list = True
@@ -252,6 +210,50 @@ class _Page(HTMLParser):
             if self.capture is not None:
                 raise ValueError("nested publisher ball")
             self.capture = (tag, [], self.special or "ball_lotto_2" in classes)
+
+    def _start_prize_tag(self, table: _TableState, tag: str, classes: set[str]) -> None:
+        if tag == "tbody":
+            table.in_body = True
+        elif tag == "thead":
+            table.in_body = False
+        elif tag == "tr":
+            table.row = _TableRow()
+        elif tag in {"td", "th"} and table.row is not None:
+            table.row.cell = _TableCell(is_header=(tag == "th"))
+        elif (
+            table.row is not None
+            and table.row.cell is not None
+            and not table.row.cell.is_header
+            and len(table.row.cells) == 1
+        ):
+            cell = table.row.cell
+            if tag == "span" and "ball" in classes and cell.line_depth is not None:
+                if "ball_lotto_2" in classes:
+                    if cell.ball_zone == "normal" or cell.line_special:
+                        cell.invalid_match = True
+                    else:
+                        cell.line_special = True
+                elif "ball_lotto" in classes:
+                    if cell.ball_zone == "special":
+                        cell.invalid_match = True
+                    else:
+                        cell.line_main += 1
+            elif tag == "i" and not cell.saw_line_circle:
+                cell.saw_italic = True
+                if "number_device_i" in classes:
+                    if cell.has_sep or cell.line_special or cell.line_main == 0:
+                        cell.invalid_match = True
+                    else:
+                        cell.has_sep = True
+                elif "number_special_i" in classes:
+                    if cell.line_special or (cell.line_main > 0 and not cell.has_sep):
+                        cell.invalid_match = True
+                    else:
+                        cell.line_special = True
+                elif cell.has_sep or cell.line_special:
+                    cell.invalid_match = True
+                else:
+                    cell.line_main += 1
 
     def handle_data(self, data: str) -> None:
         if self.card is not None and not self.ignored:
@@ -269,63 +271,7 @@ class _Page(HTMLParser):
         if tag in ("script", "style"):
             self.ignored = max(0, self.ignored - 1)
         if self.card is not None and self.card.table_stack:
-            table = self.card.table_stack[-1]
-            if tag == "div":
-                if (row := table.row) is not None and (cell := row.cell) is not None:
-                    if cell.zone_depth == self.depth:
-                        cell.ball_zone = None
-                        cell.zone_depth = None
-                    if cell.line_depth == self.depth:
-                        if cell.line_main or cell.line_special:
-                            cell.matches.append(PrizeMatch(cell.line_main, cell.line_special))
-                        cell.line_depth = None
-                        cell.line_main = 0
-                        cell.line_special = False
-                self.depth -= 1
-                return
-            if tag in {"td", "th"} and table.row is not None and table.row.cell is not None:
-                cell = table.row.cell
-                if cell.line_depth is not None:
-                    cell.invalid_match = True
-                if not cell.is_header and len(table.row.cells) == 1:
-                    if (
-                        cell.saw_italic
-                        and not cell.saw_line_circle
-                        and (cell.line_main or cell.line_special)
-                    ):
-                        cell.matches.append(PrizeMatch(cell.line_main, cell.line_special))
-                    table.row.matches = tuple(cell.matches)
-                    if cell.invalid_match:
-                        table.row.invalid_match = True
-                table.row.cells.append(" ".join("".join(cell.text).split()))
-                table.row.cell_is_header.append(cell.is_header)
-                table.row.cell = None
-                return
-            if tag == "tr" and table.row is not None:
-                row = table.row
-                if row.cells:
-                    if not table.in_body or all(row.cell_is_header):
-                        table.headers.append(tuple(cell.casefold() for cell in row.cells))
-                    else:
-                        if row.invalid_match:
-                            table.invalid_match = True
-                        table.rows.append((tuple(row.cells), row.matches))
-                table.row = None
-                return
-            if tag == "tbody":
-                table.in_body = False
-                return
-            if tag == "table":
-                finished = self.card.table_stack.pop()
-                if any(_is_prize_header(header) for header in finished.headers):
-                    if self.card.prizes is not None:
-                        raise ValueError("duplicate fallback prize table")
-                    if finished.invalid_match or finished.in_body or finished.row is not None:
-                        raise ValueError("malformed fallback prize table")
-                    self.card.prizes = _parse_prize_rows(self.game, finished.rows)
-                elif any(_looks_like_prize_header(header) for header in finished.headers):
-                    raise ValueError("fallback prize table structure changed")
-                return
+            self._end_prize_tag(self.card, tag)
             return
         if self.capture is not None and tag == self.capture[0]:
             if self.card is None:
@@ -345,6 +291,65 @@ class _Page(HTMLParser):
                 self.card = None
                 self.root = None
             self.depth -= 1
+
+    def _end_prize_tag(self, card: _Card, tag: str) -> None:
+        table = card.table_stack[-1]
+        if tag == "div":
+            if (row := table.row) is not None and (cell := row.cell) is not None:
+                if cell.zone_depth == self.depth:
+                    cell.ball_zone = None
+                    cell.zone_depth = None
+                if cell.line_depth == self.depth:
+                    if cell.line_main or cell.line_special:
+                        cell.matches.append(PrizeMatch(cell.line_main, cell.line_special))
+                    cell.line_depth = None
+                    cell.line_main = 0
+                    cell.line_special = False
+            self.depth -= 1
+            return
+        if tag in {"td", "th"} and table.row is not None and table.row.cell is not None:
+            cell = table.row.cell
+            if cell.line_depth is not None:
+                cell.invalid_match = True
+            if not cell.is_header and len(table.row.cells) == 1:
+                if (
+                    cell.saw_italic
+                    and not cell.saw_line_circle
+                    and (cell.line_main or cell.line_special)
+                ):
+                    cell.matches.append(PrizeMatch(cell.line_main, cell.line_special))
+                table.row.matches = tuple(cell.matches)
+                if cell.invalid_match:
+                    table.row.invalid_match = True
+            table.row.cells.append(" ".join("".join(cell.text).split()))
+            table.row.cell_is_header.append(cell.is_header)
+            table.row.cell = None
+            return
+        if tag == "tr" and table.row is not None:
+            row = table.row
+            if row.cells:
+                if not table.in_body or all(row.cell_is_header):
+                    table.headers.append(tuple(cell.casefold() for cell in row.cells))
+                else:
+                    if row.invalid_match:
+                        table.invalid_match = True
+                    table.rows.append((tuple(row.cells), row.matches))
+            table.row = None
+            return
+        if tag == "tbody":
+            table.in_body = False
+            return
+        if tag == "table":
+            finished = card.table_stack.pop()
+            if any(_is_prize_header(header) for header in finished.headers):
+                if card.prizes is not None:
+                    raise ValueError("duplicate fallback prize table")
+                if finished.invalid_match or finished.in_body or finished.row is not None:
+                    raise ValueError("malformed fallback prize table")
+                card.prizes = _parse_prize_rows(self.game, finished.rows)
+            elif any(_looks_like_prize_header(header) for header in finished.headers):
+                raise ValueError("fallback prize table structure changed")
+            return
 
 
 def _page(

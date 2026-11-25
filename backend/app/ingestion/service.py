@@ -1,14 +1,15 @@
 """Historical import and collector share one transactional ingestion path."""
 
 from collections import deque
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Generator, Iterable
 from concurrent.futures import Future, ThreadPoolExecutor
+from contextlib import closing
 from dataclasses import dataclass, replace
 from datetime import UTC, date, datetime
 from threading import Event
 from typing import Literal, Protocol
 
-from sqlalchemy import Engine, func, select, text
+from sqlalchemy import Engine, func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
@@ -16,6 +17,8 @@ from sqlalchemy.orm import Session
 from app.domain.draw import Draw, validate_draw_id
 from app.games.definitions import DomainValidationError, get_game
 from app.ingestion.fetcher import SourceDeferredError, SourceFetchError
+from app.ingestion.locking import JobOverlapError as JobOverlapError
+from app.ingestion.locking import game_ingestion_lock
 from app.ingestion.sources import SourceParseError, parse_result, result_url
 from app.models.ingestion import IngestionCheckpointRow, IngestionItemRow, IngestionRunRow
 from app.repositories.draws import DrawRepository
@@ -25,10 +28,6 @@ COLLECTOR_BATCH_LIMIT = 20
 
 class PageFetcher(Protocol):
     def fetch(self, url: str) -> tuple[str, datetime]: ...
-
-
-class JobOverlapError(RuntimeError):
-    """Another import/collector owns this game's advisory lock."""
 
 
 class ImportPrerequisiteError(RuntimeError):
@@ -290,26 +289,16 @@ class IngestionService:
             raise DomainValidationError("id_range", "start_id must be <= end_id")
 
         # Session-level lock spans per-draw transactions and protects manual/scheduled overlap.
-        with self.engine.connect() as lock_connection:
-            acquired = lock_connection.scalar(
-                text("SELECT pg_try_advisory_lock(5043, hashtext(:game))"), {"game": game}
+        with game_ingestion_lock(self.engine, game, f"ingestion already running for {game}"):
+            return self._run_locked(
+                game,
+                kind,
+                start_id=start_id,
+                end_id=end_id,
+                from_date=from_date,
+                to_date=to_date,
+                recheck=recheck,
             )
-            if not acquired:
-                raise JobOverlapError(f"ingestion already running for {game}")
-            try:
-                return self._run_locked(
-                    game,
-                    kind,
-                    start_id=start_id,
-                    end_id=end_id,
-                    from_date=from_date,
-                    to_date=to_date,
-                    recheck=recheck,
-                )
-            finally:
-                lock_connection.scalar(
-                    text("SELECT pg_advisory_unlock(5043, hashtext(:game))"), {"game": game}
-                )
 
     def _run_locked(
         self,
@@ -420,32 +409,11 @@ class IngestionService:
                     counts["skipped"] += 1
 
             if kind == "import":
-                with ThreadPoolExecutor(max_workers=self.import_workers) as pool:
-                    deferred: SourceDeferredError | None = None
-                    iterator = iter(pending)
-                    active: deque[tuple[int, Future[str]]] = deque()
-                    for sequence in iterator:
-                        active.append((sequence, pool.submit(process, sequence)))
-                        if len(active) == self.import_workers:
-                            break
-                    while active:
-                        sequence, future = active.popleft()
-                        try:
-                            record(future.result())
-                        except SourceDeferredError as exc:
-                            counts["failed"] += 1
-                            deferred = exc
+                with closing(self._import_outcomes(pending, process, stop_submitting)) as outcomes:
+                    for sequence, outcome in outcomes:
+                        record(outcome)
                         if self.progress is not None and sequence % 50 == 0:
                             self.progress(sequence, counts.copy())
-                        if stop_submitting.is_set():
-                            continue  # Drain already running work, but submit no further IDs.
-                        try:
-                            following = next(iterator)
-                        except StopIteration:
-                            continue
-                        active.append((following, pool.submit(process, following)))
-                if deferred is not None:
-                    raise deferred
             else:
                 for sequence in pending:
                     try:
@@ -485,6 +453,36 @@ class IngestionService:
                 row.counters = {key: value for key, value in counts.items()}
                 row.error_summary = error
         return RunSummary(run_id, game, kind, status, counts)
+
+    def _import_outcomes(
+        self,
+        pending: Iterable[int],
+        process: Callable[[int], str],
+        stop_submitting: Event,
+    ) -> Generator[tuple[int, str]]:
+        deferred: SourceDeferredError | None = None
+        with ThreadPoolExecutor(max_workers=self.import_workers) as pool:
+            iterator = iter(pending)
+            active: deque[tuple[int, Future[str]]] = deque()
+            for sequence in iterator:
+                active.append((sequence, pool.submit(process, sequence)))
+                if len(active) == self.import_workers:
+                    break
+            while active:
+                sequence, future = active.popleft()
+                try:
+                    outcome = future.result()
+                except SourceDeferredError as exc:
+                    outcome = "failed"
+                    deferred = exc
+                yield sequence, outcome
+                if stop_submitting.is_set():
+                    continue  # Drain already running work, but submit no further IDs.
+                following = next(iterator, None)
+                if following is not None:
+                    active.append((following, pool.submit(process, following)))
+        if deferred is not None:
+            raise deferred
 
     def _finish_collector_checkpoint(self, game: str, upper: int) -> int:
         """Latest-first writes must not advance the checkpoint across unattempted IDs."""

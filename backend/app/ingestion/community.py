@@ -1,19 +1,21 @@
 """Opt-in, append-only community fallback; never repairs official history."""
 
+from collections.abc import Mapping, Sequence
 from dataclasses import replace
 from datetime import UTC, datetime
 from typing import Literal
 
-from sqlalchemy import Engine, func, select, text
+from sqlalchemy import Engine, func, select
 from sqlalchemy.orm import Session
 
-from app.domain.draw import validate_draw_id
+from app.domain.draw import Draw, validate_draw_id
 from app.games.definitions import get_game
 from app.ingestion.fetcher import SourceFetchError
+from app.ingestion.locking import game_ingestion_lock
 from app.ingestion.publishers import feed_url as feed_url
 from app.ingestion.publishers import load_draws
 from app.ingestion.publishers import parse_feed as parse_feed
-from app.ingestion.service import JobOverlapError, PageFetcher, RunSummary
+from app.ingestion.service import PageFetcher, RunSummary
 from app.models.draw import DrawRow
 from app.models.ingestion import IngestionCheckpointRow, IngestionItemRow, IngestionRunRow
 from app.repositories.draws import DrawRepository
@@ -61,6 +63,19 @@ class CommunityFeedError(ValueError):
     """Untrusted publisher cannot safely extend stored history."""
 
 
+def _verify_anchors(anchors: Sequence[DrawRow], incoming: Mapping[int, Draw]) -> None:
+    for stored in anchors:
+        draw = incoming.get(stored.draw_seq)
+        if draw is None or (
+            draw.draw_date,
+            list(draw.main_numbers),
+            draw.special_number,
+        ) != (stored.draw_date, stored.main_numbers, stored.special_number):
+            raise CommunityFeedError(
+                f"reference mismatch for {stored.draw_id}; manual review required"
+            )
+
+
 class CommunityFallbackService:
     def __init__(self, engine: Engine, fetcher: PageFetcher) -> None:
         self.engine = engine
@@ -70,34 +85,16 @@ class CommunityFallbackService:
         self, game: str, *, fallback_reason: str = "official_cloudflare_challenge"
     ) -> RunSummary:
         get_game(game)
-        with self.engine.connect() as lock:
-            if not lock.scalar(
-                text("SELECT pg_try_advisory_lock(5043, hashtext(:game))"), {"game": game}
-            ):
-                raise JobOverlapError("another collector owns this game")
-            try:
-                return self._collect_locked(game, fallback_reason=fallback_reason)
-            finally:
-                lock.execute(
-                    text("SELECT pg_advisory_unlock(5043, hashtext(:game))"), {"game": game}
-                )
+        with game_ingestion_lock(self.engine, game, "another collector owns this game"):
+            return self._collect_locked(game, fallback_reason=fallback_reason)
 
     def enrich_prizes(
         self, game: str, draw_id: str, *, fallback_reason: str = "official_source_blocked"
     ) -> RunSummary:
         get_game(game)
         validate_draw_id(draw_id)
-        with self.engine.connect() as lock:
-            if not lock.scalar(
-                text("SELECT pg_try_advisory_lock(5043, hashtext(:game))"), {"game": game}
-            ):
-                raise JobOverlapError("another collector owns this game")
-            try:
-                return self._enrich_prizes_locked(game, draw_id, fallback_reason=fallback_reason)
-            finally:
-                lock.execute(
-                    text("SELECT pg_advisory_unlock(5043, hashtext(:game))"), {"game": game}
-                )
+        with game_ingestion_lock(self.engine, game, "another collector owns this game"):
+            return self._enrich_prizes_locked(game, draw_id, fallback_reason=fallback_reason)
 
     def _collect_locked(self, game: str, *, fallback_reason: str) -> RunSummary:
         with Session(self.engine) as session, session.begin():
@@ -136,16 +133,7 @@ class CommunityFallbackService:
                     raise CommunityFeedError("fallback requires 20 stored reference draws")
                 latest = anchors[0].draw_seq
                 draws = load_draws(self.fetcher, game, anchors[-1].draw_seq)
-                for stored in anchors:
-                    incoming = draws.get(stored.draw_seq)
-                    if incoming is None or (
-                        incoming.draw_date,
-                        list(incoming.main_numbers),
-                        incoming.special_number,
-                    ) != (stored.draw_date, stored.main_numbers, stored.special_number):
-                        raise CommunityFeedError(
-                            f"reference mismatch for {stored.draw_id}; manual review required"
-                        )
+                _verify_anchors(anchors, draws)
                 upper = max(draws)
                 if upper < latest or upper - latest > MAX_NEW:
                     raise CommunityFeedError("stale feed or new batch exceeds 20 draws")
@@ -289,16 +277,7 @@ class CommunityFallbackService:
                     raise CommunityFeedError("fallback requires 20 stored reference draws")
                 lower = min(stored_target.draw_seq, anchors[-1].draw_seq)
                 draws = load_draws(self.fetcher, game, lower)
-                for stored in anchors:
-                    incoming = draws.get(stored.draw_seq)
-                    if incoming is None or (
-                        incoming.draw_date,
-                        list(incoming.main_numbers),
-                        incoming.special_number,
-                    ) != (stored.draw_date, stored.main_numbers, stored.special_number):
-                        raise CommunityFeedError(
-                            f"reference mismatch for {stored.draw_id}; manual review required"
-                        )
+                _verify_anchors(anchors, draws)
                 incoming = draws.get(stored_target.draw_seq)
                 if incoming is None or (
                     incoming.draw_date,
