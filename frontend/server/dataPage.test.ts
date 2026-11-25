@@ -33,6 +33,15 @@ function mockGamesFetch() {
             special_min: null,
             special_max: null,
           },
+          {
+            id: 'power_655',
+            label: 'Power 6/55',
+            main_count: 6,
+            main_min: 1,
+            main_max: 55,
+            special_min: 1,
+            special_max: 55,
+          },
         ],
       })
     }
@@ -118,6 +127,23 @@ function mockGamesFetch() {
 }
 
 describe('static AI data page handler', () => {
+  it('skips the unsupported Power special analytics request', async () => {
+    const upstream = mockGamesFetch()
+    const handler = createDataHandler(config, upstream)
+    const response = await handler(
+      new Request('https://lottoscope-sable.vercel.app/data/power_655'),
+    )
+    expect(response.status).toBe(200)
+    const html = await response.text()
+    expect(html).toContain('Power 6/55')
+    expect(html).toContain('Main Number Frequency')
+    expect(html).not.toContain('Special Number Frequency')
+    const calls = upstream.mock.calls.map(([input]) => new URL(String(input)))
+    expect(calls).toHaveLength(4)
+    expect(calls.some((url) => url.searchParams.get('number_kind') === 'main')).toBe(true)
+    expect(calls.some((url) => url.searchParams.get('number_kind') === 'special')).toBe(false)
+  })
+
   it('renders semantic HTML with Edge Cache headers and pagination links', async () => {
     const upstream = mockGamesFetch()
     const handler = createDataHandler(config, upstream)

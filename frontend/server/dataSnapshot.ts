@@ -80,7 +80,7 @@ export async function loadSnapshot(
       fetchOrigin,
       signal,
     ),
-    game.special_min !== null
+    game.id === 'lotto_535'
       ? fetchOriginJson<{ context: Context; items: NumberMetric[] }>(
           origin,
           token,
