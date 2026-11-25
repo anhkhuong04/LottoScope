@@ -16,6 +16,7 @@ import type { Snapshot } from './session'
 export type { Snapshot } from './session'
 import './draw-machine.css'
 import { MachineFallback } from './visual/MachineFallback'
+import { DrawTray } from './DrawTray'
 
 const DrawScene = lazy(() => import('./DrawScene'))
 export type Action = { type: 'start' | 'pause' | 'resume'; id: number }
@@ -206,7 +207,6 @@ export default function DrawMachine({
                 </p>
               </div>
             )}
-            {supported === null && <p className="draw-loading">Checking graphics support…</p>}
             {failure && (
               <div className="draw-failure" role="alert">
                 <MachineFallback />
@@ -282,42 +282,7 @@ export default function DrawMachine({
             </div>
           </div>
 
-          <div className={`draw-tray${hasSpecial ? ' has-special' : ''}`}>
-            <ol
-              className="draw-result-slots"
-              aria-label="Draw sequence"
-              style={{ gridTemplateColumns: `repeat(${game.main_count}, minmax(0, 1fr))` }}
-            >
-              {Array.from({ length: game.main_count }, (_, i) => (
-                <li key={i}>
-                  <span className={`draw-slot${snapshot.drawn[i] !== undefined ? ' filled' : ''}`}>
-                    {snapshot.drawn[i] === undefined
-                      ? '—'
-                      : String(snapshot.drawn[i]).padStart(2, '0')}
-                  </span>
-                  <small>Ball {i + 1}</small>
-                </li>
-              ))}
-            </ol>
-
-            {hasSpecial && (
-              <div className="draw-special-result" aria-label="Special Number">
-                <span
-                  className={`draw-slot special${snapshot.specialNumber !== null ? ' filled' : ''}`}
-                >
-                  {snapshot.specialNumber === null
-                    ? '—'
-                    : String(snapshot.specialNumber).padStart(2, '0')}
-                </span>
-                <div>
-                  <strong>Special Number</strong>
-                  <small>
-                    Red chamber · {game.special_min}–{specialMax}
-                  </small>
-                </div>
-              </div>
-            )}
-          </div>
+          <DrawTray snapshot={snapshot} game={game} specialMax={specialMax} />
 
           {snapshot.status === 'stalled' && (
             <p className="notice">

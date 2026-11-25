@@ -1,11 +1,11 @@
-import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { api, globalSearch, type CheckResponse } from '../api'
 import { useApp } from '../state'
-import { Ball, Balls, Card, PageHead, Pager, WindowSelector, formatPercent } from '../ui'
+import { Balls, Card, PageHead, WindowSelector } from '../ui'
 import { parseCombination } from '../features/draw-machine/checkerLink'
 
-type DetailTab = 'similar' | 'numbers' | 'pairs'
+import { CheckerDetails, type DetailTab } from '../features/checker/CheckerDetails'
 
 export function validateNumbers(
   numbers: number[],
@@ -109,17 +109,6 @@ export function Checker() {
   const clear = () => {
     setSelected([])
     setSimilarPage(1)
-  }
-  const onTabKeyDown = (event: KeyboardEvent<HTMLButtonElement>, currentIndex: number) => {
-    const order: DetailTab[] = ['similar', 'numbers', 'pairs']
-    let nextIndex: number | null = null
-    if (event.key === 'ArrowRight') nextIndex = (currentIndex + 1) % order.length
-    else if (event.key === 'ArrowLeft') nextIndex = (currentIndex - 1 + order.length) % order.length
-    if (nextIndex !== null) {
-      event.preventDefault()
-      setActiveTab(order[nextIndex])
-      document.getElementById(`${tabsId}-tab-${order[nextIndex]}`)?.focus()
-    }
   }
   const data = result?.key === key ? result.data : null
   const visibleError = error?.key === key ? error.message : null
@@ -245,171 +234,15 @@ export function Checker() {
         </div>
       </div>
       {data && (
-        <section className="checker-detail-tabs" aria-label="Combination analysis details">
-          <div className="checker-tablist" role="tablist" aria-label="Analysis views">
-            <button
-              id={`${tabsId}-tab-similar`}
-              type="button"
-              role="tab"
-              aria-selected={activeTab === 'similar'}
-              aria-controls={`${tabsId}-panel-similar`}
-              tabIndex={activeTab === 'similar' ? 0 : -1}
-              className={`checker-tab${activeTab === 'similar' ? ' active' : ''}`}
-              onClick={() => setActiveTab('similar')}
-              onKeyDown={(event) => onTabKeyDown(event, 0)}
-            >
-              Similar Draws <span className="checker-tab-count">{data.similar_draws.total}</span>
-            </button>
-            <button
-              id={`${tabsId}-tab-numbers`}
-              type="button"
-              role="tab"
-              aria-selected={activeTab === 'numbers'}
-              aria-controls={`${tabsId}-panel-numbers`}
-              tabIndex={activeTab === 'numbers' ? 0 : -1}
-              className={`checker-tab${activeTab === 'numbers' ? ' active' : ''}`}
-              onClick={() => setActiveTab('numbers')}
-              onKeyDown={(event) => onTabKeyDown(event, 1)}
-            >
-              Numbers <span className="checker-tab-count">{data.number_analysis.length}</span>
-            </button>
-            <button
-              id={`${tabsId}-tab-pairs`}
-              type="button"
-              role="tab"
-              aria-selected={activeTab === 'pairs'}
-              aria-controls={`${tabsId}-panel-pairs`}
-              tabIndex={activeTab === 'pairs' ? 0 : -1}
-              className={`checker-tab${activeTab === 'pairs' ? ' active' : ''}`}
-              onClick={() => setActiveTab('pairs')}
-              onKeyDown={(event) => onTabKeyDown(event, 2)}
-            >
-              Pairs <span className="checker-tab-count">{data.pair_analysis.length}</span>
-            </button>
-          </div>
-
-          {activeTab === 'similar' && (
-            <div
-              id={`${tabsId}-panel-similar`}
-              role="tabpanel"
-              aria-labelledby={`${tabsId}-tab-similar`}
-              className="checker-tabpanel"
-            >
-              <div className="checker-similar-list">
-                {data.similar_draws.items.map((item) => (
-                  <div className="checker-similar-row" key={item.draw.draw_id}>
-                    <div className="checker-similar-head">
-                      <div className="draw-meta">
-                        <Link
-                          className="draw-id"
-                          to={`/history/${item.draw.draw_id}${globalSearch(game!.id, analysisWindow)}`}
-                        >
-                          #{item.draw.draw_id}
-                        </Link>
-                        <span className="draw-date">{item.draw.draw_date}</span>
-                      </div>
-                      <span className="pill checker-match-pill">{item.overlap_count} matched</span>
-                      <Link
-                        className="link-arrow"
-                        to={`/history/${item.draw.draw_id}${globalSearch(game!.id, analysisWindow)}`}
-                      >
-                        Details →
-                      </Link>
-                    </div>
-                    <Balls
-                      values={item.draw.main_numbers}
-                      special={item.draw.special_number}
-                      highlighted={selectedSet}
-                    />
-                  </div>
-                ))}
-                {data.similar_draws.items.length === 0 && (
-                  <p className="muted">No similar draws found.</p>
-                )}
-              </div>
-              <Pager
-                page={data.similar_draws.page}
-                total={data.similar_draws.total}
-                pageSize={data.similar_draws.page_size}
-                setPage={(page) => setSimilarPage(page)}
-              />
-            </div>
-          )}
-
-          {activeTab === 'numbers' && (
-            <div
-              id={`${tabsId}-panel-numbers`}
-              role="tabpanel"
-              aria-labelledby={`${tabsId}-tab-numbers`}
-              className="checker-tabpanel"
-            >
-              <div className="table-wrap">
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>Number</th>
-                      <th>Frequency</th>
-                      <th>Rate</th>
-                      <th>Gap</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.number_analysis.map((item) => (
-                      <tr key={item.number}>
-                        <td>
-                          <Link
-                            to={`/numbers/${item.number}${globalSearch(game!.id, analysisWindow)}`}
-                          >
-                            <Ball value={item.number} />
-                          </Link>
-                        </td>
-                        <td>{item.frequency}</td>
-                        <td>{formatPercent(item.frequency_percent)}</td>
-                        <td>{item.current_gap ?? '—'}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'pairs' && (
-            <div
-              id={`${tabsId}-panel-pairs`}
-              role="tabpanel"
-              aria-labelledby={`${tabsId}-tab-pairs`}
-              className="checker-tabpanel"
-            >
-              <div className="table-wrap">
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>Pair</th>
-                      <th>Draws</th>
-                      <th>Rate</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.pair_analysis.map((pair) => (
-                      <tr key={pair.numbers.join('-')}>
-                        <td>
-                          <Link
-                            to={`/pairs/${pair.numbers.join('-')}${globalSearch(game!.id, analysisWindow)}`}
-                          >
-                            <Balls values={pair.numbers} />
-                          </Link>
-                        </td>
-                        <td>{pair.frequency}</td>
-                        <td>{formatPercent(pair.percent_of_draws)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-        </section>
+        <CheckerDetails
+          data={data}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          setPage={setSimilarPage}
+          selectedSet={selectedSet}
+          search={globalSearch(game!.id, analysisWindow)}
+          tabsId={tabsId}
+        />
       )}
     </>
   )

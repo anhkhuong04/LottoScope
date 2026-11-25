@@ -11,7 +11,6 @@ import {
 
 export const STEP = 1 / 60
 export const RADIUS = 2.5
-export const BALL_RADIUS = 0.19
 export const OPENING_ANGLE = 0.21
 export const ROTOR_ARM_ANGLES = [
   Math.PI / 2,

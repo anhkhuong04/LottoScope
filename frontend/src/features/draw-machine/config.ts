@@ -32,7 +32,6 @@ export function simulationForGame(gameId: string): Readonly<SimulationConfig> {
   return defaultSimulation
 }
 // Straight downward 6-o'clock discharge outlet (-Y axis).
-export const OUTLET_ANGLE = 0
 export const EXIT_DEPTH = 2.7
 export function outletPoint(depth: number, x = 0, side = 0): Point {
   return { x, y: -depth, z: side }
