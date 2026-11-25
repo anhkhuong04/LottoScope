@@ -68,6 +68,7 @@ class AnalysisContext:
 class WindowSnapshot:
     context: AnalysisContext
     draws: tuple[Draw, ...]
+    cutoff: Draw | None
 
 
 @dataclass(frozen=True, slots=True)
@@ -142,6 +143,7 @@ class AnalyticsService:
                 repo.data_version(game),
             ),
             draws,
+            cutoff,
         )
 
     def snapshot(

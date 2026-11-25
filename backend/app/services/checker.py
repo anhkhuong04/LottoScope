@@ -121,12 +121,11 @@ class CheckerService:
             with Session(connection) as session:
                 repo = DrawRepository(session)
                 snapshot = AnalyticsService.select_snapshot(repo, game, window, as_of_draw_id)
-                cutoff = (
-                    repo.get_by_id(game, snapshot.context.as_of_draw_id)
-                    if snapshot.context.as_of_draw_id is not None
-                    else None
+                history = (
+                    snapshot.draws
+                    if window.kind == "all_time"
+                    else repo.window_draws(game, cutoff=snapshot.cutoff)
                 )
-                history = repo.window_draws(game, cutoff=cutoff)
                 return check_draws(
                     game,
                     candidate,

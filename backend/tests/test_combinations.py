@@ -119,6 +119,28 @@ def test_checker_exact_overlap_window_and_isolation(engine, game, candidate, exa
 
 
 @pytest.mark.integration
+def test_all_time_checker_reads_draws_once_at_inclusive_cutoff(engine, monkeypatch) -> None:
+    seed(engine)
+    original = DrawRepository.window_draws
+    calls = []
+
+    def tracked(repo, game, **arguments):
+        calls.append((game, arguments["cutoff"].draw_id))
+        return original(repo, game, **arguments)
+
+    monkeypatch.setattr(DrawRepository, "window_draws", tracked)
+    result = CheckerService(engine).check(
+        "lotto_535", (1, 2, 3, 4, 5), AnalysisWindow("all_time"), as_of_draw_id="90002"
+    )
+    assert calls == [("lotto_535", "90002")]
+    assert result.context.actual_draw_count == result.history_draw_count == 2
+    assert result.last_exact_match.draw_id == "90001"
+    assert result.overlap_histogram["match_2"] == 1
+    assert result.overlap_histogram["match_5"] == 1
+    assert [item.draw.draw_id for item in result.similar_draws.items] == ["90001", "90002"]
+
+
+@pytest.mark.integration
 def test_checker_no_match_validation_and_repeated_identity(engine) -> None:
     seed(engine)
     checker = CheckerService(engine)
