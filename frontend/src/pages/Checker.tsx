@@ -22,7 +22,7 @@ export function validateNumbers(
 }
 
 export function Checker() {
-  const { game, window: analysisWindow } = useApp()
+  const { game, window: analysisWindow, dataRevision } = useApp()
   const [search] = useSearchParams()
   const [selected, setSelected] = useState<number[]>(() =>
     parseCombination(search.get('numbers'), game!.main_min, game!.main_max, game!.main_count),
@@ -94,7 +94,7 @@ export function Checker() {
       })
     return () => controller.abort()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key, validation, attempt])
+  }, [key, validation, attempt, dataRevision])
 
   const toggle = (number: number) => {
     setSelected((values) =>

@@ -1,7 +1,7 @@
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { api } from '../api'
+import { api, type CheckResponse } from '../api'
 import { Checker } from './Checker'
 import { Dashboard } from './Dashboard'
 import { History } from './History'
@@ -318,6 +318,51 @@ describe('mobile-optimized analytics pages', () => {
     }
     await waitFor(() => expect(screen.getByText(/Exact match: 1 draw/)).toBeVisible())
     expect(screen.getByRole('link', { name: 'Draw 01025' })).toBeVisible()
+  })
+
+  it('aborts a pre-Sync Checker request and ignores its late response', async () => {
+    const response: CheckResponse = {
+      context: {
+        game: 'lotto_535',
+        analysis_window: mockState.window,
+        actual_draw_count: 30,
+        as_of_draw_id: '01027',
+        data_version: 2,
+      },
+      main_numbers: [1, 2, 3, 4, 5],
+      history_draw_count: 1027,
+      exact_match_count: 0,
+      last_exact_match: null,
+      overlap_histogram: {},
+      similar_draws: { items: [], page: 1, page_size: 5, total: 0 },
+      number_analysis: [],
+      pair_analysis: [],
+    }
+    let resolveOld!: (data: CheckResponse) => void
+    const oldRequest = new Promise<CheckResponse>((resolve) => {
+      resolveOld = resolve
+    })
+    vi.mocked(api).mockReturnValueOnce(oldRequest).mockResolvedValueOnce(response)
+    const checker = () => (
+      <MemoryRouter initialEntries={['/checker?numbers=1,2,3,4,5']}>
+        <Checker />
+      </MemoryRouter>
+    )
+    const { rerender } = render(checker())
+    const oldSignal = vi.mocked(api).mock.calls[0][1]
+    expect(oldSignal?.aborted).toBe(false)
+
+    try {
+      mockState.dataRevision++
+      rerender(checker())
+      expect(oldSignal?.aborted).toBe(true)
+      expect(await screen.findByText('Checked 1027 draws')).toBeVisible()
+      await act(async () => resolveOld({ ...response, history_draw_count: 1026 }))
+      expect(screen.getByText('Checked 1027 draws')).toBeVisible()
+      expect(screen.queryByText('Checked 1026 draws')).toBeNull()
+    } finally {
+      mockState.dataRevision = 0
+    }
   })
 
   it('toggles History advanced filter drawer state', () => {
