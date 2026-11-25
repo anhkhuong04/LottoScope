@@ -3,18 +3,15 @@ import AxeBuilder from '@axe-core/playwright'
 
 test('flow A: dashboard to number detail, game and window switch', async ({ page }) => {
   await page.goto('/')
-  await expect(page.getByRole('heading', { name: /Tổng quan Lotto/ })).toBeVisible()
-  await expect(page.getByText('Kết quả gần nhất')).toBeVisible()
-  await page.getByLabel('Phạm vi phân tích').selectOption('20')
+  await expect(page.getByRole('heading', { name: 'Lotto 5/35 Overview' })).toBeVisible()
+  await expect(page.getByText('Latest Result')).toBeVisible()
+  await page.getByLabel('Analysis window').selectOption('20')
   await expect(page).toHaveURL(/count=20/)
-  await page
-    .getByRole('link', { name: /Phân tích số|Xem tất cả/ })
-    .first()
-    .click()
-  await expect(page.getByRole('heading', { name: 'Tần suất & khoảng cách' })).toBeVisible()
+  await page.getByRole('link', { name: 'View all' }).first().click()
+  await expect(page.getByRole('heading', { name: 'Frequency & Gaps' })).toBeVisible()
   await page.locator('.number-tile').first().click()
-  await expect(page.getByRole('heading', { name: /Số \d+/ })).toBeVisible()
-  await page.getByLabel('Chọn game').selectOption('mega_645')
+  await expect(page.getByRole('heading', { name: /^Number \d+/ })).toBeVisible()
+  await page.getByLabel('Select game').selectOption('mega_645')
   await expect(page).toHaveURL(/\/numbers\?/)
   await expect(page.locator('.number-tile')).toHaveCount(45)
 })
@@ -22,22 +19,21 @@ test('flow A: dashboard to number detail, game and window switch', async ({ page
 test('flow B: checker and flow C: generator with draw machine', async ({ page }) => {
   await page.goto('/checker?game=lotto_535')
   for (const number of ['01', '02', '03', '04', '05'])
-    await page.getByRole('button', { name: `Số ${number}` }).click()
-  await page.getByRole('button', { name: 'Kiểm tra lịch sử' }).click()
-  await expect(page.getByRole('heading', { name: /Trùng chính xác/ })).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Mức trùng số' })).toBeVisible()
+    await page.getByRole('button', { name: `Number ${number}`, exact: true }).click()
+  await expect(page.getByText(/Exact match: [1-9]/)).toBeVisible()
+  await expect(page.getByLabel('Match Distribution')).toBeVisible()
   await page.goto('/generator?game=lotto_535')
-  await expect(page.getByRole('heading', { name: 'Lồng cầu mô phỏng' })).toBeVisible()
-  await expect(page.locator('.draw-stage-badge')).toHaveText('35 BÓNG')
+  await expect(page.getByRole('heading', { name: 'Draw Simulator' })).toBeVisible()
+  await expect(page.locator('.draw-stage-badge')).toHaveText('35 BALLS')
   await expect(page.locator('.draw-result-slots li')).toHaveCount(5)
 })
 
 test('flow D: pair detail and responsive overflow', async ({ page }) => {
   await page.goto('/pairs?game=lotto_535&window=last_draws&count=30')
-  await expect(page.getByRole('heading', { name: 'Cặp số trong lịch sử' })).toBeVisible()
-  await page.locator('.data-table tbody a').first().click()
-  await expect(page.getByRole('heading', { name: /Cặp \d+-\d+/ })).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Các kỳ xuất hiện' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Historical Number Pairs' })).toBeVisible()
+  await page.locator('.pair-link:visible').first().click()
+  await expect(page.getByRole('heading', { name: /^Pair \d+-\d+/ })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Appeared Draws' })).toBeVisible()
   await expect
     .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
     .toBe(true)
@@ -45,12 +41,14 @@ test('flow D: pair detail and responsive overflow', async ({ page }) => {
 
 test('history date filter, details, labels and keyboard focus', async ({ page }) => {
   await page.goto('/history?game=lotto_535')
-  await page.getByLabel('Từ ngày').fill('2026-09-01')
+  await expect(page.getByRole('heading', { name: 'Draw History' })).toBeVisible()
+  const filter = page.getByRole('button', { name: 'Filter', exact: true })
+  if (await filter.isVisible()) await filter.click()
+  await page.getByLabel('From date').fill('2026-09-01')
   await expect(page).toHaveURL(/from_date=2026-09-01/)
-  await expect(page.getByRole('heading', { name: 'Kết quả các kỳ quay' })).toBeVisible()
-  await page.getByRole('button', { name: 'Trang sau' }).click()
+  await page.getByRole('button', { name: 'Next page' }).click()
   await expect(page).toHaveURL(/page=2/)
-  await expect(page.getByText(/Trang 2\//)).toBeVisible()
+  await expect(page.getByText(/Page 2\//)).toBeVisible()
   await page.keyboard.press('Tab')
   await expect.poll(() => page.evaluate(() => document.activeElement?.tagName)).not.toBe('BODY')
   await expect
@@ -61,33 +59,33 @@ test('history date filter, details, labels and keyboard focus', async ({ page })
 test('cross-screen draw links keep valid filters', async ({ page }) => {
   await page.goto('/numbers/1?game=lotto_535&window=last_draws&count=30&sort=gap_desc')
   await page.locator('.timeline a').first().click()
-  await expect(page.getByRole('heading', { name: /Kỳ/ })).toBeVisible()
-  await page.getByRole('link', { name: 'Về lịch sử' }).click()
-  await expect(page.getByRole('heading', { name: 'Kết quả các kỳ quay' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /^Draw \d{5}$/ })).toBeVisible()
+  await page.getByRole('link', { name: 'Back to history' }).click()
+  await expect(page.getByRole('heading', { name: 'Draw History' })).toBeVisible()
   await expect(page).not.toHaveURL(/sort=gap_desc/)
   await page.goto('/history?game=lotto_535&sort=asc&from_date=2026-09-01')
   if (test.info().project.name === 'mobile') await page.locator('.draw-row a').first().click()
   else await page.locator('.data-table tbody a').first().click()
-  await page.getByRole('link', { name: 'Về lịch sử' }).click()
+  await page.getByRole('link', { name: 'Back to history' }).click()
   await expect(page).toHaveURL(/sort=asc/)
   await expect(page).toHaveURL(/from_date=2026-09-01/)
 })
 
 test('analysis window survives deep link and browser history', async ({ page }) => {
   await page.goto('/numbers?game=lotto_535&window=last_draws&count=30')
-  await page.getByLabel('Phạm vi phân tích').selectOption('20')
+  await page.getByLabel('Analysis window').selectOption('20')
   await expect(page).toHaveURL(/count=20/)
-  await page.getByLabel('Phạm vi phân tích').selectOption('date_range')
-  await page.getByLabel('Từ ngày').fill('2026-09-01')
-  await page.getByLabel('Đến ngày').fill('2026-09-30')
-  await page.getByRole('button', { name: 'Áp dụng' }).click()
+  await page.getByLabel('Analysis window').selectOption('date_range')
+  await page.getByLabel('From date').fill('2026-09-01')
+  await page.getByLabel('To date').fill('2026-09-30')
+  await page.getByRole('button', { name: 'Apply' }).click()
   await expect(page).toHaveURL(/window=date_range/)
   await page.goBack()
-  await expect(page.getByLabel('Phạm vi phân tích')).toHaveValue('20')
+  await expect(page.getByLabel('Analysis window')).toHaveValue('20')
   await page.goBack()
-  await expect(page.getByLabel('Phạm vi phân tích')).toHaveValue('30')
+  await expect(page.getByLabel('Analysis window')).toHaveValue('30')
   await page.goForward()
-  await expect(page.getByLabel('Phạm vi phân tích')).toHaveValue('20')
+  await expect(page.getByLabel('Analysis window')).toHaveValue('20')
 })
 
 test('network error, retry and same-context stale data', async ({ page }) => {
@@ -96,9 +94,9 @@ test('network error, retry and same-context stale data', async ({ page }) => {
     fail ? route.abort() : route.continue(),
   )
   await page.goto('/numbers?game=lotto_535')
-  await expect(page.getByRole('alert').getByText(/Không kết nối được API/)).toBeVisible()
+  await expect(page.getByRole('alert').getByText(/Unable to connect to API/)).toBeVisible()
   fail = false
-  await page.getByRole('button', { name: 'Thử lại' }).click()
+  await page.getByRole('button', { name: 'Retry' }).click()
   await expect(page.locator('.number-tile')).toHaveCount(35)
   fail = true
   await page.route('**/api/v1/games/lotto_535/sync', (route) =>
@@ -106,8 +104,8 @@ test('network error, retry and same-context stale data', async ({ page }) => {
       json: { created: 0, enriched: 0, remaining_unresolved: 0 },
     }),
   )
-  await page.getByRole('button', { name: 'Đồng bộ', exact: true }).click()
-  await expect(page.getByText(/Dữ liệu cũ trong cùng phạm vi/)).toBeVisible()
+  await page.getByRole('button', { name: 'Sync', exact: true }).click()
+  await expect(page.getByText(/Stale data in same window/)).toBeVisible()
   await expect(page.locator('.number-tile')).toHaveCount(35)
 })
 
@@ -132,7 +130,7 @@ test('empty and invalid-input responses remain distinct', async ({ page }) => {
     }),
   )
   await page.goto('/pairs?game=lotto_535')
-  await expect(page.getByText('Không có cặp nào khớp bộ lọc.')).toBeVisible()
+  await expect(page.getByText('No pairs match the filter.')).toBeVisible()
   await page.route('**/api/v1/games/lotto_535/analytics/numbers?*', (route) =>
     route.fulfill({
       status: 422,
@@ -144,7 +142,8 @@ test('empty and invalid-input responses remain distinct', async ({ page }) => {
   )
   await page.goto('/numbers?game=lotto_535')
   await expect(page.getByRole('alert').getByText('Phạm vi không hợp lệ.')).toBeVisible()
-  await page.route('**/api/v1/games/lotto_535/status', (route) =>
+  await page.unroute('**/api/v1/games/lotto_535/analytics/numbers?*')
+  await page.route('**/api/v1/games/lotto_535/draws/latest', (route) =>
     route.fulfill({
       status: 500,
       contentType: 'application/json',
@@ -154,20 +153,19 @@ test('empty and invalid-input responses remain distinct', async ({ page }) => {
     }),
   )
   await page.goto('/dashboard?game=lotto_535')
-  const status = page.locator('.latest-card .data-details summary')
-  await expect(status).toHaveText('Chưa kiểm tra được trạng thái đồng bộ')
-  await status.click()
-  await expect(page.getByRole('alert').getByText('Dịch vụ tạm gián đoạn.')).toBeVisible()
+  const latest = page.locator('.latest-card')
+  await expect(latest.getByRole('alert').getByText('Dịch vụ tạm gián đoạn.')).toBeVisible()
+  await expect(page.locator('.dashboard-sections .frequency-tile')).toHaveCount(6)
 })
 
 test('mobile bottom navigation and touch targets', async ({ page, isMobile }) => {
   test.skip(!isMobile)
   await page.goto('/dashboard?game=lotto_535')
-  await page.locator('.bottom-nav').getByRole('link', { name: 'Kiểm tra' }).click()
-  await expect(page.getByRole('heading', { name: 'Đối chiếu với lịch sử' })).toBeVisible()
-  await page.locator('.bottom-nav').getByRole('button', { name: 'Thêm' }).click()
-  await page.getByRole('link', { name: 'Cặp số' }).click()
-  await expect(page.getByRole('heading', { name: 'Cặp số trong lịch sử' })).toBeVisible()
+  await page.locator('.bottom-nav').getByRole('link', { name: 'Checker' }).click()
+  await expect(page.getByRole('heading', { name: 'Combination Checker' })).toBeVisible()
+  await page.locator('.bottom-nav').getByRole('button', { name: 'More' }).click()
+  await page.locator('#more-menu').getByRole('link', { name: 'Pairs' }).click()
+  await expect(page.getByRole('heading', { name: 'Historical Number Pairs' })).toBeVisible()
   const sizes = await page
     .locator('.bottom-nav a, .bottom-nav button, .game-select select')
     .evaluateAll((elements) =>
@@ -196,7 +194,7 @@ test('key screens have no automated WCAG A/AA violations', async ({ page }) => {
     '/generator',
   ]) {
     await page.goto(`${path}?game=lotto_535`)
-    await page.getByLabel('Chọn game').waitFor()
+    await page.getByLabel('Select game').waitFor()
     await expect(page.locator('.skeleton-content')).toHaveCount(0)
     // Scan resolved, opaque content instead of an entrance-animation frame.
     await expect(page.locator('.page-head')).toHaveCSS('opacity', '1')

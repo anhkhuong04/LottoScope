@@ -37,13 +37,13 @@ test('draw prizes show zero, match conditions and exact VND without overflow', a
     route.fulfill({ json: lottoPrizes }),
   )
   await page.goto('/history/00922?game=lotto_535')
-  await expect(page.getByRole('heading', { name: 'Giải thưởng kỳ quay' })).toBeVisible()
-  const table = page.getByRole('table', { name: 'Bảng giải thưởng' })
+  await expect(page.getByRole('heading', { name: 'Prize Breakdown' })).toBeVisible()
+  const table = page.getByRole('table', { name: 'Prize table' })
   await expect(table).toBeVisible()
   await expect(table.getByRole('row', { name: /Giải Độc Đắc/ })).toContainText('0')
-  await expect(table.getByText('7.749.247.500', { exact: true })).toBeVisible()
-  await expect(table.getByText('12.312', { exact: true })).toBeVisible()
-  await expect(table.getByRole('img', { name: 'Trùng số đặc biệt', exact: true })).toBeVisible()
+  await expect(table.getByText('7,749,247,500', { exact: true })).toBeVisible()
+  await expect(table.getByText('12,312', { exact: true })).toBeVisible()
+  await expect(table.getByRole('img', { name: 'Match special number', exact: true })).toBeVisible()
   await expect
     .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth))
     .toBe(true)
@@ -70,13 +70,13 @@ test('prize source error keeps draw visible, retry works, missing data stays emp
       : route.fulfill({ json: { ...lottoPrizes, items: [], source_retrieved_at: null } }),
   )
   await page.goto('/history/00922?game=lotto_535')
-  await expect(page.getByRole('heading', { name: 'Kỳ 00922' })).toBeVisible()
-  await expect(page.getByText('Ngày quay:')).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Draw 00922' })).toBeVisible()
+  await expect(page.getByText('Draw date:')).toBeVisible()
   await expect(page.locator('.prize-card').getByRole('alert')).toBeVisible()
   failed = false
-  await page.locator('.prize-card').getByRole('button', { name: 'Thử lại' }).click()
-  await expect(page.getByText('Chưa có dữ liệu giải thưởng cho kỳ này.')).toBeVisible()
-  await expect(page.getByRole('table', { name: 'Bảng giải thưởng' })).toHaveCount(0)
+  await page.locator('.prize-card').getByRole('button', { name: 'Retry' }).click()
+  await expect(page.getByText('No prize data available for this draw.')).toBeVisible()
+  await expect(page.getByRole('table', { name: 'Prize table' })).toHaveCount(0)
 })
 
 test('Mega prize snapshot has no special matches and big money stays exact', async ({ page }) => {
@@ -97,9 +97,11 @@ test('Mega prize snapshot has no special matches and big money stays exact', asy
     }),
   )
   await page.goto('/history/01570?game=mega_645')
-  const table = page.getByRole('table', { name: 'Bảng giải thưởng' })
-  await expect(table.getByText('9.007.199.254.740.993', { exact: true })).toBeVisible()
-  await expect(table.getByRole('img', { name: 'Trùng 6 số chính', exact: true })).toBeVisible()
+  const table = page.getByRole('table', { name: 'Prize table' })
+  await expect(table.getByText('9,007,199,254,740,993', { exact: true })).toBeVisible()
+  await expect(
+    table.getByRole('img', { name: 'Match 6 main number(s)', exact: true }),
+  ).toBeVisible()
   await expect(table.locator('.prize-symbol.special')).toHaveCount(0)
   await expect
     .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth))
@@ -143,14 +145,14 @@ test('late Lotto prizes cannot replace the current Mega detail', async ({ page }
   )
   await page.goto('/history/00922?game=lotto_535')
   await requested
-  await page.getByLabel('Chọn game').selectOption('mega_645')
+  await page.getByLabel('Select game').selectOption('mega_645')
   await expect(page).toHaveURL(/\/history\?game=mega_645/)
   await page.locator('a[href^="/history/"]:visible').first().click()
-  const table = page.getByRole('table', { name: 'Bảng giải thưởng' })
+  const table = page.getByRole('table', { name: 'Prize table' })
   await expect(table.getByRole('row', { name: /Jackpot/ })).toBeVisible()
   release()
   await finished
-  await expect(table.getByText('178.900.548.500', { exact: true })).toBeVisible()
+  await expect(table.getByText('178,900,548,500', { exact: true })).toBeVisible()
   await expect(table.getByText('Giải Độc Đắc', { exact: true })).toHaveCount(0)
   await expect(table.locator('.prize-symbol.special')).toHaveCount(0)
 })

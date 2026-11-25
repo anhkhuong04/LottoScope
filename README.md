@@ -42,7 +42,7 @@ Official lottery pages publish draws one result at a time without aggregated fre
 - **Number & Pair Analytics** (`/numbers`, `/numbers/:number`, `/pairs`, `/pairs/:pair`): Independent main-number and Lotto 5/35 special-number frequencies, dense ranking, current/average/maximum appearance gaps, and canonical pair co-occurrence statistics with exact `as_of_draw_id` cutoff support.
 - **Combination History Checker** (`/checker`): Validates a candidate main-number set against all historical draws up to an optional cutoff, reporting exact-match counts, a full overlap distribution histogram (`0` to `5`/`6` matches), matching draw records, and window-scoped number/pair metrics.
 - **3D Physical Draw Simulator** (`/generator`): Client-side interactive draw drum powered by Three.js, React Three Fiber, and Rapier3D physics. Features a spherical glass drum, Z-axis 3-blade Y-rotor, 6-o'clock bottom discharge gate, dual-wing catch tray, distinct Lotto 5/35 red special-ball chamber (`01–12`) and enlarged `+50%` balls, reduced-motion mode, clipboard export, and one-click deep linking into Checker.
-- **Idempotent Ingestion & Opt-In Publisher Fallback**: CLI importers, scheduled/manual sync (`POST /api/v1/games/{game}/sync` with 60s per-game cooldown), PostgreSQL session advisory locks, source provenance (`source_url`, `source_sha256`), discrepancy tracking (`draw_corrections`), and optional fallback to vetted community publishers when upstream returns anti-bot challenges.
+- **Idempotent Ingestion & Opt-In Publisher Fallback**: CLI importers, scheduled/manual sync (`POST /api/v1/games/{game}/sync` with 60s per-game cooldown), PostgreSQL session advisory locks, source provenance (`source_url`, `source_sha256`), discrepancy tracking (`draw_corrections`), and optional fallback to vetted community publishers for eligible upstream blocks, rate limits, or network errors.
 - **AI & Crawler Access Layer**: Public [`robots.txt`](frontend/public/robots.txt) and [`llms.txt`](frontend/public/llms.txt), Edge-cached SSR data pages (`/data`, `/data/{game}`) supporting HTML, Markdown (`?format=md`), and RFC-4180 CSV (`?format=csv`), Vercel Edge Middleware auto-routing for AI crawlers, and 8 read-only client-side **WebMCP** tools (`document.modelContext`).
 
 ---
@@ -110,7 +110,7 @@ flowchart LR
 
 ### Design Boundaries
 
-- **Single Source of Truth**: PostgreSQL stores canonical draws (`draws`), tier payouts (`draw_prizes`), ingestion runs/items (`ingestion_runs`, `ingestion_items`), and detected upstream edits (`draw_corrections`).
+- **Single Source of Truth**: PostgreSQL stores canonical draws and their prize snapshots (`draws.prizes`), ingestion runs/items (`ingestion_runs`, `ingestion_items`), and detected upstream edits (`draw_corrections`).
 - **Route/Domain Separation**: FastAPI routes handle only HTTP validation and status mapping; deterministic domain rules (`app/games/`, `app/domain/`), analytics (`app/analytics/`), and transactional workflows (`app/services/`) contain no framework coupling.
 - **Origin Protection in Cloud Mode**: Setting `LOTTO_DEPLOYMENT_MODE=cloud` disables public OpenAPI docs and requires `X-Lotto-Origin-Token` on all routes except `/health/live`, enforced between Vercel's server-side gateway ([`frontend/api/gateway.ts`](frontend/api/gateway.ts)) and Render.
 
@@ -346,9 +346,29 @@ npm run typecheck
 npm test
 npm run build
 
-# End-to-end Playwright + Axe accessibility suite (optionally set PLAYWRIGHT_BASE_URL=http://127.0.0.1:8088)
+# End-to-end Playwright + Axe accessibility suite, using the seeded API below
 npm run test:e2e
 ```
+
+For browser tests, create an empty PostgreSQL database named `lottoscope_e2e_test`
+on a test instance. Set `LOTTO_DATABASE_URL` to that database and set
+`LOTTO_DEPLOYMENT_MODE=local` and `LOTTO_SCHEDULER_ENABLED=false`. Run these
+commands from `backend/`.
+
+```bash
+uv run --locked alembic upgrade head
+uv run --locked python -m tests.seed_e2e
+uv run --locked uvicorn app.main:app --host 127.0.0.1 --port 5198
+```
+
+The frontend Playwright command defaults to that API address. To use another
+test server, set `LOTTO_DEV_API_ORIGIN`. The seed combines committed source
+fixtures with synthetic draws.
+Use a dedicated database for backend integration tests so that truncation in
+that suite cannot affect browser runs.
+
+Store local design references in `frontend/references/`. Vite publishes
+runtime assets from `frontend/public/`.
 
 ---
 

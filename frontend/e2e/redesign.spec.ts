@@ -4,18 +4,15 @@ test('reduced motion keeps frequency values readable and disables decorative mot
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto('/dashboard?game=lotto_535')
+  const frequency = page.locator('.dashboard-sections .frequency-tile').first()
+  await expect(frequency.locator('.frequency-value')).toHaveText(/\d+\s* draws/)
+  await expect(frequency.locator('.frequency-meter > span')).toHaveCSS('animation-name', 'none')
   await page.goto('/numbers?game=lotto_535')
   await expect(page.locator('.frequency-tile')).toHaveCount(35)
   const value = await page.locator('.frequency-value').first().textContent()
-  expect(value).toMatch(/\d+\s* kỳ/)
-  const motion = await page
-    .locator('.frequency-meter > span')
-    .first()
-    .evaluate((node) => ({
-      animation: getComputedStyle(node).animationName,
-      transform: getComputedStyle(node).transform,
-    }))
-  expect(motion).toEqual({ animation: 'none', transform: 'none' })
+  expect(value).toMatch(/\d+\s* draws/)
+  await expect(page.locator('.frequency-meter')).toHaveCount(0)
   await page.emulateMedia({ reducedMotion: 'no-preference' })
   await expect(page.locator('.frequency-value').first()).toHaveText(value!)
 })
@@ -34,9 +31,9 @@ test('dashboard keeps latest results before analysis without duplicate metrics',
   await expect(page.locator('.dashboard-metrics')).toHaveCount(0)
   await expect(page.locator('.number-tile')).toHaveCount(6)
   await expect(page.locator('.dashboard-sections .draw-meta')).toHaveCount(3)
-  await page.getByRole('link', { name: 'Xem tất cả' }).click()
+  await page.getByRole('link', { name: 'View all' }).click()
   await expect(page.locator('.number-tile')).toHaveCount(55)
-  await expect(page.getByLabel('Phạm vi phân tích')).toHaveValue('20')
+  await expect(page.getByLabel('Analysis window')).toHaveValue('20')
 })
 
 test('mobile more navigation dismisses on Escape or outside click and restores useful focus', async ({
@@ -58,7 +55,7 @@ test('mobile more navigation dismisses on Escape or outside click and restores u
   await page.locator('#more-menu a').first().click()
   await expect(page).toHaveURL(/\/numbers\?game=mega_645/)
   await expect(page.locator('#main-content')).toBeFocused()
-  await expect(page.getByLabel('Phạm vi phân tích')).toHaveValue('20')
+  await expect(page.getByLabel('Analysis window')).toHaveValue('20')
 })
 
 test('initial loading retains the shell and replaces skeletons with the requested game', async ({
@@ -74,11 +71,11 @@ test('initial loading retains the shell and replaces skeletons with the requeste
   })
   await page.goto('/dashboard?game=power_655')
   await expect(page.locator('.page-skeleton')).toHaveAttribute('aria-busy', 'true')
-  await expect(page.getByRole('status')).toContainText('Đang tải danh sách game')
+  await expect(page.getByRole('status')).toContainText('Loading game list and data')
   await expect(page.locator('.metric-value')).toHaveCount(0)
-  await expect(page.getByLabel('Chọn game')).toBeDisabled()
+  await expect(page.getByLabel('Select game')).toBeDisabled()
   release()
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Tổng quan Power 6/55')
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Power 6/55 Overview')
   await expect(page.locator('.latest-card .balls > .ball')).toHaveCount(6)
   await expect(page.locator('.page-skeleton')).toHaveCount(0)
 })

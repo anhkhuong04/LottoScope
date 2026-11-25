@@ -3,14 +3,18 @@ import { expect, test } from '@playwright/test'
 test('approved machine keeps one perspective without the prototype editor', async ({ page }) => {
   const errors: string[] = []
   page.on('pageerror', (error) => errors.push(error.message))
+  const started = performance.now()
   await page.goto('/generator/preview?game=lotto_535')
   await expect(page).toHaveURL(/\/generator\?game=lotto_535/)
-  await expect(page.getByRole('button', { name: 'Bắt đầu quay' })).toBeEnabled({ timeout: 30_000 })
+  await expect(page.getByRole('button', { name: 'Start Draw' })).toBeEnabled({ timeout: 30_000 })
+  console.info('Machine ready probe', test.info().project.name, {
+    elapsedMs: Math.round(performance.now() - started),
+  })
   await expect(page.locator('.draw-canvas canvas')).toBeVisible()
-  await expect(page.getByRole('group', { name: 'Góc nhìn' })).toHaveCount(0)
-  await expect(page.getByRole('button', { name: 'Mặt trước', exact: true })).toHaveCount(0)
-  await expect(page.getByLabel('Mở cửa thoát')).toHaveCount(0)
-  await expect(page.getByLabel('Kích thước mô hình')).toHaveCount(0)
+  await expect(page.getByRole('group', { name: 'View angle' })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Front', exact: true })).toHaveCount(0)
+  await expect(page.getByLabel('Open exit gate')).toHaveCount(0)
+  await expect(page.getByLabel('Model scale')).toHaveCount(0)
   await expect(page.locator('.draw-slot.filled')).toHaveCount(0)
   await expect
     .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth))
@@ -31,8 +35,8 @@ test('unsupported graphics keeps an illustration and never fabricates a result',
   })
   await page.goto('/generator?game=power_655')
   await expect(page.getByRole('alert')).toContainText('WebGL 2')
-  await expect(page.getByRole('img', { name: 'Minh họa lồng cầu tĩnh' })).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Bắt đầu quay' })).toBeDisabled()
+  await expect(page.getByRole('img', { name: 'Static draw machine illustration' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Start Draw' })).toBeDisabled()
   await expect(page.locator('.draw-slot.filled')).toHaveCount(0)
 })
 
@@ -55,7 +59,7 @@ test('the perspective stops rendering while idle and paused', async ({ page }) =
       return { times: samples.slice(), durationMs: performance.now() - started }
     })
   await page.goto('/generator?game=power_655')
-  await expect(page.getByRole('button', { name: 'Bắt đầu quay' })).toBeEnabled({ timeout: 30_000 })
+  await expect(page.getByRole('button', { name: 'Start Draw' })).toBeEnabled({ timeout: 30_000 })
   // Allow the local environment texture's one-time render to finish.
   await expect.poll(async () => (await sample()).times.length).toBe(0)
   const renderer = await page.locator('.draw-canvas canvas').evaluate((canvas) => {
@@ -63,11 +67,11 @@ test('the perspective stops rendering while idle and paused', async ({ page }) =
     const debug = gl.getExtension('WEBGL_debug_renderer_info')
     return String(gl.getParameter(debug ? debug.UNMASKED_RENDERER_WEBGL : gl.RENDERER))
   })
-  await page.getByRole('button', { name: 'Bắt đầu quay' }).click()
+  await page.getByRole('button', { name: 'Start Draw' }).click()
   await sample() // Warm up before measuring the running frame intervals.
   const running = await sample()
   expect(running.times.length).toBeGreaterThan(0)
-  await page.getByRole('button', { name: 'Tạm dừng', exact: true }).click()
+  await page.getByRole('button', { name: 'Pause', exact: true }).click()
   await expect.poll(async () => (await sample()).times.length).toBe(0)
   const intervals = running.times.slice(1).map((time, index) => time - running.times[index])
   intervals.sort((a, b) => a - b)

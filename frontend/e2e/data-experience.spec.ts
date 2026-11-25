@@ -24,39 +24,39 @@ test('Lotto special analytics keeps its pool, applied scope and appearance histo
 }) => {
   await page.goto('/numbers?game=lotto_535&window=last_draws&count=20')
   await expect(page.locator('.frequency-tile')).toHaveCount(35)
-  await page.getByLabel('Nhóm số').selectOption('special')
+  await page.getByLabel('Number kind').selectOption('special')
   await expect(page.locator('.frequency-tile')).toHaveCount(12)
   await expect(page.locator('.frequency-tile .ball.special')).toHaveCount(12)
-  await expect(page.locator('.scope-summary')).toContainText('20 kỳ gần nhất')
-  await expect(page.locator('.scope-summary')).toContainText('Thực tế: 20 kỳ')
+  await expect(page.locator('.scope-summary')).toContainText('Last 20 draws')
+  await expect(page.locator('.scope-summary')).toContainText('Actual: 20 draws')
   await expect(page).toHaveURL(/number_kind=special/)
-  await page.locator('.frequency-tile').first().click()
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Số đặc biệt 01')
-  await expect(page.getByRole('heading', { name: 'Các cặp đi cùng' })).toHaveCount(0)
+  await page.locator('.frequency-tile[href^="/numbers/1?"]').click()
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Special Number 01')
+  await expect(page.getByRole('heading', { name: 'Co-occurring Pairs' })).toHaveCount(0)
   await expect(page.locator('.draw-row .ball.special').first()).toHaveText('01')
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([])
-  await page.getByRole('link', { name: 'Về phân tích số' }).click()
-  await expect(page.getByLabel('Nhóm số')).toHaveValue('special')
-  await page.getByLabel('Chọn game').selectOption('mega_645')
+  await page.getByRole('link', { name: 'Back to numbers' }).click()
+  await expect(page.getByLabel('Number kind')).toHaveValue('special')
+  await page.getByLabel('Select game').selectOption('mega_645')
   await expect(page.locator('.frequency-tile')).toHaveCount(45)
-  await expect(page.getByLabel('Nhóm số')).toHaveCount(0)
+  await expect(page.getByLabel('Number kind')).toHaveCount(0)
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([])
 })
 
-test('filter bars, scopes and dense ranks are visible across data screens', async ({ page }) => {
+test('filter bars and scopes are visible across data screens', async ({ page }) => {
   for (const route of ['/dashboard', '/history', '/numbers', '/pairs']) {
     await page.goto(route + '?game=lotto_535&window=last_draws&count=10')
-    await expect(page.getByRole('region', { name: 'Bộ lọc', exact: true })).toHaveCount(1)
+    await expect(page.getByRole('region', { name: 'Filters', exact: true })).toHaveCount(1)
     await expect(page.locator('.scope-summary').first()).toBeVisible()
     expect(
       await page.locator('h1').evaluate((node) => node.getBoundingClientRect().top),
     ).toBeLessThan(
       await page
-        .getByRole('region', { name: 'Bộ lọc', exact: true })
+        .getByRole('region', { name: 'Filters', exact: true })
         .evaluate((node) => node.getBoundingClientRect().top),
     )
   }
-  await expect(page.getByRole('columnheader', { name: 'Hạng tần suất' })).toBeVisible()
+  await expect(page.getByRole('columnheader', { name: 'Rank' })).toHaveCount(0)
   await expect
     .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth))
     .toBe(true)
@@ -85,15 +85,15 @@ test('switching number pools discards a delayed main response', async ({ page })
   })
   await page.goto('/numbers?game=lotto_535')
   await requested
-  await page.getByLabel('Nhóm số').selectOption('special')
+  await page.getByLabel('Number kind').selectOption('special')
   await expect(page.locator('.frequency-tile .ball.special')).toHaveCount(12)
   release()
-  await expect(page.getByLabel('Nhóm số')).toHaveValue('special')
+  await expect(page.getByLabel('Number kind')).toHaveValue('special')
   await expect(page.locator('.frequency-tile')).toHaveCount(12)
-  await expect(page.locator('.scope-summary')).toContainText('Số đặc biệt')
+  await expect(page.locator('.scope-summary')).toContainText('Special numbers')
 })
 
-test('Dashboard retains special scope on refresh failure and labels the shortened pair list', async ({
+test('Dashboard retains special scope on refresh failure and limits the pair preview', async ({
   page,
 }) => {
   let refreshed = false
@@ -118,14 +118,12 @@ test('Dashboard retains special scope on refresh failure and labels the shortene
   await page.goto('/dashboard?game=lotto_535')
   const special = page
     .locator('.card')
-    .filter({ has: page.getByRole('heading', { name: 'Thống kê số đặc biệt Lotto 5/35' }) })
+    .filter({ has: page.getByRole('heading', { name: 'Lotto 5/35 Special Numbers (01–12)' }) })
   await expect(special.locator('.frequency-tile')).toHaveCount(12)
-  await page.getByRole('button', { name: 'Đồng bộ', exact: true }).click()
-  await expect(special.getByRole('alert')).toContainText('Dữ liệu cũ trong cùng phạm vi')
-  await expect(special.locator('.scope-summary')).toContainText('Thực tế: 7 kỳ')
-  await expect(special.locator('.scope-summary')).toContainText('Đến kỳ 00123')
+  await page.getByRole('button', { name: 'Sync', exact: true }).click()
+  await expect(special.getByRole('alert')).toContainText('Stale data in same window')
+  await expect(special.locator('.scope-summary')).toContainText('Actual: 7 draws')
+  await expect(special.locator('.scope-summary')).toContainText('Through draw 00123')
   await expect(special.locator('.frequency-tile .ball.special')).toHaveCount(12)
-  await expect(page.locator('.pairs-summary .scope-summary')).toContainText('Cặp số chính')
-  await expect(page.locator('.pairs-summary')).toContainText('Tối đa 5 cặp')
-  await expect(page.locator('.pairs-summary')).toContainText('Cùng tần suất cùng hạng')
+  await expect(page.locator('.pairs-summary .pair-link')).toHaveCount(5)
 })

@@ -53,7 +53,7 @@ for (const game of games) {
   console.log(`${game.id}: latest=${latest.draw_id}, window=${numbers.context.actual_draw_count}, API OK`)
 }
 
-for (const path of ['/dashboard', '/history/00001', '/numbers/1', '/pairs/1/2', '/checker', '/generator']) {
+for (const path of ['/dashboard', '/history/00001', '/numbers/1', '/pairs/1-2', '/checker', '/generator']) {
   const response = await fetch(new URL(path, site), { signal: AbortSignal.timeout(90_000) })
   assert.equal(response.status, 200, `${path}: deep link failed`)
   assert.match(response.headers.get('content-type') ?? '', /text\/html/i)

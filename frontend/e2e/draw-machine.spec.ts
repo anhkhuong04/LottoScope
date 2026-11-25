@@ -33,20 +33,35 @@ for (const [game, max, count] of [
       path: `test-results/draw-ready-${game}-${test.info().project.name}.png`,
       fullPage: false,
     })
+    if (game === 'lotto_535') {
+      await page.locator('.draw-stage').evaluate((stage) => {
+        // Pause as soon as the special pool appears. A screenshot or a slow browser action
+        // can otherwise race the single special ball through the gate.
+        const phase = new MutationObserver(() => {
+          if (stage.querySelector('.draw-stage-badge')?.textContent !== '12 BALLS') return
+          const pause = [...stage.querySelectorAll('button')].find(
+            (button) => button.textContent?.trim() === 'Pause',
+          )
+          if (!pause) return
+          phase.disconnect()
+          pause.click()
+        })
+        phase.observe(stage, { childList: true, subtree: true, characterData: true })
+      })
+    }
     await page.getByRole('button', { name: 'Start Draw' }).click()
+    let mainInSpecialPhase: number[] | undefined
     if (game === 'lotto_535') {
       await expect(page.locator('.draw-stage-badge')).toHaveText('12 BALLS', { timeout: 90_000 })
+      await expect(page.locator('.draw-status')).toHaveText('Paused')
       await page.screenshot({
         path: `test-results/draw-special-${game}-${test.info().project.name}.png`,
         fullPage: false,
       })
       await expect(page.locator('.draw-result-slots .draw-slot.filled')).toHaveCount(5)
-      const mainBeforePause = await page.locator('.draw-result-slots .draw-slot').allTextContents()
-      await page.getByRole('button', { name: 'Pause', exact: true }).click()
-      await expect(page.locator('.draw-status')).toHaveText('Paused')
-      expect(await page.locator('.draw-result-slots .draw-slot').allTextContents()).toEqual(
-        mainBeforePause,
-      )
+      mainInSpecialPhase = (
+        await page.locator('.draw-result-slots .draw-slot.filled').allTextContents()
+      ).map(Number)
       await expect(page.getByRole('link', { name: 'Check history' })).toHaveCount(0)
       await page.getByRole('button', { name: 'Resume' }).click()
     }
@@ -60,6 +75,7 @@ for (const [game, max, count] of [
       await page.locator('.draw-result-slots .draw-slot.filled').allTextContents()
     ).map(Number)
     expect(drawn).toHaveLength(count)
+    if (mainInSpecialPhase) expect(drawn).toEqual(mainInSpecialPhase)
     expect(new Set(drawn).size).toBe(count)
     expect(drawn.every((n) => n >= 1 && n <= max)).toBe(true)
     await expect(page.locator('.draw-result-slots .draw-slot.filled').first()).toHaveCSS(

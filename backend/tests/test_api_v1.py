@@ -427,6 +427,7 @@ def test_official_fixture_ingestion_to_api(client, engine) -> None:
         assert generated["generated_count"] == 1
 
 
+@pytest.mark.integration
 def test_openapi_and_internal_error_redaction(client) -> None:
     schema = client.get("/openapi.json").json()
     assert "/api/v1/games/{game}/combinations/generate" in schema["paths"]

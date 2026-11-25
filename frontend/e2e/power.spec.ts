@@ -17,17 +17,17 @@ test.beforeEach(async ({ page }) => {
 test('Power numbers, deep links and game switch preserve window and use 55 numbers', async ({
   page,
 }) => {
-  await page.goto('/numbers?game=power_655&window=last_draws&count=20')
-  await expect(page.getByLabel('Chọn game')).toHaveValue('power_655')
+  await page.goto('/numbers?game=power_655&window=last_draws&count=20&sort=number')
+  await expect(page.getByLabel('Select game')).toHaveValue('power_655')
   await expect(page.locator('.number-tile')).toHaveCount(55)
   await page.locator('.number-tile').last().click()
   await expect(page).toHaveURL(/\/numbers\/55\?/)
-  await expect(page.getByRole('heading', { name: 'Số 55', exact: true })).toBeVisible()
-  await page.getByLabel('Chọn game').selectOption('mega_645')
+  await expect(page.getByRole('heading', { name: 'Number 55', exact: true })).toBeVisible()
+  await page.getByLabel('Select game').selectOption('mega_645')
   await expect(page.locator('.number-tile')).toHaveCount(45)
-  await page.getByLabel('Chọn game').selectOption('power_655')
+  await page.getByLabel('Select game').selectOption('power_655')
   await expect(page.locator('.number-tile')).toHaveCount(55)
-  await expect(page.getByLabel('Phạm vi phân tích')).toHaveValue('20')
+  await expect(page.getByLabel('Analysis window')).toHaveValue('20')
 })
 
 test('Power checker accepts exactly six main numbers and resets on game change', async ({
@@ -35,21 +35,20 @@ test('Power checker accepts exactly six main numbers and resets on game change',
 }) => {
   await page.goto('/checker?game=power_655')
   await expect(page.locator('.picker button')).toHaveCount(55)
-  await expect(page.getByRole('button', { name: 'Kiểm tra lịch sử' })).toBeDisabled()
-  await page.getByLabel('Nhập số').fill('05 10 14 23 24 38')
-  await page.getByRole('button', { name: 'Thêm số' }).click()
-  await expect(page.getByText('6/6 số đã chọn')).toBeVisible()
-  await page.getByRole('button', { name: 'Kiểm tra lịch sử' }).click()
-  await expect(page.getByRole('heading', { name: /Trùng chính xác: [1-9]/ })).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Mức trùng số' })).toBeVisible()
-  await page.getByLabel('Chọn game').selectOption('mega_645')
-  await expect(page.getByText('Chưa chọn số nào')).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Kiểm tra lịch sử' })).toBeDisabled()
-  await page.getByLabel('Chọn game').selectOption('power_655')
+  await expect(page.getByText('0/6', { exact: true })).toBeVisible()
+  for (const number of ['05', '10', '14', '23', '24', '38']) {
+    await page.getByRole('button', { name: `Number ${number}`, exact: true }).click()
+  }
+  await expect(page.getByText('6/6', { exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Number 55', exact: true })).toBeDisabled()
+  await expect(page.getByText(/Exact match: [1-9]/)).toBeVisible()
+  await expect(page.getByLabel('Match Distribution')).toBeVisible()
+  await page.getByLabel('Select game').selectOption('mega_645')
+  await expect(page.getByText('0/6', { exact: true })).toBeVisible()
+  await expect(page.getByLabel('Match Distribution')).toHaveCount(0)
+  await page.getByLabel('Select game').selectOption('power_655')
   await expect(page.locator('.picker button')).toHaveCount(55)
-  await page.getByLabel('Nhập số').fill('56')
-  await page.getByRole('button', { name: 'Thêm số' }).click()
-  await expect(page.getByRole('alert')).toContainText('1 đến 55')
+  await expect(page.getByRole('button', { name: 'Number 56', exact: true })).toHaveCount(0)
 })
 
 test('Power detail separates special and shows both Jackpots and five prize tiers', async ({
@@ -58,12 +57,14 @@ test('Power detail separates special and shows both Jackpots and five prize tier
   await page.goto('/history/00001?game=power_655')
   await expect(page.locator('.content .draw-special').first()).toContainText('35')
   await expect(page.locator('.prize-jackpot')).toHaveCount(2)
-  await expect(page.locator('.prize-jackpot').first()).toContainText('30.528.493.950')
-  await expect(page.locator('.prize-jackpot').last()).toContainText('3.058.721.550')
-  const table = page.getByRole('table', { name: 'Bảng giải thưởng' })
+  await expect(page.locator('.prize-jackpot').first()).toContainText('30,528,493,950')
+  await expect(page.locator('.prize-jackpot').last()).toContainText('3,058,721,550')
+  const table = page.getByRole('table', { name: 'Prize table' })
   await expect(table.locator('tbody tr')).toHaveCount(5)
   const jackpot2 = table.getByRole('row', { name: /Jackpot 2/ })
-  await expect(jackpot2.getByRole('img', { name: 'Trùng 5 số chính và số đặc biệt' })).toBeVisible()
+  await expect(
+    jackpot2.getByRole('img', { name: 'Match 5 main number(s) and special number' }),
+  ).toBeVisible()
   await expect(jackpot2.locator('.prize-symbol.special')).toHaveCount(1)
   await expect
     .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth))
@@ -80,11 +81,11 @@ test('Power detail separates special and shows both Jackpots and five prize tier
 
 test('Power draw machine replaces rule generator and pair detail works', async ({ page }) => {
   await page.goto('/generator?game=power_655')
-  await expect(page.getByRole('heading', { name: 'Lồng cầu mô phỏng' })).toBeVisible()
-  await expect(page.getByRole('checkbox', { name: 'Giới hạn trùng kỳ trước' })).toHaveCount(0)
+  await expect(page.getByRole('heading', { name: 'Draw Simulator' })).toBeVisible()
+  await expect(page.getByRole('checkbox', { name: 'Maximum previous overlap' })).toHaveCount(0)
   await expect(page.locator('.draw-result-slots li')).toHaveCount(6)
   await page.goto('/pairs/24-38?game=power_655&window=all_time')
-  await expect(page.getByRole('heading', { name: 'Cặp 24-38' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Pair 24-38' })).toBeVisible()
   await expect(page.locator('.draw-row')).not.toHaveCount(0)
 })
 
@@ -111,7 +112,7 @@ test('late Mega response cannot replace Power analytics; Power error can retry',
   })
   await page.goto('/numbers?game=mega_645')
   await requested
-  await page.getByLabel('Chọn game').selectOption('power_655')
+  await page.getByLabel('Select game').selectOption('power_655')
   await expect(page.locator('.number-tile')).toHaveCount(55)
   release()
   await done
@@ -125,10 +126,10 @@ test('late Mega response cannot replace Power analytics; Power error can retry',
       json: { created: 0, enriched: 0, remaining_unresolved: 0 },
     }),
   )
-  await page.getByRole('button', { name: 'Đồng bộ', exact: true }).click()
-  await expect(page.getByText(/Dữ liệu cũ trong cùng phạm vi/)).toBeVisible()
+  await page.getByRole('button', { name: 'Sync', exact: true }).click()
+  await expect(page.getByText(/Stale data in same window/)).toBeVisible()
   failed = false
-  await page.getByRole('button', { name: 'Thử lại' }).click()
+  await page.getByRole('button', { name: 'Retry' }).click()
   await expect(page.getByRole('alert')).toHaveCount(0)
   await expect(page.locator('.number-tile')).toHaveCount(55)
 })

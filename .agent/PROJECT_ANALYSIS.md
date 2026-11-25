@@ -24,6 +24,10 @@ contract POST/cooldown ở API, vận hành mặc định không scheduler ở R
 
 ## Phạm vi
 
+- Commit `fd465eb` (24/11/2026) cập nhật lịch poll, mở rộng điều kiện fallback
+  và bổ sung đọc bảng giải từ nguồn dự phòng. Contract hiện hành ở
+  [Data Pipeline](../docs/DATA_PIPELINE.md) và [API](../docs/API.md).
+
 - Thiết kế lồng cầu 03/11/2026: người dùng đã duyệt mô hình và yêu cầu chỉ giữ
   phối cảnh 3D, tích hợp Rapier; mốc đầu cập nhật Docker local.
   [DRAW_MACHINE_REDESIGN](../docs/DRAW_MACHINE_REDESIGN.md) ghi kiến trúc visual/

@@ -39,19 +39,19 @@ test('manual sync posts once and reloads stored dashboard data after completion'
   await page.goto('/dashboard?game=lotto_535')
   await expect(page.locator('.latest-card .balls .ball')).toHaveCount(6)
   expect(requests).toBe(0)
-  await page.getByRole('button', { name: 'Đồng bộ', exact: true }).click()
-  await expect(page.getByRole('button', { name: 'Đang đồng bộ…' })).toBeDisabled()
+  await page.getByRole('button', { name: 'Sync', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Syncing…' })).toBeDisabled()
   expect(requests).toBe(1)
   release()
   await expect(
-    page.getByRole('status').filter({ hasText: 'Lotto 5/35: đã thêm 2 kỳ mới' }),
+    page.getByRole('status').filter({ hasText: 'Lotto 5/35: added 2 new draw(s).' }),
   ).toBeVisible()
-  await expect(page.locator('.latest-meta span').first()).toHaveText('Kỳ 99999')
+  await expect(page.locator('.latest-meta span').first()).toHaveText('Draw 99999')
   await expect(page.locator('.sync-feedback')).not.toContainText(/Minh Chính|Minh Ngọc|vietvudanh/)
   await expect(
     page.getByRole('link', { name: /Minh Chính|Minh Ngọc|Vietlott|vietvudanh/ }),
   ).toHaveCount(0)
-  const close = page.getByRole('button', { name: 'Đóng thông báo đồng bộ' })
+  const close = page.getByRole('button', { name: 'Dismiss sync notice' })
   const box = await close.boundingBox()
   expect(box!.width).toBeGreaterThanOrEqual(44)
   expect(box!.height).toBeGreaterThanOrEqual(44)
@@ -82,18 +82,18 @@ test('a late sync keeps the selected game and reports source errors without losi
     }),
   )
   await page.goto('/dashboard?game=lotto_535')
-  await page.getByRole('button', { name: 'Đồng bộ', exact: true }).click()
-  await page.getByLabel('Chọn game').selectOption('mega_645')
+  await page.getByRole('button', { name: 'Sync', exact: true }).click()
+  await page.getByLabel('Select game').selectOption('mega_645')
   await expect(page.locator('.latest-card .balls .ball')).toHaveCount(6)
   release()
   await expect(
-    page.getByRole('status').filter({ hasText: 'Lotto 5/35: đã kiểm tra nguồn' }),
+    page.getByRole('status').filter({ hasText: 'Lotto 5/35: checked source' }),
   ).toBeVisible()
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Tổng quan Mega 6/45')
-  await expect(page.locator('.latest-meta span').first()).toHaveText(/^Kỳ \d{5}$/)
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Mega 6/45 Overview')
+  await expect(page.locator('.latest-meta span').first()).toHaveText(/^Draw \d{5}$/)
   const saved = await page.locator('.latest-meta span').first().textContent()
-  await page.getByRole('button', { name: 'Đồng bộ', exact: true }).click()
-  await expect(page.getByRole('alert')).toContainText('Mega 6/45: Chưa thể hoàn tất')
-  await expect(page.getByRole('alert')).toContainText('Dữ liệu đã lưu vẫn được giữ')
+  await page.getByRole('button', { name: 'Sync', exact: true }).click()
+  await expect(page.getByRole('alert')).toContainText('Mega 6/45: Unable to fetch new draws')
+  await expect(page.getByRole('alert')).toContainText('Stored data has been preserved')
   await expect(page.locator('.latest-meta span').first()).toHaveText(saved!)
 })

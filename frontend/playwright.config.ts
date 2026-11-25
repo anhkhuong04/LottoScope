@@ -1,10 +1,14 @@
 import { defineConfig, devices } from '@playwright/test'
 
 const deployedBaseURL = process.env.PLAYWRIGHT_BASE_URL
+const localBaseURL = 'http://127.0.0.1:5197'
+const testBuild = '.vite/e2e'
 
 export default defineConfig({
   testDir: './e2e',
-  use: { baseURL: deployedBaseURL ?? 'http://127.0.0.1:5173', trace: 'retain-on-failure' },
+  timeout: 60_000,
+  workers: 2,
+  use: { baseURL: deployedBaseURL ?? localBaseURL, trace: 'retain-on-failure' },
   projects: [
     {
       name: 'desktop',
@@ -19,9 +23,12 @@ export default defineConfig({
   webServer: deployedBaseURL
     ? undefined
     : {
-        command: 'npm run dev -- --host 127.0.0.1 --port 5173 --strictPort',
-        url: 'http://127.0.0.1:5173',
-        reuseExistingServer: true,
-        timeout: 30_000,
+        command:
+          `npm run build -- --outDir ${testBuild} && ` +
+          `npm run preview -- --host 127.0.0.1 --port 5197 --strictPort --outDir ${testBuild}`,
+        env: { LOTTO_DEV_API_ORIGIN: process.env.LOTTO_DEV_API_ORIGIN ?? 'http://127.0.0.1:5198' },
+        url: localBaseURL,
+        reuseExistingServer: false,
+        timeout: 90_000,
       },
 })
