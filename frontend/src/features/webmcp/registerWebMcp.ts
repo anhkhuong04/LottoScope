@@ -1,4 +1,5 @@
 import { api, params, windowQuery, type AnalysisWindow } from '../../api'
+import { analysisDrawCounts, supportedGameIds } from '../../analysisOptions'
 
 type JsonSchema = Record<string, unknown>
 
@@ -16,12 +17,9 @@ export type ModelContextLike = {
   registerTool: (tool: WebMcpTool, options?: { signal?: AbortSignal }) => void | Promise<void>
 }
 
-const VALID_GAMES = new Set(['lotto_535', 'mega_645', 'power_655'])
-const VALID_COUNTS = new Set([10, 20, 30, 50, 100])
-
 function requireGame(input: Record<string, unknown>): string {
   const game = String(input.game ?? '')
-  if (!VALID_GAMES.has(game)) {
+  if (!supportedGameIds.has(game)) {
     throw new Error('game must be one of: lotto_535, mega_645, power_655')
   }
   return game
@@ -39,7 +37,7 @@ function buildWindow(input: Record<string, unknown>): AnalysisWindow {
     return { kind: 'date_range', from_date, to_date }
   }
   const rawCount = input.count === undefined ? 30 : Number(input.count)
-  if (!VALID_COUNTS.has(rawCount)) {
+  if (!analysisDrawCounts.has(rawCount)) {
     throw new Error('count must be one of: 10, 20, 30, 50, 100')
   }
   return { kind: 'last_draws', count: rawCount }
@@ -51,7 +49,7 @@ function asTextResult(data: unknown): { content: [{ type: 'text'; text: string }
 
 const GAME_SCHEMA: JsonSchema = {
   type: 'string',
-  enum: ['lotto_535', 'mega_645', 'power_655'],
+  enum: [...supportedGameIds],
   description: 'Game identifier: lotto_535, mega_645, or power_655.',
 }
 
@@ -63,7 +61,7 @@ const WINDOW_PROPERTIES: Record<string, JsonSchema> = {
   },
   count: {
     type: 'integer',
-    enum: [10, 20, 30, 50, 100],
+    enum: [...analysisDrawCounts],
     description: 'Draw count when window is last_draws (default: 30).',
   },
   from_date: {

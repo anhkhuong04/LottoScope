@@ -11,6 +11,7 @@ import {
   type PairMetric,
 } from './api'
 import { useApp } from './state'
+import { analysisDrawCounts } from './analysisOptions'
 
 export function PageHead({
   title,
@@ -288,11 +289,11 @@ function WindowSelectorForm({
             }
           }}
         >
-          <option value="10">Last 10 draws</option>
-          <option value="20">Last 20 draws</option>
-          <option value="30">Last 30 draws</option>
-          <option value="50">Last 50 draws</option>
-          <option value="100">Last 100 draws</option>
+          {[...analysisDrawCounts].map((count) => (
+            <option key={count} value={count}>
+              Last {count} draws
+            </option>
+          ))}
           <option value="date_range">Date range</option>
           <option value="all_time">All-time history</option>
         </select>

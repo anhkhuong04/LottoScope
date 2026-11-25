@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router'
 import { api, type AnalysisWindow, type Game } from './api'
+import { analysisDrawCounts, supportedGameIds } from './analysisOptions'
 
 type AppContext = {
   games: Game[]
@@ -15,9 +16,6 @@ type AppContext = {
   refreshData: () => void
 }
 const Context = createContext<AppContext | null>(null)
-const allowedCounts = [10, 20, 30, 50, 100]
-// UI capabilities, independent of the games the API may add later.
-const supportedGames = new Set(['lotto_535', 'mega_645', 'power_655'])
 
 export function parseWindow(search: URLSearchParams): AnalysisWindow {
   if (search.get('window') === 'all_time') return { kind: 'all_time' }
@@ -32,7 +30,7 @@ export function parseWindow(search: URLSearchParams): AnalysisWindow {
       to_date: search.get('to_date')!,
     }
   const count = Number(search.get('count'))
-  return { kind: 'last_draws', count: allowedCounts.includes(count) ? count : 30 }
+  return { kind: 'last_draws', count: analysisDrawCounts.has(count) ? count : 30 }
 }
 
 export function AppProvider({ children }: { children: ReactNode }) {
@@ -47,7 +45,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const controller = new AbortController()
     api<{ items: Game[] }>('/games', controller.signal)
       .then((result) => {
-        const available = result.items.filter((item) => supportedGames.has(item.id))
+        const available = result.items.filter((item) => supportedGameIds.has(item.id))
         setGames(available)
         setGameError(available.length ? null : 'No supported games found.')
       })
