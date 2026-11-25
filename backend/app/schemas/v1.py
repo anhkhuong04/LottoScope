@@ -221,13 +221,6 @@ class NumbersOut(Out):
     number_kind: Literal["main", "special"] = "main"
 
 
-class PairPageOut(Out):
-    items: tuple[PairOut, ...]
-    page: int
-    page_size: int
-    total: int
-
-
 class PairsOut(Out):
     context: ContextOut
     page: int

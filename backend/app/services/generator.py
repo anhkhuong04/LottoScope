@@ -176,6 +176,28 @@ def validate_rules(definition: GameDefinition, rules: RuleSet) -> None:
                 raise InvalidRulesError("sum_range conflicts with odd_even_ratio")
 
 
+def _validate_available_numbers(
+    definition: GameDefinition, rules: RuleSet, available: list[int]
+) -> None:
+    ratio = rules.odd_even_ratio
+    if ratio is not None:
+        odds = [number for number in available if number % 2]
+        evens = [number for number in available if number % 2 == 0]
+        if len(odds) < ratio.odd or len(evens) < ratio.even:
+            raise InvalidRulesError("odd_even_ratio conflicts with excluded numbers")
+        smallest = sorted(odds[: ratio.odd] + evens[: ratio.even])
+        largest = sorted(
+            (odds[-ratio.odd :] if ratio.odd else []) + (evens[-ratio.even :] if ratio.even else [])
+        )
+    else:
+        smallest = available[: definition.main_count]
+        largest = available[-definition.main_count :]
+    if rules.sum_range is not None and (
+        rules.sum_range.max < sum(smallest) or rules.sum_range.min > sum(largest)
+    ):
+        raise InvalidRulesError("sum_range conflicts with available numbers")
+
+
 class GeneratorService:
     def __init__(self, engine: Engine) -> None:
         self.engine = engine
@@ -264,24 +286,7 @@ class GeneratorService:
             and max(item.frequency for item in pairs.values()) < pair_rule.min_count
         ):
             raise InvalidRulesError("minimum_historical_pair_frequency cannot be reached")
-        ratio = rules.odd_even_ratio
-        if ratio is not None:
-            odds = [number for number in available if number % 2]
-            evens = [number for number in available if number % 2 == 0]
-            if len(odds) < ratio.odd or len(evens) < ratio.even:
-                raise InvalidRulesError("odd_even_ratio conflicts with excluded numbers")
-            smallest = sorted(odds[: ratio.odd] + evens[: ratio.even])
-            largest = sorted(
-                (odds[-ratio.odd :] if ratio.odd else [])
-                + (evens[-ratio.even :] if ratio.even else [])
-            )
-        else:
-            smallest = available[: definition.main_count]
-            largest = available[-definition.main_count :]
-        if rules.sum_range is not None and (
-            rules.sum_range.max < sum(smallest) or rules.sum_range.min > sum(largest)
-        ):
-            raise InvalidRulesError("sum_range conflicts with available numbers")
+        _validate_available_numbers(definition, rules, available)
         exact_dates: dict[tuple[int, ...], list[date]] = {}
         for draw in history:
             exact_dates.setdefault(draw.main_numbers, []).append(draw.draw_date)
