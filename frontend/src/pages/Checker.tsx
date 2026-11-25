@@ -123,7 +123,7 @@ export function Checker() {
       <WindowSelector />
       <div className="grid cols-2 checker-top-grid">
         <Card
-          title={`Select ${game!.main_count} main numbers (${game!.main_min}–${game!.main_max})`}
+          title={`Select ${game!.main_count} main numbers`}
           action={
             <div className="checker-picker-header-actions">
               <span className="pill checker-count-pill">

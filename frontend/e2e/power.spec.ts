@@ -30,6 +30,28 @@ test('Power numbers, deep links and game switch preserve window and use 55 numbe
   await expect(page.getByLabel('Analysis window')).toHaveValue('20')
 })
 
+test('Checker headings show the required count without a range for each game', async ({ page }) => {
+  await page.goto('/checker?game=lotto_535')
+  const game = page.getByLabel('Select game')
+  const picker = page.locator('.picker')
+  await expect(
+    page.getByRole('heading', { name: 'Select 5 main numbers', exact: true }),
+  ).toBeVisible()
+  await expect(picker.getByRole('button')).toHaveCount(35)
+
+  await game.selectOption('mega_645')
+  await expect(
+    page.getByRole('heading', { name: 'Select 6 main numbers', exact: true }),
+  ).toBeVisible()
+  await expect(picker.getByRole('button')).toHaveCount(45)
+
+  await game.selectOption('power_655')
+  await expect(
+    page.getByRole('heading', { name: 'Select 6 main numbers', exact: true }),
+  ).toBeVisible()
+  await expect(picker.getByRole('button')).toHaveCount(55)
+})
+
 test('Power checker accepts exactly six main numbers and resets on game change', async ({
   page,
 }) => {
