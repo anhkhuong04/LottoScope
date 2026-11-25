@@ -201,6 +201,55 @@ describe('static AI data page handler', () => {
     )
   })
 
+  it.each([
+    ['from_date=2026-01-01', 'last_draws'],
+    ['to_date=2026-11-23&window=all_time', 'all_time'],
+    ['from_date=2026-01-01&to_date=2026-11-23&window=last_draws', 'last_draws'],
+    ['from_date=2026-01-01&to_date=2026-11-23&window=last_draws&count=20', 'last_draws'],
+    ['from_date=2026-01-01&to_date=2026-11-23', 'date_range'],
+    ['from_date=2026-01-01&to_date=2026-11-23&window=all_time', 'all_time'],
+  ])('preserves draw dates and analysis scope through links for %s', async (dates, window) => {
+    const url = new URL(
+      `https://lottoscope-sable.vercel.app/data/lotto_535?${dates}&draw_page=2&pair_page=2`,
+    )
+    const upstream = mockGamesFetch()
+    const handler = createDataHandler(config, upstream)
+    const html = await (await handler(new Request(url))).text()
+
+    for (const [label, drawPage, pairPage, analysisWindow] of [
+      ['Previous draws', '1', '2', window],
+      ['Next draws', '3', '2', window],
+      ['Previous pairs', '2', '1', window],
+      ['Next pairs', '2', '3', window],
+      ['Markdown', '2', '2', window],
+      ['Last 10', '2', '2', 'last_draws'],
+    ]) {
+      const href = html.match(new RegExp(`href="([^"]+)">${label}</a>`))?.[1]
+      expect(href, label).toBeDefined()
+      const target = new URL(href!.replaceAll('&amp;', '&'), url)
+      upstream.mockClear()
+      const response = await handler(new Request(target))
+      expect(response.status).toBe(200)
+      const calls = upstream.mock.calls.map(([input]) => new URL(String(input)))
+      const drawQuery = calls.find((call) => call.pathname.endsWith('/draws'))!.searchParams
+      const pairQuery = calls.find((call) =>
+        call.pathname.endsWith('/analytics/pairs'),
+      )!.searchParams
+      expect(drawQuery.get('from_date'), label).toBe(url.searchParams.get('from_date'))
+      expect(drawQuery.get('to_date'), label).toBe(url.searchParams.get('to_date'))
+      expect(drawQuery.get('page'), label).toBe(drawPage)
+      expect(pairQuery.get('page'), label).toBe(pairPage)
+      expect(pairQuery.get('window'), label).toBe(analysisWindow)
+      if (analysisWindow === 'last_draws') {
+        expect(pairQuery.get('count'), label).toBe(
+          label === 'Last 10' ? '10' : (url.searchParams.get('count') ?? '30'),
+        )
+        expect(pairQuery.has('from_date'), label).toBe(false)
+        expect(pairQuery.has('to_date'), label).toBe(false)
+      }
+    }
+  })
+
   it('supports CSV format for draws, numbers, special, and pairs', async () => {
     const upstream = mockGamesFetch()
     const handler = createDataHandler(config, upstream)

@@ -243,6 +243,8 @@ Supported query parameters: `window` (`last_draws` | `date_range` | `all_time`),
 CSV exports load the requested section. If its data source is unavailable,
 `GET` and `HEAD` return `503` with `Cache-Control: no-store`. A successful
 empty section returns a CSV header with no data rows.
+Pagination and export links retain draw date filters independently of the
+selected analysis window.
 
 ---
 

@@ -156,15 +156,11 @@ export function buildPageHref(
   const fmt = overrides.format ?? opts.format
   const sec = overrides.section ?? opts.section
 
-  if (win === 'all_time') {
-    qs.set('window', 'all_time')
-  } else if (win === 'date_range' && opts.fromDate && opts.toDate) {
-    qs.set('window', 'date_range')
-    qs.set('from_date', opts.fromDate)
-    qs.set('to_date', opts.toDate)
-  } else if (cnt !== 30) {
-    qs.set('count', String(cnt))
-  }
+  // With both dates and an omitted window, the parser infers date_range.
+  if (win !== 'last_draws' || (opts.fromDate && opts.toDate)) qs.set('window', win)
+  if (win === 'last_draws' && cnt !== 30) qs.set('count', String(cnt))
+  if (opts.fromDate) qs.set('from_date', opts.fromDate)
+  if (opts.toDate) qs.set('to_date', opts.toDate)
 
   if (opts.asOfDrawId) qs.set('as_of_draw_id', opts.asOfDrawId)
   if (opts.drawId) qs.set('draw_id', opts.drawId)
